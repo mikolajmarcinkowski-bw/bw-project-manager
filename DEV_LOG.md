@@ -5,6 +5,73 @@
 
 ---
 
+## [2026-06-15] db + deploy | Schemat WDROŻONY i zweryfikowany na żywej bazie ✅
+
+**Deploy:** `supabase login --token` (login interaktywny NIE działa w non-TTY!) → `link --password`
+→ `db push --password`. Obie migracje zaaplikowane bez błędów (jedyny NOTICE: pgcrypto już istniał).
+Postgres 17, region eu-west-2.
+
+**Weryfikacja:** `gen types typescript` → `src/types/supabase.ts` (1562 linie). Potwierdzone **wszystkie 29 tabel**
++ funkcja `current_user_role`. Schemat zgodny z kontraktem MCP (test akceptacyjny przeszedł na etapie pisania).
+
+**Dokumentacja zaktualizowana** (prośba Mikołaja): `INFRASTRUCTURE.md` + `CLAUDE.md` — sprawdzony workflow
+Supabase dla non-TTY (login tokenem ze schowka, hasło DB przez flagę `--password`, brak Dockera → praca
+na zdalnej bazie, `db reset`/lokalny stack niedostępne).
+
+**Stan:** Tasks #1 (schemat) + #2 (CLI/push) ZAMKNIĘTE. Następne: task #3 (seed szablonów — wymaga
+przeczytania `bw-process-matrix.md` + `raw/00-09`), potem brandowy UI Fazy 1 przez `impeccable`.
+
+**NIE commitowane jeszcze** — czeka na decyzję Mikołaja (branch vs main; auto-deploy Vercel z GitHub
+jeszcze nieskonfigurowany). Pliki w working tree: migracje, `src/types/supabase.ts`, plumbing auth
+(`proxy.ts`, `update-session.ts`, `dal.ts`), zaktualizowane docs.
+
+---
+
+## [2026-06-15] db + blocker | Schemat DB napisany (DDL + RLS) — czeka na deploy (credentiale)
+
+**Co zrobiono:**
+- `supabase init` → katalog `supabase/` + `config.toml`
+- Migracja `20260615120000_init_schema.sql` — pełny schemat DDL: 21 enumów, 29 tabel
+  (profiles, team_members, clients, projects, project_pms, project_types, step_templates,
+  step_task_templates, project_steps, tasks, decision_points, project_documents, change_requests,
+  risks, milestones, kpis, budget_settings, budget_lines, task_role_assignments, stakeholders,
+  escalation_levels, meetings, communications, questions_doubts, maintenance_packages,
+  ai_project_suggestions, external_refs, working_calendar, activity_log) + indeksy + trigger updated_at.
+- Migracja `20260615120100_rls_and_triggers.sql` — RLS (R13: każdy zalogowany = pełny dostęp do
+  danych projektów; szablony/pula/kalendarz read-all + write-admin; activity_log read+insert),
+  funkcje `current_user_role()`/`is_admin()` (SECURITY DEFINER, bez rekursji), trigger
+  `handle_new_user()` auto-tworzący `profiles` na insert do `auth.users`.
+
+**Reconcyliacja modelu (wg advisora):** kanon = nowy model (PRD §6 + rewizje D-051), NIE stara treść
+`data-model.md`. Kształt encji core z PRD §6 + rewizje; detal kolumn encji-dokumentów z treści
+`data-model.md`; nazwy pól zadań z `mcp-tools.md`. Jedna wzbogacona tabela `tasks` (FK `project_steps`),
+checklist zwinięty w nią. `projects` BEZ `pm_id`/`active_step_id`; PM-owie przez `project_pms` (m:n);
+aktywność klocków przez `is_active`; typy przez `project_types`.
+
+**Test akceptacyjny:** przeszedłem WSZYSTKIE tool e MCP (`mcp-tools.md`) — każdy parametr ma kolumnę.
+Załatane 2 luki: `project_steps.kind` (add_steps_to_project) + `change_requests.notes` (update_change_request).
+
+**BLOKER (deploy):** push migracji wymaga credentiali, które ma tylko Mikołaj:
+1. `supabase login` (browser) LUB `SUPABASE_ACCESS_TOKEN`
+2. hasło DB Supabase (do `supabase link` / `db push`)
+Brak Dockera/`psql` → nie da się zwalidować lokalnie. SQL przejrzany manualnie, nie uruchomiony.
+
+**Plumbing auth (Faza 1, nie-DB, zrobione w międzyczasie — czysta mechanika Next 16):**
+- ⚠️ Next 16 breaking: `middleware.ts` → **`proxy.ts`** (default/named export `proxy`, runtime Node.js);
+  `cookies()` jest **async**. Sprawdzone w `node_modules/next/dist/docs` (wymóg AGENTS.md).
+- `src/lib/supabase/update-session.ts` — odświeżanie sesji w proxy (wzorzec @supabase/ssr getAll/setAll),
+  ochrona tras (publiczne: /login, /auth/*; reszta → redirect /login z ?redirectTo).
+- `proxy.ts` (root) — wpina updateSession + matcher (pomija api/_next/assety).
+- `src/lib/auth/dal.ts` — DAL: getSessionUser / requireUser / requireAdmin (czyta rolę z `profiles`,
+  React `cache`). Wzorzec z docs: auth blisko źródła danych, nie w layoutach.
+
+**Następny krok:** Mikołaj loguje CLI + podaje hasło DB → `supabase link --project-ref ipptnszwnjtoqpixhefd`
+→ `db push` → `gen types` do `src/types/supabase.ts`. Potem: weryfikacja schematu, seed szablonów (task #3),
+brandowy UI Fazy 1 (tokeny BW + shell + login) przez skill `impeccable` (D-050).
+Migracje + plumbing NIE są jeszcze commitowane (migracje czekają na weryfikację deploymentem).
+
+---
+
 ## [2026-06-15] checkpoint | Faza 0 ukończona — cała infrastruktura gotowa ✅
 
 **Status infrastruktury:**

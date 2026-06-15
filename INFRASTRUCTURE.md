@@ -130,24 +130,54 @@ chore(deps): aktualizuj zależności
 
 ---
 
-## Supabase — workflow migracji
+## Supabase — workflow migracji (SPRAWDZONE 2026-06-15)
+
+> ⚠️ **Sesja AI jest non-TTY.** Interaktywne komendy się NIE udają:
+> - `npx supabase login` (flow przeglądarkowy) → `LegacyLoginMissingTokenError`
+> - `supabase link` / `db push` próbujące zapytać o hasło DB → wieszają się / błąd
+>
+> Dlatego logujemy **tokenem**, a hasło DB podajemy **flagą**, nigdy przez prompt.
+
+### 1. Logowanie CLI (jednorazowo) — przez Personal Access Token
 
 ```bash
-# Nowa migracja
-npx supabase migration new [nazwa_migracji]
-# Edytuj plik w supabase/migrations/
+# Mikołaj generuje token: https://supabase.com/dashboard/account/tokens → wrzuca do schowka
+# AI odczytuje ze schowka i loguje (token zapisuje się w ~/.supabase, kolejne komendy go nie wymagają):
+TOKEN="$(pbpaste | tr -d '[:space:]')"
+npx supabase login --token "$TOKEN"
 
-# Zastosuj lokalnie (dev)
-npx supabase db reset
-
-# Deploy na produkcję
-npx supabase db push --project-ref [REF_ID]
-
-# Generuj typy TypeScript
-npx supabase gen types typescript --project-id [REF_ID] > src/types/supabase.ts
+# Weryfikacja dostępu:
+npx supabase projects list      # powinno pokazać ref: ipptnszwnjtoqpixhefd
 ```
 
-**Seed danych:** `supabase/seed.sql` — szablony klocków 9-fazowych dla 5 typów (CRM/SPO/INT/MKT/ERP). Uruchamia się przy `db reset`.
+### 2. Link projektu + deploy migracji (hasło DB przez flagę, nie prompt)
+
+```bash
+# Mikołaj wrzuca HASŁO DB do schowka. AI:
+DBPASS="$(pbpaste)"
+npx supabase link --project-ref ipptnszwnjtoqpixhefd --password "$DBPASS"
+
+# Deploy migracji na produkcję (po zlinkowaniu):
+npx supabase db push --password "$DBPASS"
+# (alternatywnie hasło przez env: SUPABASE_DB_PASSWORD="$DBPASS" npx supabase db push)
+```
+
+### 3. Nowa migracja / typy
+
+```bash
+npx supabase migration new [nazwa]          # tworzy plik w supabase/migrations/[timestamp]_[nazwa].sql
+npx supabase gen types typescript --project-id ipptnszwnjtoqpixhefd > src/types/supabase.ts
+```
+
+> 🚫 **Brak Dockera w tym środowisku** → `npx supabase db reset` i lokalny stack (`supabase start`)
+> NIE działają. Pracujemy bezpośrednio na zdalnej bazie przez `db push`. SQL walidujemy
+> manualnie + przez sam `db push` (PostgreSQL zgłosi błędy składni przy aplikacji migracji).
+
+**Hasło DB:** ma Mikołaj (ustawione przy zakładaniu projektu). Podaje przez schowek na żądanie.
+**Token CLI:** Personal Access Token z dashboardu — `~/.supabase`, nie commitować.
+
+**Seed danych:** `supabase/migrations/*_seed_templates.sql` (osobna migracja DML) — szablony klocków
+9-fazowych dla 5 typów (CRM/SPO/INT/MKT/ERP). Aplikuje się razem z `db push`.
 
 ---
 

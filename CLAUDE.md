@@ -94,28 +94,30 @@ Gdy GitHub App będzie skonfigurowane → każdy push na `main` = auto-deploy.
 # Instalacja (jednorazowo, bez sudo)
 npm install supabase --save-dev
 
-# Logowanie (jednorazowo)
-npx supabase login   # otworzy przeglądarkę
+# Logowanie (jednorazowo) — UWAGA: sesja AI jest non-TTY, flow przeglądarkowy NIE działa.
+# Logujemy się TOKENEM (Mikołaj generuje na https://supabase.com/dashboard/account/tokens → schowek):
+TOKEN="$(pbpaste | tr -d '[:space:]')" && npx supabase login --token "$TOKEN"
 
 # Inicjalizacja w projekcie (jednorazowo)
 npx supabase init
 
-# Połącz z projektem (jednorazowo)
-npx supabase link --project-ref ipptnszwnjtoqpixhefd
+# Połącz z projektem (jednorazowo) — hasło DB przez FLAGĘ (prompt nie działa w non-TTY)
+DBPASS="$(pbpaste)" && npx supabase link --project-ref ipptnszwnjtoqpixhefd --password "$DBPASS"
 
 # Nowa migracja
 npx supabase migration new [nazwa]
 # Plik tworzy się w supabase/migrations/[timestamp]_[nazwa].sql
 
-# Wdróż migracje na produkcję Supabase
-npx supabase db push
+# Wdróż migracje na produkcję Supabase (hasło DB przez flagę)
+npx supabase db push --password "$DBPASS"
 
 # Generuj TypeScript types ze schematu DB
 npx supabase gen types typescript --project-id ipptnszwnjtoqpixhefd > src/types/supabase.ts
 
-# Reset lokalnej bazy (dev)
-npx supabase db reset
+# UWAGA: brak Dockera → `npx supabase db reset` i lokalny stack NIE działają.
+# Pracujemy bezpośrednio na zdalnej bazie przez `db push`.
 ```
+Pełny, sprawdzony workflow (token + link + push) → `INFRASTRUCTURE.md` sekcja „Supabase — workflow migracji".
 
 **Hasło do DB:** Mikołaj je zna (podał przy tworzeniu projektu). Jeśli potrzebne — pyta Mikołaja.
 
