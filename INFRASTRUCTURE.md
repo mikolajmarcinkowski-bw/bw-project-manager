@@ -15,6 +15,8 @@
 | Supabase projekt | ✅ GOTOWE | https://ipptnszwnjtoqpixhefd.supabase.co (West EU London, PG17) | 2026-06-15 |
 | Schemat DB (migracje) | ✅ WDROŻONE | 29 tabel + RLS + trigger profiles + seed (13 szablonów / 86 zadań) | 2026-06-15 |
 | Supabase CLI | ✅ ZALOGOWANE | token (login --token); link `ipptnszwnjtoqpixhefd` | 2026-06-15 |
+| Auth / konta | ✅ DZIAŁA | rejestracja WYŁĄCZONA; konto Mikołaja: dev_admin+tester (hasło tymcz. — zmienić). Konta zakłada admin przez Auth Admin API | 2026-06-15 |
+| Aplikacja (Faza 1) | ✅ DZIAŁA lokalnie | login + shell + dashboard + inspekcja; branch `feat/db-foundation-auth` (niemergowany) | 2026-06-15 |
 | Resend | ✅ GOTOWE | brief@bwmanager.pl (1000 maili/mc free) | 2026-06-15 |
 | Domena własna | ⏳ TBD | — | — |
 

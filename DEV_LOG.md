@@ -5,6 +5,29 @@
 
 ---
 
+## [2026-06-15] checkpoint | KONIEC SESJI 10 — Faza 1 ukończona, dokumentacja zaktualizowana
+
+**Co osiągnięto dziś (fundament → Faza 1, wszystko na produkcji/branchu `feat/db-foundation-auth`):**
+1. Schemat DB: 30 tabel + RLS (R13) + seed (13/86 z harmonogramu 9-faz) — wdrożone + zweryfikowane (gen types + sondy REST).
+2. Hardening bezpieczeństwa (po security-auditor): trigger ochrony uprawnień, handle_new_user='user', signup off.
+3. Auth: login + `src/proxy.ts` (Next 16) + DAL. Tokeny BW + tryb jasny/ciemny.
+4. Shell (sidebar+topbar), dashboard (pusty stan), narzędzie inspekcji testerów (`ui_feedback`), logo (kolor/biały wg motywu).
+5. Konto Mikołaja (dev_admin+tester). Aplikacja DZIAŁA lokalnie (login→dashboard→inspekcja).
+6. Przeglądy: code-reviewer + security-auditor + impeccable critique. Polskie znaki w copy. Patterny spisane w CLAUDE.md.
+
+**Commity na branchu:** a4aeca5 (DB+auth) · 951dc16 (seed+proxy fix) · b7a10e5 (docs) · b917779 (inspekcja DB) ·
+605ec60 (tokeny+hardening) · 79ca641 (UI Fazy 1) · 6773057 (polskie znaki+krytyka) · 2dfc965 (logo).
+
+**Dokumentacja zaktualizowana (sesja 10 close):** CLAUDE.md (sekcja „Patterny i konwencje z budowy" — A–F),
+STATUS.md (snapshot + „Jak wznowić na zimno"), CHANGELOG.md (0.3.0), INFRASTRUCTURE.md (auth/app),
+DEV_LOG.md (ten wpis), decisions.md D-052, war-room reconciliacja (Master Excel porzucony).
+
+**➡️ WZNOWIENIE: Faza 2a** — tworzenie klienta/projektu (auto-insert zadań wg typów) + dashboard z realnymi teczkami
+(P1,P2,P13,P14). Trzymaj patterny z CLAUDE.md (deleguj UI subagentom, code-review po fragmencie, impeccable critique,
+polskie znaki, commit per fragment). Rozważ PR brancha → main. ZMIEŃ tymczasowe hasło konta.
+
+---
+
 ## [2026-06-15] polish | Polskie znaki w copy + krytyka impeccable (weryfikacja designu)
 
 **Polskie znaki:** całe widoczne copy poprawione na diakrytyki (login, shell, dashboard, inspekcja) —

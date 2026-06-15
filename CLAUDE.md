@@ -296,3 +296,47 @@ Szczegółowy plan: `WAR_ROOM/product-specs/.../07-initial-prompt.md`
 | Deploy na Vercel | ✅ | ✅ |
 | Ukończona faza | ✅ | ✅ |
 | Bloker/błąd | ✅ | — |
+
+---
+
+## Patterny i konwencje z budowy (USTALONE — stosuj w każdej sesji)
+
+Wypracowane podczas budowy fundamentu + Fazy 1 (2026-06-15). To są twarde reguły „jak tu pracujemy".
+
+### A. Stack — realia Next 16.2.9 (NIE Twój trening!)
+- `AGENTS.md`: przed pisaniem kodu Next czytaj `node_modules/next/dist/docs/01-app/...`.
+- **`proxy.ts` (w `src/`) zastępuje `middleware.ts`** — default/named export `proxy`, runtime Node.js. Plik MUSI być na poziomie `app/` (czyli `src/proxy.ts`, NIE w roocie — w roocie jest cicho ignorowany).
+- **`cookies()` jest async** (`await cookies()`). Server Actions: `'use server'`.
+- **Tailwind v4 CSS-first**: tokeny w `src/app/globals.css` (`@theme inline`, `@custom-variant dark`, `oklch()`). BRAK `tailwind.config.js`.
+- `useSearchParams()` w komponencie wymaga otoczki `<Suspense>` (inaczej build się wywala).
+
+### B. Supabase (sesja AI = non-TTY)
+- Login CLI: `npx supabase login --token "$TOKEN"` (token z dashboardu, NIE flow przeglądarkowy — nie działa).
+- Link/push: hasło DB przez flagę `--password "$DBPASS"` (prompt nie działa). Brak Dockera → praca na zdalnej bazie, `db reset`/lokalny stack niedostępne. Pełny workflow → `INFRASTRUCTURE.md`.
+- Klienci: `@/lib/supabase/server` (await createClient, server comp/actions), `client` (komponenty klienckie), `admin` (service_role — TYLKO server/API/MCP, nigdy w client).
+- Po migracji: `gen types` → `src/types/supabase.ts`. **Weryfikuj wdrożoną rzeczywistość** sondami REST (count/select), nie tylko plikiem migracji.
+- **Deploy migracji wrażliwych (auth/RLS) = za zgodą Mikołaja** (classifier blokuje auto-deploy — słusznie).
+
+### C. Model danych / bezpieczeństwo
+- Kanon schematu = **migracje + `src/types/supabase.ts`**, nie opisy w `data-model.md` (ten bywa nieaktualny). Reconcyliacja: PRD §6 + rewizje D-051 > stare ciało doku. Test akceptacyjny: każdy parametr toola z `mcp-tools.md` ma kolumnę.
+- RLS: **R13 — każdy zalogowany = pełny dostęp do danych projektów** (`using(true)`). Szablony/pula/kalendarz: read-all + write-admin. NIE ograniczaj per-PM.
+- Funkcje RLS (`is_admin`, `is_tester`, `current_user_role`): `SECURITY DEFINER` + `set search_path = public` (zawsze!).
+- **Ochrona uprawnień**: trigger `protect_profile_privileges` blokuje zmianę `role`/`is_tester` dla nie-adminów (`auth.uid() IS NULL` = kontekst zaufany: service_role/migracja/MCP — wtedy dozwolone). `handle_new_user` zaszywa rolę `'user'` (nie ufa metadanym). Rejestracja wyłączona (prod: dashboard Supabase).
+- **Konta zakłada admin** przez Auth Admin API (`POST /auth/v1/admin/users` service_role) + `PATCH /rest/v1/profiles` na rolę. (Mikołaj = dev_admin + tester; hasło tymczasowe do zmiany.)
+
+### D. Delegacja do subagentów (TWARDA — zlecenie Mikołaja)
+- **Fundament / praca wymagająca osądu i spójności** (schemat DB, reconcyliacja docs) → inline (subagent zgubiłby kontekst, przeczytałby stare źródła).
+- **UI / rzeczy równoległe** → DELEGUJ (`react-specialist`, `nextjs-developer`), równolegle, z: (1) twardymi realiami Next 16, (2) nazwami tokenów BW, (3) wzorcami Supabase, (4) **rozdzielonymi plikami** (ownership boundary) by nie było konfliktów, (5) zakazem `next build` gdy drzewo się zmienia. Po powrocie: integruję + `next build` + naprawiam.
+- **Po każdym większym fragmencie → `code-reviewer`** (pkt 7). **Okresowo / przy auth-RLS-API → `security-auditor`.** Naprawiaj realne uwagi PRZED dalszą budową.
+
+### E. Frontend = impeccable (DWA kroki, D-050)
+1. **Kierunek (przed budową):** wczytaj `PRODUCT.md`/`DESIGN.md` + zasady; przekaż tokeny/anti-patterny agentom.
+2. **Weryfikacja (przed commitem):** `impeccable critique` (+ `audit`/`polish` wg potrzeby) na zbudowanym UI. To NIE to samo co `code-reviewer`. Detektor: `npx impeccable detect --json <pliki>`.
+- **Copy = polskie znaki** (ą/ć/ę/ł/ń/ó/ś/ź/ż), nigdy ASCII. Subagenci domyślnie piszą ASCII — pilnuj sweepem.
+- Kolory: orange `#F94213` = JEDNA akcja per widok; teal `#28B39B` = struktura/aktywne; statusy RAG osobno. Tokeny w globals.css. Przyciski pill. Anti-patterny: zero hero/SaaS-cream/hero-metric/identycznych kafelków/side-stripe/gradient-text/glassmorphism/modal-first.
+- Logo: `Logo` (`src/components/brand/logo.tsx`) — kolorowy (`bw-logo.png`) w jasnym, biały (`bw-logo-white.png`) w ciemnym, przełączane CSS `dark:`.
+
+### F. Git / logowanie
+- Branch roboczy `feat/...` (NIE bezpośrednio na main). Commit per fragment, po polsku, z trailerem `Co-Authored-By: Claude Opus 4.8 (1M context)`. Push po commicie.
+- Loguj na bieżąco: `DEV_LOG.md` (kronika), `STATUS.md` (snapshot), `CHANGELOG.md` (deploy/faza). War-room (`STATUS.md`, `wiki/`, `product-specs/`) jest POZA repo gita — zmiany trwałe przez OneDrive.
+- Każda decyzja produktowa/architektoniczna → `WAR_ROOM/wiki/technical/decisions.md` (kolejne D-0xx). Po zmianie utrzymuj spójność cross-refów (twarda zasada).

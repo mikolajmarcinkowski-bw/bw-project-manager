@@ -4,6 +4,32 @@
 
 ---
 
+## [0.3.0] — 2026-06-15 — Faza 1: UI (login + shell + inspekcja) + logo + hardening
+
+### Dodano
+- **Auth UI:** ekran logowania (Supabase email+hasło), `src/proxy.ts` ochrona tras, DAL (getSessionUser/requireUser/requireAdmin)
+- **Design BW:** tokeny OKLCH (orange=akcja, teal=struktura, statusy RAG), czcionki Montserrat/Lexend Deca/Space Grotesk, tryb jasny/ciemny (next-themes)
+- **Shell:** sidebar (Dashboard/Projekty/Archiwum) + topbar (theme toggle + logout), dashboard z pustym stanem
+- **Narzędzie inspekcji** dla testerów (`ui_feedback`): klik elementu → ścieżka CSS + kontekst → zapis do bazy; Escape/aria/focus
+- **Logo BusinessWeb:** kolorowe (jasny) + białe (ciemny), przełączane CSS — login + sidebar
+- **Konto admina** Mikołaja (dev_admin + tester) przez Auth Admin API
+
+### Bezpieczeństwo (po audycie)
+- Trigger blokujący self-escalation roli/is_tester; handle_new_user zaszywa 'user'; rejestracja wyłączona
+- open-redirect (backslash) odrzucany; walidacja serwerowa feedbacku; brak wycieku błędów DB
+
+### Jakość
+- Przeglądy: code-reviewer + security-auditor + impeccable critique (detektor czysty); polskie znaki w całym copy
+- Patterny budowy spisane w `CLAUDE.md` (sekcja „Patterny i konwencje")
+
+### Status
+✅ Faza 1 działa lokalnie (login → dashboard → inspekcja). Branch `feat/db-foundation-auth`.
+
+### Następna wersja (0.4.0)
+- Faza 2a: tworzenie klienta/projektu (auto-insert zadań wg typów) + dashboard z realnymi teczkami (P1,P2,P13,P14)
+
+---
+
 ## [0.2.0] — 2026-06-15 — Fundament: schemat DB + seed + plumbing auth
 
 ### Dodano
