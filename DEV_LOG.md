@@ -1,34 +1,57 @@
-# DEV_LOG — Szczegółowy log pracy (AI pisze, Mikołaj czyta)
+# DEV_LOG — Szczegółowy log pracy
 
-> Format wpisu: `[YYYY-MM-DD HH:MM] tag | tytuł`
+> Format: `[YYYY-MM-DD] tag | tytuł`
 > Tagi: `setup` · `feat` · `fix` · `deploy` · `db` · `mcp` · `blocker` · `checkpoint`
-> Zasada: tyle szczegółów żeby wznowić pracę "na zimno" bez pytania o kontekst.
 
 ---
 
-## [2026-06-15] deploy | Pierwszy deploy na Vercel produkcja ✅
+## [2026-06-15] checkpoint | Faza 0 ukończona — cała infrastruktura gotowa ✅
 
-**Co:** Next.js 14 App Router + shadcn/ui zbuildowany i wdrożony.
+**Status infrastruktury:**
+- ✅ GitHub: `github.com/mikolajmarcinkowski-bw/bw-project-manager` (private, branch: main)
+- ✅ Vercel: `bw-project-manager.vercel.app` — 2 deploye produkcyjne OK
+- ✅ Supabase: `ipptnszwnjtoqpixhefd.supabase.co` (West EU London) — projekt założony, klucze skonfigurowane
+- ✅ Resend: klucz w `.env.local` + Vercel env vars
+- ✅ Vercel env vars: 12 zmiennych (Supabase URL/anon/service_role, Resend key/from, App URL) dla production + development
+
+**Co jest w repo (main, commit fa56055):**
+- Next.js 16.2.9 App Router + TypeScript + Tailwind CSS + shadcn/ui
+- `src/lib/supabase/client.ts` — browser client
+- `src/lib/supabase/server.ts` — server component client (SSR z cookies)
+- `src/lib/supabase/admin.ts` — admin client (service_role, tylko server-side)
+- `.env.local` — kompletny (wszystkie klucze wypełnione)
+- `CLAUDE.md`, `INFRASTRUCTURE.md`, `WAR_ROOM_MAP.md`, `DEV_LOG.md`, `CHANGELOG.md`
+
+**Czego BRAKUJE (następne kroki):**
+1. Supabase Auth setup (middleware, login page, protected routes)
+2. Migracje DB — schema z `WAR_ROOM/wiki/technical/data-model.md`
+3. Seed szablonów (9-fazowa struktura dla 5 typów: CRM/SPO/INT/MKT/ERP)
+4. Shell aplikacji (layout, sidebar nav, topbar)
+5. Dashboard teczkowy (P13)
+
+**Następny krok (Faza 1):**
+- Zainstaluj Supabase CLI: `npx supabase login` → `npx supabase link --project-ref ipptnszwnjtoqpixhefd`
+- Napisz migracje z `WAR_ROOM/wiki/technical/data-model.md`
+- Dodaj Supabase Auth middleware (chronione trasy)
+- Zbuduj shell: sidebar nav + layout
+
+**Ostrzeżenia dla AI:**
+- `sed -i ''` nie działa ze spacją w ścieżce — używaj Pythona do edycji `.env.local`
+- GitHub token działa przez `~/.git-credentials` (skonfigurowany)
+- Vercel deploy: `cd "DeliveryApp - build" && npx vercel --prod --yes`
+
+---
+
+## [2026-06-15] deploy | Drugi deploy produkcyjny — Supabase klient
+
+**Co:** Dodano `@supabase/supabase-js` + `@supabase/ssr`, 3 klienty w `src/lib/supabase/`.
+**Build:** OK, 4 strony statyczne, TypeScript bez błędów.
 **URL:** https://bw-project-manager.vercel.app
-**Vercel projekt:** mikolaj-marcinkowski-s-projects/bw-project-manager
-**GitHub repo:** github.com/mikolajmarcinkowski-bw/bw-project-manager (main branch)
-**Stack:** Next.js 16.2.9, TypeScript, Tailwind, shadcn/ui — build OK, 4 strony statyczne
-**Do zrobienia:**
-- ⚠️ Vercel→GitHub auto-deploy: zainstalować GitHub App przez vercel.com/dashboard → projekt → Settings → Git
-- ⏳ Supabase: założyć projekt, podać klucze
-- ⏳ Resend: założyć konto, podać API key
-**Następny krok:** Supabase setup → schema DB → Supabase klient w Next.js
-
-## [2026-06-15] setup | Inicjalizacja folderu budowy
-
-**Co:** Utworzono strukturę folderu `DeliveryApp - build/` jako root repozytorium Next.js.
-**Pliki:** `CLAUDE.md`, `INFRASTRUCTURE.md`, `WAR_ROOM_MAP.md`, `DEV_LOG.md`, `CHANGELOG.md`, `.env.local.example`
-**Status infrastruktury:** GitHub ✅ konto | Supabase ⏳ | Vercel ⏳ | Resend ⏳
-**Następny krok:**
-1. Mikołaj podaje GitHub username → AI tworzy repo przez `gh repo create`
-2. Mikołaj zakłada konto Supabase → tworzy projekt → podaje URL + klucze
-3. AI inicjalizuje Next.js: `npx create-next-app@latest . --typescript --tailwind --app --src-dir`
-4. AI dodaje shadcn/ui, konfiguruje Supabase client
-5. Mikołaj łączy Vercel z GitHub repo
 
 ---
+
+## [2026-06-15] setup | Inicjalizacja folderu budowy + pierwszy deploy
+
+**Co:** Next.js 16.2.9 + shadcn/ui + git init + push na GitHub + deploy Vercel.
+**URL produkcji:** https://bw-project-manager.vercel.app
+**Commit:** 82c5cfa
