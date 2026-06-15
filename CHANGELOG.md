@@ -4,6 +4,58 @@
 
 ---
 
+## [0.3.0] — 2026-06-15 — Faza 1: UI (login + shell + inspekcja) + logo + hardening
+
+### Dodano
+- **Auth UI:** ekran logowania (Supabase email+hasło), `src/proxy.ts` ochrona tras, DAL (getSessionUser/requireUser/requireAdmin)
+- **Design BW:** tokeny OKLCH (orange=akcja, teal=struktura, statusy RAG), czcionki Montserrat/Lexend Deca/Space Grotesk, tryb jasny/ciemny (next-themes)
+- **Shell:** sidebar (Dashboard/Projekty/Archiwum) + topbar (theme toggle + logout), dashboard z pustym stanem
+- **Narzędzie inspekcji** dla testerów (`ui_feedback`): klik elementu → ścieżka CSS + kontekst → zapis do bazy; Escape/aria/focus
+- **Logo BusinessWeb:** kolorowe (jasny) + białe (ciemny), przełączane CSS — login + sidebar
+- **Konto admina** Mikołaja (dev_admin + tester) przez Auth Admin API
+
+### Bezpieczeństwo (po audycie)
+- Trigger blokujący self-escalation roli/is_tester; handle_new_user zaszywa 'user'; rejestracja wyłączona
+- open-redirect (backslash) odrzucany; walidacja serwerowa feedbacku; brak wycieku błędów DB
+
+### Jakość
+- Przeglądy: code-reviewer + security-auditor + impeccable critique (detektor czysty); polskie znaki w całym copy
+- Patterny budowy spisane w `CLAUDE.md` (sekcja „Patterny i konwencje")
+
+### Status
+✅ Faza 1 działa lokalnie (login → dashboard → inspekcja). Branch `feat/db-foundation-auth`.
+
+### Następna wersja (0.4.0)
+- Faza 2a: tworzenie klienta/projektu (auto-insert zadań wg typów) + dashboard z realnymi teczkami (P1,P2,P13,P14)
+
+---
+
+## [0.2.0] — 2026-06-15 — Fundament: schemat DB + seed + plumbing auth
+
+### Dodano
+- **Schemat bazy (29 tabel)** wdrożony na Supabase (PG17) — migracje `supabase/migrations/`:
+  - core (projects bez pm_id/active_step_id, project_pms m:n, project_types, tasks wzbogacone),
+    encje dokumentów BW (CR/RAID/budget/KPI/milestones/stakeholders/governance/maintenance), activity_log
+  - RLS wg R13 (każdy zalogowany = pełny dostęp), `is_admin()`/`current_user_role()`, trigger auto-`profiles`
+- **Seed szablonów (D-052):** 13 step_templates (FAZA 0–8 + Sprint 2 + 3 cykliczne) + 86 step_task_templates
+  (z `raw/00_harmonogram.html`, skrypt `scripts/gen-seed.mjs`)
+- **Typy TS** `src/types/supabase.ts` (gen types)
+- **Plumbing auth Next 16:** `src/proxy.ts` (proxy zastępuje middleware), `update-session.ts`, `dal.ts`
+
+### Naprawiono
+- `proxy.ts` przeniesiony root → `src/proxy.ts` (w roocie był cicho ignorowany — app w src/)
+
+### Zmieniono
+- Dokumentacja: workflow Supabase non-TTY (INFRASTRUCTURE/CLAUDE), reconciliacja D-052 (war-room, data-model)
+
+### Status
+✅ Fundament danych + auth gotowy i zweryfikowany E2E (next build OK, proxy wykryty). Branch `feat/db-foundation-auth`.
+
+### Następna wersja (0.3.0)
+- Brandowy UI Fazy 1: tokeny BW + theme toggle + shell (sidebar/topbar) + login (skill `impeccable`)
+
+---
+
 ## [0.1.0] — 2026-06-15 — Faza 0: Infrastruktura
 
 ### Dodano
