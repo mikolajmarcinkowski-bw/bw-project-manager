@@ -693,6 +693,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_active: boolean
+          is_tester: boolean
           role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
@@ -702,6 +703,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_active?: boolean
+          is_tester?: boolean
           role?: Database["public"]["Enums"]["user_role"]
         }
         Update: {
@@ -711,6 +713,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean
+          is_tester?: boolean
           role?: Database["public"]["Enums"]["user_role"]
         }
         Relationships: []
@@ -1353,6 +1356,68 @@ export type Database = {
         }
         Relationships: []
       }
+      ui_feedback: {
+        Row: {
+          author_id: string | null
+          category: Database["public"]["Enums"]["feedback_category"] | null
+          comment: string
+          created_at: string
+          css_selector: string | null
+          element_tag: string | null
+          element_text: string | null
+          id: string
+          page_path: string
+          priority: Database["public"]["Enums"]["feedback_priority"]
+          status: Database["public"]["Enums"]["feedback_status"]
+          theme: string | null
+          user_agent: string | null
+          viewport_h: number | null
+          viewport_w: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          category?: Database["public"]["Enums"]["feedback_category"] | null
+          comment: string
+          created_at?: string
+          css_selector?: string | null
+          element_tag?: string | null
+          element_text?: string | null
+          id?: string
+          page_path: string
+          priority?: Database["public"]["Enums"]["feedback_priority"]
+          status?: Database["public"]["Enums"]["feedback_status"]
+          theme?: string | null
+          user_agent?: string | null
+          viewport_h?: number | null
+          viewport_w?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          category?: Database["public"]["Enums"]["feedback_category"] | null
+          comment?: string
+          created_at?: string
+          css_selector?: string | null
+          element_tag?: string | null
+          element_text?: string | null
+          id?: string
+          page_path?: string
+          priority?: Database["public"]["Enums"]["feedback_priority"]
+          status?: Database["public"]["Enums"]["feedback_status"]
+          theme?: string | null
+          user_agent?: string | null
+          viewport_h?: number | null
+          viewport_w?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ui_feedback_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       working_calendar: {
         Row: {
           day: string
@@ -1381,6 +1446,7 @@ export type Database = {
         Returns: Database["public"]["Enums"]["user_role"]
       }
       is_admin: { Args: never; Returns: boolean }
+      is_tester: { Args: never; Returns: boolean }
     }
     Enums: {
       approval_status: "pending" | "approved" | "rejected"
@@ -1390,6 +1456,9 @@ export type Database = {
       decision_status: "pending" | "yes" | "no"
       decision_type: "uat" | "change_request" | "deviation" | "other"
       external_system: "jira" | "gmail" | "gcal" | "clockify"
+      feedback_category: "bug" | "visual" | "content" | "ux"
+      feedback_priority: "low" | "medium" | "high"
+      feedback_status: "new" | "in_progress" | "resolved"
       impl_type: "CRM" | "SPO" | "INT" | "MKT" | "ERP"
       kpi_status: "on" | "at" | "off" | "done"
       milestone_status: "on" | "at" | "off" | "done"
@@ -1542,6 +1611,9 @@ export const Constants = {
       decision_status: ["pending", "yes", "no"],
       decision_type: ["uat", "change_request", "deviation", "other"],
       external_system: ["jira", "gmail", "gcal", "clockify"],
+      feedback_category: ["bug", "visual", "content", "ux"],
+      feedback_priority: ["low", "medium", "high"],
+      feedback_status: ["new", "in_progress", "resolved"],
       impl_type: ["CRM", "SPO", "INT", "MKT", "ERP"],
       kpi_status: ["on", "at", "off", "done"],
       milestone_status: ["on", "at", "off", "done"],
