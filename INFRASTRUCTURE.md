@@ -9,9 +9,10 @@
 
 | Serwis | Status | URL/ID | Ostatnia zmiana |
 |--------|--------|--------|-----------------|
-| GitHub repo | ⏳ DO ZAŁOŻENIA | github.com/mikolajmarcinkowski-bw/bw-project-manager | — |
+| GitHub repo | ✅ GOTOWE | github.com/mikolajmarcinkowski-bw/bw-project-manager | 2026-06-15 |
+| Vercel projekt | ✅ GOTOWE | bw-project-manager.vercel.app (team: mikolaj-marcinkowski-s-projects) | 2026-06-15 |
+| Vercel→GitHub sync | ⚠️ BRAK — do ustawienia | Trzeba zainstalować GitHub App przez Vercel dashboard | — |
 | Supabase projekt | ⏳ DO ZAŁOŻENIA | — | — |
-| Vercel projekt | ⏳ DO ZAŁOŻENIA | — | — |
 | Resend konto | ⏳ DO ZAŁOŻENIA | — | — |
 | Domena własna | ⏳ TBD | — | — |
 

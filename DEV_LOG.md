@@ -6,6 +6,19 @@
 
 ---
 
+## [2026-06-15] deploy | Pierwszy deploy na Vercel produkcja ✅
+
+**Co:** Next.js 14 App Router + shadcn/ui zbuildowany i wdrożony.
+**URL:** https://bw-project-manager.vercel.app
+**Vercel projekt:** mikolaj-marcinkowski-s-projects/bw-project-manager
+**GitHub repo:** github.com/mikolajmarcinkowski-bw/bw-project-manager (main branch)
+**Stack:** Next.js 16.2.9, TypeScript, Tailwind, shadcn/ui — build OK, 4 strony statyczne
+**Do zrobienia:**
+- ⚠️ Vercel→GitHub auto-deploy: zainstalować GitHub App przez vercel.com/dashboard → projekt → Settings → Git
+- ⏳ Supabase: założyć projekt, podać klucze
+- ⏳ Resend: założyć konto, podać API key
+**Następny krok:** Supabase setup → schema DB → Supabase klient w Next.js
+
 ## [2026-06-15] setup | Inicjalizacja folderu budowy
 
 **Co:** Utworzono strukturę folderu `DeliveryApp - build/` jako root repozytorium Next.js.

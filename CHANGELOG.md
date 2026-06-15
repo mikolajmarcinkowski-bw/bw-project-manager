@@ -13,6 +13,8 @@
 - Pełna specyfikacja produktowa gotowa (27 user stories, design system, model danych, plan budowy)
 
 ### Status
-- ⏳ Oczekiwanie na dane dostępowe: GitHub username, Supabase, Vercel, Resend
+- ✅ GitHub repo: github.com/mikolajmarcinkowski-bw/bw-project-manager
+- ✅ Vercel deploy: https://bw-project-manager.vercel.app
+- ⏳ Supabase, Resend — do skonfigurowania
 
 ---
