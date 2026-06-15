@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { NAV_ITEMS } from './nav-items'
+import { Logo } from '@/components/brand/logo'
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -15,13 +16,7 @@ export function Sidebar() {
     >
       {/* Logotyp */}
       <div className="flex items-center h-14 px-4 border-b border-sidebar-border shrink-0">
-        <span
-          className="font-sans font-semibold text-[0.9rem] tracking-tight text-teal leading-tight"
-          aria-label="BW Project Manager"
-        >
-          BW{' '}
-          <span className="text-foreground">Project Manager</span>
-        </span>
+        <Logo className="h-6" />
       </div>
 
       {/* Nawigacja */}

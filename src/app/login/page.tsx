@@ -4,6 +4,7 @@ import { Suspense, useActionState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { login, type LoginState } from './actions'
 import { Button } from '@/components/ui/button'
+import { Logo } from '@/components/brand/logo'
 
 const initialState: LoginState = undefined
 
@@ -38,18 +39,10 @@ function LoginForm() {
         className="w-full max-w-sm rounded-[10px] bg-card shadow-whisper border border-border px-8 py-10 flex flex-col gap-7"
       >
         {/* Logotyp */}
-        <div className="flex flex-col gap-1 items-center text-center">
-          <span
-            className="font-sans font-semibold text-xl tracking-tight"
-            style={{ color: 'var(--teal)' }}
-          >
-            BW
-          </span>
-          <h1 className="font-sans font-semibold text-lg leading-tight text-foreground">
-            Project Manager
-          </h1>
-          <p className="font-meta text-xs text-muted-foreground mt-0.5 uppercase tracking-wide">
-            Narzędzie wewnętrzne
+        <div className="flex flex-col gap-2 items-center text-center">
+          <Logo className="h-11" />
+          <p className="font-meta text-xs text-muted-foreground uppercase tracking-wide">
+            Project Manager · narzędzie wewnętrzne
           </p>
         </div>
 
