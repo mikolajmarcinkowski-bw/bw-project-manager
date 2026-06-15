@@ -46,15 +46,23 @@ export async function createProjectAction(input: {
   if (isNaN(Date.parse(start_date))) {
     return { error: 'Data rozpoczęcia ma nieprawidłowy format (wymagane ISO).' }
   }
+  if (start_date < '2000-01-01') {
+    return { error: 'Data rozpoczęcia jest nierealistycznie wczesna.' }
+  }
 
   const end_date = (input.end_date ?? '').trim() || null
+  if (end_date) {
+    if (isNaN(Date.parse(end_date))) {
+      return { error: 'Deadline ma nieprawidłowy format.' }
+    }
+    if (end_date < start_date) {
+      return { error: 'Deadline nie może być wcześniejszy niż data rozpoczęcia.' }
+    }
+  }
   const description = (input.description ?? '').trim() || null
 
-  // PM fallback — jeśli brak pm_ids, użyj bieżącego usera
-  const pm_ids: string[] =
-    Array.isArray(input.pm_ids) && input.pm_ids.length > 0
-      ? input.pm_ids
-      : [user.id]
+  // PM = alokacja informacyjna; brak fallbacku. Pusta lista = projekt bez PM (przypisany później).
+  const pm_ids: string[] = Array.isArray(input.pm_ids) ? input.pm_ids.filter(Boolean) : []
 
   // 1. Utwórz projekt
   const { data: project, error: projectError } = await supabase
@@ -93,14 +101,16 @@ export async function createProjectAction(input: {
     return { error: 'Nie udało się przypisać typów projektu. Spróbuj ponownie.' }
   }
 
-  // 3. Wstaw PM-ów
-  const { error: pmsError } = await supabase.from('project_pms').insert(
-    pm_ids.map((profile_id) => ({ project_id: projectId, profile_id }))
-  )
-  if (pmsError) {
-    console.error('[createProjectAction] project_pms insert failed:', pmsError)
-    await cleanup()
-    return { error: 'Nie udało się przypisać kierowników projektu. Spróbuj ponownie.' }
+  // 3. Wstaw PM-ów (tylko jeśli wybrano — projekt może powstać bez PM)
+  if (pm_ids.length > 0) {
+    const { error: pmsError } = await supabase.from('project_pms').insert(
+      pm_ids.map((profile_id) => ({ project_id: projectId, profile_id }))
+    )
+    if (pmsError) {
+      console.error('[createProjectAction] project_pms insert failed:', pmsError)
+      await cleanup()
+      return { error: 'Nie udało się przypisać kierowników projektu. Spróbuj ponownie.' }
+    }
   }
 
   // 4. R15 — auto-insert kroków i zadań z szablonów (fazy 0..8, bez recurring)

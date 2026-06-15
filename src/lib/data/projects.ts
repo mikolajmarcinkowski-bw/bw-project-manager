@@ -7,6 +7,39 @@ import type { ImplType } from '@/lib/actions/projects'
 // Re-export for consumers who only import from this module
 export type { ImplType }
 
+type Db = Awaited<ReturnType<typeof createClient>>
+
+// Zbiór id projektów „zagrożonych" (P13/R5). Sygnał odpala gdy:
+//  - zadanie po terminie: due_date < dziś i status ≠ done/na, LUB
+//  - aktywny projekt po deadline: status 'active' i end_date < dziś.
+// (Daty PMI per-zadanie ustawiane są w realizacji; do tego czasu deadline projektu daje sygnał.)
+async function getAtRiskProjectIds(supabase: Db, projectIds?: string[]): Promise<Set<string>> {
+  const today = new Date().toISOString().slice(0, 10)
+  const ids = new Set<string>()
+
+  let tasksQuery = supabase
+    .from('tasks')
+    .select('project_id')
+    .lt('due_date', today)
+    .not('status', 'in', '(done,na)')
+  if (projectIds) tasksQuery = tasksQuery.in('project_id', projectIds)
+  const { data: riskTasks, error: tasksErr } = await tasksQuery
+  if (tasksErr) console.error('[getAtRiskProjectIds] tasks:', tasksErr)
+  for (const t of riskTasks ?? []) ids.add(t.project_id)
+
+  let projQuery = supabase
+    .from('projects')
+    .select('id')
+    .eq('status', 'active')
+    .lt('end_date', today)
+  if (projectIds) projQuery = projQuery.in('id', projectIds)
+  const { data: riskProjects, error: projErr } = await projQuery
+  if (projErr) console.error('[getAtRiskProjectIds] projects:', projErr)
+  for (const p of riskProjects ?? []) ids.add(p.id)
+
+  return ids
+}
+
 // ─── getClientsWithStats ──────────────────────────────────────────────────────
 
 export async function getClientsWithStats(): Promise<
@@ -39,19 +72,7 @@ export async function getClientsWithStats(): Promise<
     }))
   }
 
-  // At-risk: due_date < today AND status not in ('done','na')
-  const today = new Date().toISOString().slice(0, 10)
-  const { data: riskTasks, error: riskError } = await supabase
-    .from('tasks')
-    .select('project_id')
-    .lt('due_date', today)
-    .not('status', 'in', '("done","na")')
-
-  if (riskError) {
-    console.error('[getClientsWithStats] risk tasks fetch failed:', riskError)
-  }
-
-  const riskProjectIds = new Set((riskTasks ?? []).map((t) => t.project_id))
+  const riskProjectIds = await getAtRiskProjectIds(supabase)
 
   const projectsByClient = new Map<string, typeof projects>()
   for (const p of projects) {
@@ -141,18 +162,7 @@ export async function getAllProjects(filters?: {
     pmProjectIds = new Set((pmRows ?? []).map((r) => r.project_id))
   }
 
-  const today = new Date().toISOString().slice(0, 10)
-  const { data: riskTasks, error: riskError } = await supabase
-    .from('tasks')
-    .select('project_id')
-    .lt('due_date', today)
-    .not('status', 'in', '("done","na")')
-
-  if (riskError) {
-    console.error('[getAllProjects] risk tasks fetch failed:', riskError)
-  }
-
-  const riskProjectIds = new Set((riskTasks ?? []).map((t) => t.project_id))
+  const riskProjectIds = await getAtRiskProjectIds(supabase)
 
   const typesByProject = new Map<string, ImplType[]>()
   for (const row of allTypes ?? []) {
@@ -261,22 +271,8 @@ export async function getClientWithProjects(clientId: string): Promise<{
     console.error('[getClientWithProjects] types fetch failed:', typesError)
   }
 
-  const today = new Date().toISOString().slice(0, 10)
-  const { data: riskTasks, error: riskError } =
-    projectIds.length > 0
-      ? await supabase
-          .from('tasks')
-          .select('project_id')
-          .in('project_id', projectIds)
-          .lt('due_date', today)
-          .not('status', 'in', '("done","na")')
-      : { data: [] as Array<{ project_id: string }>, error: null }
-
-  if (riskError) {
-    console.error('[getClientWithProjects] risk tasks fetch failed:', riskError)
-  }
-
-  const riskProjectIds = new Set((riskTasks ?? []).map((t) => t.project_id))
+  const riskProjectIds =
+    projectIds.length > 0 ? await getAtRiskProjectIds(supabase, projectIds) : new Set<string>()
 
   const typesByProject = new Map<string, ImplType[]>()
   for (const row of allTypes ?? []) {

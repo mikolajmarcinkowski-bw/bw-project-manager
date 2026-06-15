@@ -198,6 +198,7 @@ export function AddProjectForm({ clients, profiles, defaultClientId }: AddProjec
             id="project-start"
             name="start_date"
             type="date"
+            min="2000-01-01"
             required
           />
         </div>
@@ -207,6 +208,7 @@ export function AddProjectForm({ clients, profiles, defaultClientId }: AddProjec
             id="project-end"
             name="end_date"
             type="date"
+            min="2000-01-01"
             aria-label="Termin zakończenia projektu (opcjonalne)"
           />
         </div>

@@ -21,9 +21,19 @@ export async function createClientAction(
   const nip = (input.nip ?? '').trim() || null
   if (nip && nip.length > 200) return { error: 'NIP jest za długi (max 200 znaków).' }
 
-  const hubspot_url = (input.hubspot_url ?? '').trim() || null
-  if (hubspot_url && hubspot_url.length > 200) {
-    return { error: 'URL HubSpot jest za długi (max 200 znaków).' }
+  let hubspot_url = (input.hubspot_url ?? '').trim() || null
+  if (hubspot_url) {
+    if (hubspot_url.length > 200) {
+      return { error: 'URL HubSpot jest za długi (max 200 znaków).' }
+    }
+    // Tylko http(s); dopnij https:// gdy brak schematu. Blokuje javascript:/data: itp.
+    if (/^https?:\/\//i.test(hubspot_url)) {
+      // ok
+    } else if (/^[a-z][a-z0-9+.-]*:/i.test(hubspot_url)) {
+      return { error: 'Link HubSpot musi zaczynać się od http:// lub https://.' }
+    } else {
+      hubspot_url = `https://${hubspot_url}`
+    }
   }
 
   const { data, error: insertError } = await supabase

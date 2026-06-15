@@ -1,5 +1,7 @@
 import { Suspense } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import Link from 'next/link'
+import { AlertTriangle, Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { ProjectList } from '@/components/projects/project-list'
 import { ProjectFilters } from '@/components/projects/project-filters'
 import { getAllProjects, getClientsWithStats } from '@/lib/data/projects'
@@ -50,18 +52,24 @@ export default async function ProjektyPage({ searchParams }: ProjektyPageProps) 
             Widok cross-klientowy wszystkich wdrożeń Delivery
           </p>
         </div>
-        {atRiskCount > 0 && (
-          <div
-            className="flex items-center gap-1.5 rounded-full border border-status-off/30 bg-status-off/5 px-3 py-1"
-            aria-live="polite"
-            aria-label={`${atRiskCount} projektów zagrożonych`}
-          >
-            <AlertTriangle className="h-3.5 w-3.5 text-status-off" aria-hidden="true" />
-            <span className="font-meta text-xs text-status-off font-medium">
-              {atRiskCount} {atRiskCount === 1 ? 'zagrożony' : 'zagrożonych'}
-            </span>
-          </div>
-        )}
+        <div className="flex items-center gap-3 shrink-0">
+          {atRiskCount > 0 && (
+            <div
+              className="flex items-center gap-1.5 rounded-full border border-status-off/30 bg-status-off/5 px-3 py-1"
+              aria-live="polite"
+              aria-label={`${atRiskCount} projektów zagrożonych`}
+            >
+              <AlertTriangle className="h-3.5 w-3.5 text-status-off" aria-hidden="true" />
+              <span className="font-meta text-xs text-status-off font-medium">
+                {atRiskCount} {atRiskCount === 1 ? 'zagrożony' : 'zagrożonych'}
+              </span>
+            </div>
+          )}
+          <Button size="sm" className="gap-1.5 rounded-full" render={<Link href="/projects/new" />}>
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+            Dodaj projekt
+          </Button>
+        </div>
       </div>
 
       {/* Filtry */}
