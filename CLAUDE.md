@@ -309,6 +309,9 @@ Wypracowane podczas budowy fundamentu + Fazy 1 (2026-06-15). To są twarde regu�
 - **`cookies()` jest async** (`await cookies()`). Server Actions: `'use server'`.
 - **Tailwind v4 CSS-first**: tokeny w `src/app/globals.css` (`@theme inline`, `@custom-variant dark`, `oklch()`). BRAK `tailwind.config.js`.
 - `useSearchParams()` w komponencie wymaga otoczki `<Suspense>` (inaczej build się wywala).
+- ⚠️ **Stale-cache dev:** HMR tokenów Tailwind v4 (`@theme`) bywa zawodny po wielu edycjach/przełączeniach brancha —
+  kolory renderują się źle (np. `--primary` jako czerń zamiast orange) mimo poprawnego CSS. Fix: `pkill -f "next dev"`,
+  `rm -rf .next/dev .next/cache`, restart. **Gdy kolory wyglądają źle w dev — najpierw restart, dopiero potem szukaj bugu.**
 
 ### B. Supabase (sesja AI = non-TTY)
 - Login CLI: `npx supabase login --token "$TOKEN"` (token z dashboardu, NIE flow przeglądarkowy — nie działa).
@@ -335,6 +338,7 @@ Wypracowane podczas budowy fundamentu + Fazy 1 (2026-06-15). To są twarde regu�
 - **Copy = polskie znaki** (ą/ć/ę/ł/ń/ó/ś/ź/ż), nigdy ASCII. Subagenci domyślnie piszą ASCII — pilnuj sweepem.
 - Kolory: orange `#F94213` = JEDNA akcja per widok; teal `#28B39B` = struktura/aktywne; statusy RAG osobno. Tokeny w globals.css. Przyciski pill. Anti-patterny: zero hero/SaaS-cream/hero-metric/identycznych kafelków/side-stripe/gradient-text/glassmorphism/modal-first.
 - Logo: `Logo` (`src/components/brand/logo.tsx`) — kolorowy (`bw-logo.png`) w jasnym, biały (`bw-logo-white.png`) w ciemnym, przełączane CSS `dark:`.
+- **Klik-testy E2E:** `node scripts/e2e.mjs` (Playwright headless na localhost:3000) — realne logowanie + flow + zrzuty do `/tmp/e2e` + zbieranie błędów konsoli. Uruchamiaj po większych zmianach UI; oglądaj zrzuty (Read) by ocenić wygląd na żywo, nie tylko z kodu.
 
 ### F. Git / logowanie
 - Branch roboczy `feat/...` (NIE bezpośrednio na main). Commit per fragment, po polsku, z trailerem `Co-Authored-By: Claude Opus 4.8 (1M context)`. Push po commicie.

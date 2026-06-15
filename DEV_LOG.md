@@ -5,6 +5,28 @@
 
 ---
 
+## [2026-06-15] test+fix | Testy integracyjne Fazy 2a (E2E Playwright) + naprawy bugów z testów
+
+**Naprawione bugi zgłoszone przez Mikołaja + qa-expert** (commity 8df0adc, fd0a1f3):
+- Button(render=Link) → nativeButton=false (zniknął błąd Base UI w konsoli)
+- Select PM/klient: nazwa zamiast UUID (children-as-function); checkmark na typach (peer-checked)
+- /archiwum: placeholder zamiast 404; atRisk/P13 działa (też end_date<dziś); „Bez PM" bez fallbacku;
+  walidacja dat (deadline≥start, min 2000); hubspot_url schemat; dynamiczny tytuł topbara; CTA w /projekty
+
+**E2E (Playwright headless Chromium na localhost, `scripts/e2e.mjs`, commit 21bf0a4):** wszystkie kroki ✅
+(login, ochrona tras, /projekty, formularz, klik typu=zaznacza, PM=nazwa, tryb ciemny, inspekcja),
+**ZERO błędów konsoli**. R15 potwierdzone end-to-end (Kaufland/SPO+ERP → 10 klocków/51 zadań).
+
+**⚠️ WAŻNA NAUCZKA:** „czarny przycisk / smutny UI" = **nieświeży cache dev serwera** (HMR tokenów
+Tailwind v4 `@theme` zawiódł po wielu edycjach/przełączeniach brancha — `--primary` renderował się
+jako prawie-czerń mimo poprawnego CSS). Fix: `pkill -f "next dev"` + `rm -rf .next/dev .next/cache` +
+restart. Po restarcie brand orange #F94213 renderuje się poprawnie. **Gdy kolory wyglądają źle w dev — restart.**
+
+**Następne:** przebieg „upiększania" przez `impeccable` (teczki jak foldery, micro-interakcje/feeling klikania,
+bogatsze stany, edytowalne typy wdrożeń) + odłożone a11y (kontrast teala, semantyczna tabela).
+
+---
+
 ## [2026-06-15] feat | Faza 2a — tworzenie klienta/projektu + dashboard teczkowy (branch feat/faza-2a-projekty)
 
 **Zbudowane (2 subagenci równolegle):** backend (createClientAction P1, createProjectAction + auto-insert R15 P2,

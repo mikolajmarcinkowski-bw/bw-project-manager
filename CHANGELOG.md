@@ -4,6 +4,28 @@
 
 ---
 
+## [0.4.0] — 2026-06-15 — Faza 2a: klient/projekt + dashboard teczkowy (branch, do mergu)
+
+> Status: na branchu `feat/faza-2a-projekty`, NIEZMERGOWANE do `main` (brak deployu prod).
+
+### Dodano
+- Tworzenie klienta (P1) + projektu z auto-insertem R15 wg typów wdrożenia (P2)
+- Dashboard teczkowy + czerwony trójkąt zagrożenia (P13); /projekty + filtry (P14); /clients/[id] (P4); /archiwum (placeholder)
+- Walidacja serwerowa (daty, hubspot_url, enum); `revalidatePath`; dynamiczny tytuł topbara
+
+### Naprawiono (testy: qa-expert + E2E Playwright)
+- Błąd Base UI button (render=Link → nativeButton=false); Select pokazuje nazwę nie UUID; checkmark na typach
+- atRisk/P13 działa (end_date<dziś); „Bez PM" bez fallbacku; walidacja dat; składnia enum w zapytaniu
+
+### Testy
+- E2E `scripts/e2e.mjs` (Playwright): wszystkie kroki ✅, zero błędów konsoli; R15 end-to-end potwierdzone
+- Nauczka: stale-cache dev (czarny `--primary`) → restart dev rozwiązuje (CSS był OK)
+
+### Następna wersja (0.5.0)
+- „Upiększanie" UI przez impeccable (foldery, micro-interakcje, edytowalne typy) → potem merge 2a→main
+
+---
+
 ## [0.3.0] — 2026-06-15 — Faza 1: UI (login + shell + inspekcja) + logo + hardening
 
 ### Dodano
