@@ -4,6 +4,26 @@
 
 ---
 
+## [0.5.0] — 2026-06-15 — Upiększanie UI (foldery) + security (leak creds)
+
+> Status: branch `feat/faza-2a-projekty`, NIEZMERGOWANE. ⚠️ Rotacja hasła konta OTWARTA (patrz DEV_LOG/STATUS).
+
+### Zmieniono (UI — impeccable)
+- Teczki klientów jak **foldery** (asset Tabler Icons MIT, `public/folder.svg`, tintowany teal) zamiast CSS-zakładki
+- Micro-interakcje (hover-lift, press, focus teal, 0.2s ease-out); bogatszy pusty stan dashboardu
+- A11y: token `--teal-strong` (ciemniejszy, WCAG AA) na mały tekst teal; `--teal` na ikony/bordery
+
+### Bezpieczeństwo
+- 🔴 Wykryto leak (GitHub secret scanning): email+hasło konta zahardkodowane w `scripts/e2e.mjs` (commit `21bf0a4`)
+- Naprawione: creds z env (`0a2f43d`). Zakres wąski — `.env.local`/klucze NIE wyciekły.
+- **OTWARTE:** rotacja hasła konta (stare w historii gita) — do zrobienia na start
+
+### Commity sesji 11
+`8df0adc` fix bugów UI · `fd0a1f3` fix QA · `21bf0a4` E2E harness (LEAK) · `d95810b` docs ·
+`0a2f43d` security(e2e) · `b354cdb` upiększanie+foldery
+
+---
+
 ## [0.4.0] — 2026-06-15 — Faza 2a: klient/projekt + dashboard teczkowy (branch, do mergu)
 
 > Status: na branchu `feat/faza-2a-projekty`, NIEZMERGOWANE do `main` (brak deployu prod).

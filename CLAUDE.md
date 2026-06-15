@@ -344,3 +344,6 @@ Wypracowane podczas budowy fundamentu + Fazy 1 (2026-06-15). To są twarde regu�
 - Branch roboczy `feat/...` (NIE bezpośrednio na main). Commit per fragment, po polsku, z trailerem `Co-Authored-By: Claude Opus 4.8 (1M context)`. Push po commicie.
 - Loguj na bieżąco: `DEV_LOG.md` (kronika), `STATUS.md` (snapshot), `CHANGELOG.md` (deploy/faza). War-room (`STATUS.md`, `wiki/`, `product-specs/`) jest POZA repo gita — zmiany trwałe przez OneDrive.
 - Każda decyzja produktowa/architektoniczna → `WAR_ROOM/wiki/technical/decisions.md` (kolejne D-0xx). Po zmianie utrzymuj spójność cross-refów (twarda zasada).
+- 🔴 **NIGDY nie hardkoduj danych logowania/sekretów w kodzie** (nauczka 2026-06-15: zahardkodowane hasło konta w
+  `scripts/e2e.mjs` → leak wykryty przez GitHub secret scanning). Creds/sekrety zawsze z env lub gitignored `.env*`.
+  Nie podawaj też hasła w linii poleceń (ląduje w historii shella) — użyj pliku env. Po wykryciu leaku: rotuj sekret + oznacz alert „revoked".

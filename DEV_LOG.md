@@ -5,6 +5,32 @@
 
 ---
 
+## [2026-06-15] security + ui | 🔴 LEAK (do domknięcia) + upiększanie UI (foldery)
+
+### 🔴 SECURITY — leak danych logowania (CZĘŚCIOWO domknięte, ROTACJA OTWARTA)
+- **Co się stało:** GitHub secret scanning zgłosił „company email password". Zweryfikowane:
+  zahardkodowałem email konta + hasło w `scripts/e2e.mjs` i zacommitowałem (**commit `21bf0a4`**). Mój błąd.
+- **Zakres (sprawdzone w historii gita):** wyciekł TYLKO email+hasło konta `mikolaj.marcinkowski@businessweb.pl`.
+  `.env.local` NIGDY nie był commitowany → klucze Supabase (service_role/anon) i Resend **bezpieczne**.
+  `eyJ` w repo = tylko hash w `package-lock.json` (fałszywy alarm).
+- **Naprawione:** `scripts/e2e.mjs` czyta teraz creds z env (E2E_EMAIL/E2E_PASS), nie z kodu (**commit `0a2f43d`**).
+- **🔴 OTWARTE — DO ZROBIENIA NA START:** (1) **ROTACJA HASŁA** konta — stare wciąż działa i siedzi w historii `21bf0a4`
+  (rotacja zablokowana przez bezpiecznik, bo nieautoryzowana — Mikołaj ma napisać „rotuj"). (2) W GitHubie oznaczyć alert „revoked".
+  (3) Opcjonalnie: przepisanie historii (force-push) — po rotacji niekonieczne. (4) Po rotacji zaktualizować hasło tam, gdzie używane.
+- **NAUCZKA (→ CLAUDE.md):** NIGDY nie hardkoduj danych logowania/sekretów w kodzie. E2E/skrypty czytają z env/gitignored.
+
+### 🎨 Upiększanie UI (impeccable) — commit `b354cdb`
+- **Teczki jak foldery:** `ClientCard` używa prawdziwego folderu — asset **Tabler Icons (MIT)** w `public/folder.svg`,
+  inline tintowany teal (przez currentColor) — zamiast wcześniejszej CSS-zakładki (Mikołaj odrzucił). Folder „podnosi się" na hover.
+- **Feeling klikania:** hover-lift kart + press (active) + płynne 0.2s ease-out + focus ring teal; project-row hover/press.
+- **A11y kontrast teala:** token `--teal-strong` (ciemniejszy, ~WCAG AA) na MAŁY TEKST teal (nawigacja/breadcrumb/linki);
+  `--teal` zostaje na ikonach/borderach/markerach. W trybie ciemnym `--teal-strong` = `--teal`.
+- **Bogatszy pusty stan** dashboardu (brandowy, zapraszający, jedna orange akcja). Detektor anti-patternów: czysto. Build OK.
+- Realizacja: kierunek + zasady z `impeccable`, implementacja przez subagenta `react-specialist`, folder-asset i ClientCard dopracowane przeze mnie.
+- **NIEZWERYFIKOWANE WIZUALNIE przeze mnie** (bezpiecznik blokuje hasło w cmdline do E2E) — Mikołaj ogląda na `localhost:3000`; po rotacji podepnę creds E2E z gitignored pliku i zrobię zrzuty.
+
+---
+
 ## [2026-06-15] test+fix | Testy integracyjne Fazy 2a (E2E Playwright) + naprawy bugów z testów
 
 **Naprawione bugi zgłoszone przez Mikołaja + qa-expert** (commity 8df0adc, fd0a1f3):
