@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -97,7 +97,11 @@ export function AddProjectForm({ clients, profiles, defaultClientId }: AddProjec
         ) : (
           <Select name="client_id" required>
             <SelectTrigger id="project-client" className="w-full">
-              <SelectValue placeholder="Wybierz klienta..." />
+              <SelectValue placeholder="Wybierz klienta...">
+                {(value) =>
+                  clients.find((c) => c.id === value)?.name ?? 'Wybierz klienta...'
+                }
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {clients.map((c) => (
@@ -143,7 +147,11 @@ export function AddProjectForm({ clients, profiles, defaultClientId }: AddProjec
                 type="checkbox"
                 name="types"
                 value={type}
-                className="sr-only"
+                className="peer sr-only"
+              />
+              <Check
+                className="size-3.5 text-teal opacity-0 transition-opacity peer-checked:opacity-100"
+                aria-hidden="true"
               />
               <span className="font-mono text-[0.7rem] font-semibold">{type}</span>
               <span className="font-meta text-xs text-muted-foreground">
@@ -161,7 +169,13 @@ export function AddProjectForm({ clients, profiles, defaultClientId }: AddProjec
         </Label>
         <Select name="pm_ids" defaultValue="none">
           <SelectTrigger id="project-pm" className="w-full">
-            <SelectValue placeholder="Wybierz PM..." />
+            <SelectValue placeholder="Wybierz PM...">
+              {(value) =>
+                !value || value === 'none'
+                  ? 'Bez PM (przypiszę później)'
+                  : (profiles.find((p) => p.id === value)?.full_name ?? 'PM')
+              }
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">— Bez PM (przypiszę później) —</SelectItem>
