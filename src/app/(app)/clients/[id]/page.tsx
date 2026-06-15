@@ -58,7 +58,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
           <nav aria-label="Nawigacja okruszkowa">
             <Link
               href="/dashboard"
-              className="font-meta text-xs text-teal hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+              className="font-meta text-xs text-teal-strong hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal rounded"
             >
               Teczki klientów
             </Link>
@@ -82,7 +82,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
                 href={client.hubspot_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 font-meta text-xs text-teal hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                className="flex items-center gap-1 font-meta text-xs text-teal-strong hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal rounded"
                 aria-label="Otwórz rekord klienta w HubSpot (nowa karta)"
               >
                 <ExternalLink className="h-3 w-3" aria-hidden="true" />

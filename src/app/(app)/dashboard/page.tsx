@@ -1,4 +1,4 @@
-import { FolderOpen } from 'lucide-react'
+import { Folder, FolderOpen } from 'lucide-react'
 import { ClientCard } from '@/components/clients/client-card'
 import { AddClientDialog } from '@/components/clients/add-client-dialog'
 import { getClientsWithStats } from '@/lib/data/projects'
@@ -41,18 +41,45 @@ export default async function DashboardPage() {
           ))}
         </div>
       ) : (
-        /* Stan pusty */
-        <div className="flex flex-col items-start rounded-[10px] border border-border bg-card py-8 px-8 max-w-xl shadow-whisper">
-          <span className="font-meta text-[0.7rem] uppercase tracking-wide text-teal mb-2">
-            Pierwsze kroki
+        /* Stan pusty — brandowy, zapraszający */
+        <div className="flex flex-col items-center rounded-[10px] border border-dashed border-border bg-card py-14 px-8 shadow-whisper max-w-lg mx-auto w-full text-center">
+          {/* Ikona folderu — duża, subtelna, teal */}
+          <div className="relative mb-5 flex items-center justify-center">
+            {/* Cień-halos pod ikoną */}
+            <span
+              className="absolute inset-0 rounded-full bg-teal/8 blur-xl"
+              aria-hidden="true"
+            />
+            <Folder
+              className="relative h-14 w-14 text-teal/40"
+              strokeWidth={1.25}
+              aria-hidden="true"
+            />
+            {/* Mały folder w tle — głębia */}
+            <Folder
+              className="absolute -bottom-1.5 -right-1.5 h-7 w-7 text-teal/20"
+              strokeWidth={1}
+              aria-hidden="true"
+            />
+          </div>
+
+          {/* Eyebrow */}
+          <span className="font-meta text-[0.7rem] uppercase tracking-widest text-teal-strong mb-2 block">
+            Brak teczek
           </span>
-          <h2 className="text-base font-semibold text-foreground mb-1.5">
-            Brak skonfigurowanych teczek
+
+          {/* Nagłówek */}
+          <h2 className="text-base font-semibold text-foreground mb-2">
+            Zacznij od pierwszego klienta
           </h2>
-          <p className="font-meta text-sm text-muted-foreground leading-relaxed mb-5">
-            Teczka grupuje projekty jednego klienta. Załóż pierwszą ręcznie albo poproś
-            Claude o setup projektu przez MCP. Pojawi się tutaj automatycznie.
+
+          {/* Opis */}
+          <p className="font-meta text-sm text-muted-foreground leading-relaxed mb-6 max-w-[30ch] mx-auto">
+            Teczka grupuje wszystkie projekty jednego klienta w jednym miejscu.
+            Załóż ją ręcznie lub poproś Claude o setup przez MCP.
           </p>
+
+          {/* Jedyna orange akcja */}
           <AddClientDialog />
         </div>
       )}
@@ -61,7 +88,7 @@ export default async function DashboardPage() {
       {clients.length > 0 && (
         <div className="flex items-center gap-4 pt-2">
           <div className="flex items-center gap-1.5 text-muted-foreground">
-            <FolderOpen className="h-3.5 w-3.5" aria-hidden="true" />
+            <FolderOpen className="h-3.5 w-3.5 text-teal" aria-hidden="true" />
             <span className="font-meta text-xs">
               {clients.length} {clients.length === 1 ? 'klient' : clients.length < 5 ? 'klienci' : 'klientów'}
             </span>

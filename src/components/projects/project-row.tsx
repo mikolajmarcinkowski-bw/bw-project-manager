@@ -32,8 +32,14 @@ export function ProjectRow({ project, showClient = false, linkDisabled = false }
   const inner = (
     <div
       className={cn(
-        'group flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors',
-        !linkDisabled && 'hover:bg-muted/60 cursor-pointer',
+        'group flex items-center gap-3 rounded-md px-3 py-2.5',
+        'transition-colors duration-200 ease-out',
+        !linkDisabled && [
+          'cursor-pointer',
+          'hover:bg-muted/70',
+          // Press state: only on genuinely clickable rows
+          'active:bg-muted/90',
+        ],
         project.atRisk && 'bg-status-off/5 hover:bg-status-off/10'
       )}
     >
@@ -42,7 +48,8 @@ export function ProjectRow({ project, showClient = false, linkDisabled = false }
         <div className="flex items-center gap-1.5">
           <span className={cn(
             'text-sm font-medium text-foreground truncate',
-            !linkDisabled && 'group-hover:text-teal transition-colors'
+            'transition-colors duration-200',
+            !linkDisabled && 'group-hover:text-teal-strong'
           )}>
             {project.name}
           </span>
@@ -103,7 +110,7 @@ export function ProjectRow({ project, showClient = false, linkDisabled = false }
     <a
       href={`/projects/${project.id}`}
       aria-label={`Projekt: ${project.name}${project.atRisk ? ', zagrożony' : ''}`}
-      className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-md"
+      className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-1 rounded-md"
     >
       {inner}
     </a>
