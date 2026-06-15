@@ -257,12 +257,15 @@ Pełne reguły R1–R15: `WAR_ROOM/product-specs/.../04-spec.md` sekcja 4.
 
 ```
 Faza 0: ✅ UKOŃCZONA — Next.js init, Supabase, Vercel, Resend, GitHub
-Faza 1: Shell + Auth + routing (layout, sidebar, middleware, Supabase Auth)
+        + ✅ schemat DB (29 tabel + RLS) WDROŻONY + seed (13 szablonów / 86 zadań, D-052)
+Faza 1: 🔶 W TOKU — plumbing auth gotowy (src/proxy.ts [NIE middleware — Next 16!], update-session, DAL);
+        ZOSTAJE: brandowy UI (tokeny BW + theme toggle + shell sidebar/topbar + login) przez `impeccable`
 Faza 2: Core UI — 3 równoległe subagenty (dashboard, Gantt+klocki, zadania+alerty)
 Faza 3: MCP Server + email (Resend daily brief)
 Faza 4: Admin panel + uzupełnienia P1
 Faza 5: QA + testy + deploy finalny
 ```
+> ⚠️ Next 16: `middleware.ts` → `proxy.ts` (w `src/`), `cookies()` async. Czytaj `node_modules/next/dist/docs/` przed kodem Next.
 
 Szczegółowy plan: `WAR_ROOM/product-specs/.../07-initial-prompt.md`
 

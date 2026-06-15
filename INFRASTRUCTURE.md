@@ -12,7 +12,9 @@
 | GitHub repo | ✅ GOTOWE | github.com/mikolajmarcinkowski-bw/bw-project-manager | 2026-06-15 |
 | Vercel projekt | ✅ GOTOWE | bw-project-manager.vercel.app (team: mikolaj-marcinkowski-s-projects) | 2026-06-15 |
 | Vercel→GitHub sync | ⚠️ BRAK — do ustawienia | Trzeba zainstalować GitHub App przez Vercel dashboard | — |
-| Supabase projekt | ✅ GOTOWE | https://ipptnszwnjtoqpixhefd.supabase.co (West EU London) | 2026-06-15 |
+| Supabase projekt | ✅ GOTOWE | https://ipptnszwnjtoqpixhefd.supabase.co (West EU London, PG17) | 2026-06-15 |
+| Schemat DB (migracje) | ✅ WDROŻONE | 29 tabel + RLS + trigger profiles + seed (13 szablonów / 86 zadań) | 2026-06-15 |
+| Supabase CLI | ✅ ZALOGOWANE | token (login --token); link `ipptnszwnjtoqpixhefd` | 2026-06-15 |
 | Resend | ✅ GOTOWE | brief@bwmanager.pl (1000 maili/mc free) | 2026-06-15 |
 | Domena własna | ⏳ TBD | — | — |
 
