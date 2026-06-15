@@ -5,6 +5,32 @@
 
 ---
 
+## [2026-06-15] db + checkpoint | Seed szablonów wdrożony + build OK + reconciliacja docs (D-052)
+
+**Seed (task #3 ZAMKNIĘTE):** `scripts/gen-seed.mjs` ekstrahuje tablicę `TASKS` z `raw/00_harmonogram.html`
+→ migracja `20260615120200_seed_templates.sql`. Wdrożone + zweryfikowane na żywej bazie (REST count):
+**13 step_templates** (10 faz FAZA 0–8 + Sprint2 + 3 klocki cykliczne) + **86 step_task_templates**
+(suma est 431h). Mapowanie typów (CRM/SPO/INT/MKT/ERP) z pól type/note harmonogramu — 12 wierszy
+wielo-typowych zweryfikowanych. Konwencja R15 udokumentowana w migracji: `applies_to_types='{}'` = wszystkie.
+
+**Fix z review (advisor):** `proxy.ts` przeniesiony root → **`src/proxy.ts`** (app jest w src/ → root był
+CICHO ignorowany, zero ochrony tras). Zweryfikowane: `next build` listuje `ƒ Proxy (Middleware)`, `tsc --noEmit` OK.
+
+**Decyzja D-052 (brak Master Excela):** Mikołaj potwierdził — „Master Excel" Oli nie powstanie.
+Harmonogram 9-fazowy = finalny kanon struktury + mapowania typów (domyka D-051).
+
+**Reconciliacja dokumentacji war-roomu** (instrukcja Mikołaja „pełna aktualność"; twarda zasada cross-refów):
+- `wiki/technical/decisions.md` → dodane **D-052**
+- `product-specs/.../04-spec.md` (GŁÓWNY PRD) → V2 backlog: usunięty „wielki Excel", nota D-052
+- `wiki/process/bw-process-matrix.md` → baner D-052 + „Pogodzenie faz" przepisane + otwarte pytania zamknięte
+- `wiki/product/questions-for-delivery.md` → „Wielki Excel" zamknięty
+- `STATUS.md` → snapshot build + bloker „Wielki Excel" zamknięty
+> Uwaga: war-room jest poza repo gita (folder nadrzędny) — zmiany docs zapisane na dysku (OneDrive), nie w commicie.
+
+**Stan:** fundament danych + auth kompletny i zweryfikowany E2E. Następne: brandowy UI Fazy 1 przez `impeccable`.
+
+---
+
 ## [2026-06-15] db + deploy | Schemat WDROŻONY i zweryfikowany na żywej bazie ✅
 
 **Deploy:** `supabase login --token` (login interaktywny NIE działa w non-TTY!) → `link --password`
