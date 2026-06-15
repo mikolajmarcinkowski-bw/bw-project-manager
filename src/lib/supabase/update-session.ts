@@ -44,20 +44,22 @@ export async function updateSession(request: NextRequest) {
     (p) => path === p || path.startsWith(`${p}/`)
   )
 
-  if (!user && !isPublic) {
+  // Przekierowanie z zachowaniem odświeżonych ciasteczek sesji
+  // (bez kopiowania getUser() mógł zrotować token → losowe wylogowania).
+  const redirectTo = (pathname: string, withParam = false) => {
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    url.searchParams.set('redirectTo', path)
-    return NextResponse.redirect(url)
+    url.pathname = pathname
+    url.search = ''
+    if (withParam) url.searchParams.set('redirectTo', path)
+    const res = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach((c) => res.cookies.set(c))
+    return res
   }
 
+  if (!user && !isPublic) return redirectTo('/login', true)
+
   // Zalogowany na /login → przekieruj na dashboard.
-  if (user && path === '/login') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    url.search = ''
-    return NextResponse.redirect(url)
-  }
+  if (user && path === '/login') return redirectTo('/dashboard')
 
   return supabaseResponse
 }

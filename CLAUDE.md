@@ -225,12 +225,20 @@ Design reference: `WAR_ROOM/product-specs/.../03-design-source.md` + `WAR_ROOM/P
 
 6. **Nigdy nie pytaj o decyzje techniczne** — masz spec, podejmij decyzję i zakomunikuj.
 
+7. **Przegląd przez subagentów — OBOWIĄZKOWY (zlecenie Mikołaja 2026-06-15):**
+   - **Po każdym większym fragmencie pracy** (feature, widok, migracja, większy moduł) → zleć agentowi
+     `code-reviewer` przegląd diffa. Napraw realne uwagi przed dalszą budową.
+   - **Co jakiś czas** (po kilku fragmentach / przed mergem dużej fazy / przy zmianach wrażliwych:
+     auth, RLS, API, sekrety) → zleć `security-auditor` audyt bezpieczeństwa.
+   - Przeglądom dawaj kontekst realiów stacku (Next 16: `proxy.ts` nie `middleware`, async `cookies()`),
+     żeby nie zgłaszały fałszywych alarmów. Weryfikuj wynik — summary agenta to intencje, nie zawsze fakty.
+
 ---
 
 ## Stack (nie do zmiany)
 
 ```
-Next.js 14 App Router + TypeScript + Tailwind CSS + shadcn/ui
+Next.js 16 App Router + TypeScript + Tailwind v4 + shadcn/ui   (UWAGA: 16, nie 14 — proxy.ts zamiast middleware, async cookies())
 Supabase (PostgreSQL + Auth + Storage + RLS)
 Vercel (hosting + CI/CD)
 Resend (email — daily brief)

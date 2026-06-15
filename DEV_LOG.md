@@ -5,6 +5,31 @@
 
 ---
 
+## [2026-06-15] review + ui | Przeglądy subagentami (zasada Mikołaja) + tokeny BW + poprawki bezpieczeństwa
+
+**Nowa twarda zasada (CLAUDE.md pkt 7):** po każdym większym fragmencie → `code-reviewer`; okresowo → `security-auditor`.
+
+**Tokeny designu (subagent nextjs-developer):** globals.css paleta BW (OKLCH, light+dark), czcionki
+Montserrat/Lexend Deca/Space Grotesk, next-themes (jasny domyślny + ciemny toggle), theme-provider + theme-toggle.
+Tokeny: `--color-primary`=orange (akcja), `--color-teal` (struktura), `--color-status-{on,at,off,quality}`, `--color-rev-green`. tsc/build OK.
+
+**Przegląd kodu (code-reviewer) — naprawione:**
+- 🟠 `update-session.ts`: redirect zalogowany→/login gubił odświeżone cookies (ryzyko losowych wylogowań) → kopiuję cookies do response.
+- 🟡 brak `unique(phase_number, step_order)` na step_templates (chroni cross-join seeda) → dodane w migracji.
+- 🟢 (odłożone, drobne): martwa `current_user_role()`, nieużywane `--font-meta/--font-heading`, brak `--destructive-foreground` → przy UI shell.
+
+**Audyt bezpieczeństwa (security-auditor) — naprawione w migracji `20260615120400_security_hardening.sql`:**
+- 🔴 KRYTYCZNE: self-escalation — każdy user mógł `update profiles set role='dev_admin'` (RLS nie widzi OLD).
+  Fix: trigger `protect_profile_privileges` blokuje zmianę role/is_tester dla nie-adminów (auth.uid() IS NULL = kontekst zaufany).
+- 🔴 `handle_new_user` ufał `raw_user_meta_data.role` → zaszyte 'user'.
+- Obrona w głębi: `config.toml` enable_signup=false (UWAGA: to lokalne — prod ustawia się w dashboardzie Supabase).
+- 🟢 forward-looking: `/api/*` poza ochroną proxy — każda przyszła trasa API MUSI sama auth (twardy wymóg Fazy 3 / MCP).
+
+**Status:** poprawki lokalne gotowe, tsc czysto. ⏳ Migracja bezpieczeństwa CZEKA na zgodę Mikołaja na deploy
+(auto-deploy zablokowany przez classifier — słusznie). Po deployu: commit + dalej UI (login/shell/inspekcja).
+
+---
+
 ## [2026-06-15] db + checkpoint | Seed szablonów wdrożony + build OK + reconciliacja docs (D-052)
 
 **Seed (task #3 ZAMKNIĘTE):** `scripts/gen-seed.mjs` ekstrahuje tablicę `TASKS` z `raw/00_harmonogram.html`
