@@ -1,5 +1,6 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/types/supabase'
 
@@ -239,6 +240,10 @@ export async function createProjectAction(input: {
   if (logError) {
     console.error('[createProjectAction] activity_log insert failed:', logError)
   }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/projekty')
+  revalidatePath(`/clients/${client_id}`)
 
   return { ok: true, id: projectId }
 }

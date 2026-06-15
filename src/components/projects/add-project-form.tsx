@@ -39,8 +39,8 @@ async function createProjectFormAction(
   const name = (formData.get('name') as string | null) ?? ''
   const types = formData.getAll('types') as ImplType[]
   // pm_ids may come as single value from Select or multiple values
-  const pmRaw = formData.getAll('pm_ids')
-  const pm_ids = pmRaw.length > 0 ? (pmRaw as string[]) : []
+  const pmRaw = formData.getAll('pm_ids') as string[]
+  const pm_ids = pmRaw.filter((v) => v && v !== 'none')
   const start_date = (formData.get('start_date') as string | null) ?? ''
   const end_date = (formData.get('end_date') as string | null) ?? undefined
   const description = (formData.get('description') as string | null) ?? undefined
@@ -85,7 +85,7 @@ export function AddProjectForm({ clients, profiles, defaultClientId }: AddProjec
       {/* Klient */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="project-client">
-          Klient <span className="text-status-off" aria-hidden="true">*</span>
+          Klient <span className="text-destructive" aria-hidden="true">*</span>
         </Label>
         {defaultClientId ? (
           <>
@@ -113,7 +113,7 @@ export function AddProjectForm({ clients, profiles, defaultClientId }: AddProjec
       {/* Nazwa projektu */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="project-name">
-          Nazwa projektu <span className="text-status-off" aria-hidden="true">*</span>
+          Nazwa projektu <span className="text-destructive" aria-hidden="true">*</span>
         </Label>
         <Input
           id="project-name"
@@ -128,7 +128,7 @@ export function AddProjectForm({ clients, profiles, defaultClientId }: AddProjec
       <fieldset className="flex flex-col gap-2">
         <legend className="text-sm font-medium leading-none mb-1.5">
           Typy wdrożenia{' '}
-          <span className="text-status-off" aria-hidden="true">*</span>
+          <span className="text-destructive" aria-hidden="true">*</span>
           <span className="font-meta text-xs text-muted-foreground ml-2 font-normal">
             (wybierz co najmniej jeden)
           </span>
@@ -137,7 +137,7 @@ export function AddProjectForm({ clients, profiles, defaultClientId }: AddProjec
           {IMPL_TYPES.map((type) => (
             <label
               key={type}
-              className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-sm cursor-pointer transition-colors hover:border-teal/40 hover:bg-muted/60 has-[:checked]:border-teal has-[:checked]:bg-teal/5 has-[:checked]:text-teal"
+              className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-sm cursor-pointer transition-colors hover:border-teal/40 hover:bg-muted/60 has-[:checked]:border-teal has-[:checked]:bg-teal/5 has-[:checked]:text-teal has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-1"
             >
               <input
                 type="checkbox"
@@ -159,11 +159,12 @@ export function AddProjectForm({ clients, profiles, defaultClientId }: AddProjec
         <Label htmlFor="project-pm">
           Kierownik projektu (PM)
         </Label>
-        <Select name="pm_ids" defaultValue={profiles[0]?.id}>
+        <Select name="pm_ids" defaultValue="none">
           <SelectTrigger id="project-pm" className="w-full">
             <SelectValue placeholder="Wybierz PM..." />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="none">— Bez PM (przypiszę później) —</SelectItem>
             {profiles.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.full_name}
@@ -177,7 +178,7 @@ export function AddProjectForm({ clients, profiles, defaultClientId }: AddProjec
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="project-start">
-            Data startu <span className="text-status-off" aria-hidden="true">*</span>
+            Data startu <span className="text-destructive" aria-hidden="true">*</span>
           </Label>
           <Input
             id="project-start"
@@ -212,7 +213,7 @@ export function AddProjectForm({ clients, profiles, defaultClientId }: AddProjec
 
       {/* Blad globalny */}
       {state && 'error' in state && (
-        <p className="font-meta text-xs text-status-off" role="alert">
+        <p className="font-meta text-xs text-destructive" role="alert">
           {state.error}
         </p>
       )}

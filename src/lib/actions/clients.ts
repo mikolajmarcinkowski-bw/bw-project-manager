@@ -1,5 +1,6 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
 export async function createClientAction(
@@ -35,6 +36,9 @@ export async function createClientAction(
     console.error('[createClientAction] insert failed:', insertError)
     return { error: 'Nie udało się utworzyć klienta. Spróbuj ponownie.' }
   }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/projekty')
 
   return { ok: true, id: data.id }
 }

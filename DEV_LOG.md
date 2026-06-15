@@ -5,6 +5,25 @@
 
 ---
 
+## [2026-06-15] feat | Faza 2a — tworzenie klienta/projektu + dashboard teczkowy (branch feat/faza-2a-projekty)
+
+**Zbudowane (2 subagenci równolegle):** backend (createClientAction P1, createProjectAction + auto-insert R15 P2,
+data/projects.ts: getClientsWithStats/getAllProjects/getProfiles/getClientWithProjects, atRisk) + UI
+(/dashboard teczki+trójkąt P13, /projekty + filtry P14, /clients/[id] P4, /projects/new formularz P2, dialog klienta P1).
+Komponenty clients/* projects/*; shadcn dialog/input/label/select. Commit checkpoint `ea4fab3`, next build OK.
+
+**Przeglądy (detektor czysty; code-reviewer + impeccable critique):**
+- ✅ Naprawione: `revalidatePath` w akcjach (nowy klient/projekt nie pokazywał się bez reloadu); sortowanie
+  zagrożonych teczek na górę + mocniejszy sygnał trójkąta + etykieta „Zagrożony" (P13); focus-visible na pillach
+  typów; PM „— Bez PM —" zamiast cichego preselectu; gwiazdki wymagalności `status-off`→`destructive`; ⚠ emoji→ikona lucide.
+- ⏳ ODŁOŻONE (do decyzji/następnej iteracji): **kontrast teala jako tekst (WCAG AA ~2.6:1)** — decyzja tokenowa/brandowa
+  (brand teal vs ciemniejszy wariant na małym tekście); **div-tabela /projekty → semantyczna `<table>`/role**; **tytuł
+  topbara per-trasa** (statyczny „Dashboard"); natywny `<select>` filtrów → shadcn Select; martwy param `filters` w getAllProjects.
+
+**Następne:** Faza 2b (widok projektu = Gantt + klocki + „tu jesteś", P5/P6/P11/P12). + rozważyć odłożone P1/P2 wyżej.
+
+---
+
 ## [2026-06-15] checkpoint | KONIEC SESJI 10 — Faza 1 ukończona, dokumentacja zaktualizowana
 
 **Co osiągnięto dziś (fundament → Faza 1, wszystko na produkcji/branchu `feat/db-foundation-auth`):**

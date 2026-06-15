@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { useCallback } from 'react'
+import { AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ImplType } from '@/lib/data/projects'
 
@@ -116,7 +117,7 @@ export function ProjectFilters({ clients }: ProjectFiltersProps) {
         aria-pressed={currentAtRisk}
         aria-label="Pokaż tylko projekty zagrożone"
       >
-        <span aria-hidden="true">⚠</span>
+        <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
         Tylko zagrożone
       </button>
 

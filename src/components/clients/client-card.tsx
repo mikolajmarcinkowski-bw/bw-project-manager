@@ -17,7 +17,7 @@ export function ClientCard({ id, name, projectCount, activeCount, atRisk }: Clie
       className={cn(
         'group flex flex-col gap-3 rounded-[10px] border border-border bg-card px-5 py-4 shadow-whisper',
         'transition-colors hover:border-teal/40 hover:bg-card/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-        atRisk && 'border-status-off/30'
+        atRisk && 'border-status-off/60 bg-status-off/5'
       )}
       aria-label={`Teczka klienta: ${name}${atRisk ? ', projekt zagrożony' : ''}`}
     >
@@ -26,10 +26,12 @@ export function ClientCard({ id, name, projectCount, activeCount, atRisk }: Clie
           {name}
         </span>
         {atRisk && (
-          <AlertTriangle
-            className="h-4 w-4 shrink-0 text-status-off mt-0.5"
-            aria-label="Projekt zagrożony"
-          />
+          <span className="flex shrink-0 items-center gap-1 text-status-off">
+            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+            <span className="font-meta text-[0.65rem] font-semibold uppercase tracking-wide">
+              Zagrożony
+            </span>
+          </span>
         )}
       </div>
 

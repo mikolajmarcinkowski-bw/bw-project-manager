@@ -60,18 +60,21 @@ export async function getClientsWithStats(): Promise<
     projectsByClient.set(p.client_id, arr)
   }
 
-  return clients.map((c) => {
-    const clientProjects = projectsByClient.get(c.id) ?? []
-    const activeCount = clientProjects.filter((p) => p.status === 'active').length
-    const atRisk = clientProjects.some((p) => riskProjectIds.has(p.id))
-    return {
-      id: c.id,
-      name: c.name,
-      projectCount: clientProjects.length,
-      activeCount,
-      atRisk,
-    }
-  })
+  return clients
+    .map((c) => {
+      const clientProjects = projectsByClient.get(c.id) ?? []
+      const activeCount = clientProjects.filter((p) => p.status === 'active').length
+      const atRisk = clientProjects.some((p) => riskProjectIds.has(p.id))
+      return {
+        id: c.id,
+        name: c.name,
+        projectCount: clientProjects.length,
+        activeCount,
+        atRisk,
+      }
+    })
+    // Zagrożone teczki na górę (P13 — sygnał ma się rzucać w oczy)
+    .sort((a, b) => Number(b.atRisk) - Number(a.atRisk) || a.name.localeCompare(b.name, 'pl'))
 }
 
 // ─── getAllProjects ────────────────────────────────────────────────────────────
