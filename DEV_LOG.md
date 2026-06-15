@@ -5,6 +5,25 @@
 
 ---
 
+## [2026-06-15] ui | Faza 1 UI: login + shell + narzędzie inspekcji (3 subagenci równolegle)
+
+**Zbudowane przez 3 subagentów równolegle (rozdzielone pliki):**
+- **Login** (nextjs-developer): `src/app/login/page.tsx` (Suspense+useActionState), `login/actions.ts` (signInWithPassword, walidacja redirectTo), `lib/actions/auth.ts` (logout).
+- **Shell** (react-specialist): `src/app/(app)/layout.tsx` (requireUser + sidebar + topbar), `(app)/dashboard/page.tsx` (placeholder, pusty stan), `app/page.tsx` (→ /dashboard), `components/shell/*` (sidebar z aria-current, topbar z ThemeToggle + logout). Nav: Dashboard / Wszystkie projekty / Archiwum.
+- **Inspekcja** (react-specialist): `components/inspection/inspection-tool.tsx` (pływający przycisk dla testerów, tryb klikania, capture-phase listener z cleanup, panel formularza), `build-selector.ts` (ścieżka CSS), `lib/actions/feedback.ts` (zapis do ui_feedback). Zamontowane w (app)/layout: `<InspectionTool isTester={user.isTester} />`.
+
+**Integracja:** zamontowałem inspekcję w powłoce, naprawiłem build (login useSearchParams → owinięty w Suspense — wymóg Next 16). `next build` OK: trasy /, /login (static), /dashboard (dynamic), Proxy wykryty.
+
+**Code review (code-reviewer) — naprawione od razu:**
+- 🟡 `feedback.ts`: wyciek surowego błędu DB → generyczny komunikat + log serwerowy; dodana walidacja serwerowa (comment 1..2000, enum category/priority, limity długości, sanityzacja viewport/theme).
+- 🟡 `login/actions.ts`: open-redirect przez backslash (`/\`) → odrzucane.
+- 🟡 `build-selector.ts`: `CSS.escape` na id/atrybutach + fallback `body`.
+- 🟢 (odłożone): a11y panelu inspekcji (Escape/role/aria-pressed), title topbara hardkodowany, ASCII vs polskie znaki — do polish.
+
+**Status:** Faza 1 (auth + shell + inspekcja) złożona, zbudowana, przejrzana. Niezacommitowane → commit teraz. Następne: dashboard teczkowy z realnymi danymi (P13) / widok klienta (Faza 2).
+
+---
+
 ## [2026-06-15] review + ui | Przeglądy subagentami (zasada Mikołaja) + tokeny BW + poprawki bezpieczeństwa
 
 **Nowa twarda zasada (CLAUDE.md pkt 7):** po każdym większym fragmencie → `code-reviewer`; okresowo → `security-auditor`.
