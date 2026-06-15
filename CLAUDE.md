@@ -197,7 +197,15 @@ Instalacja: `npm install resend`
 
 ## Skill `impeccable` — TWARDA ZASADA
 
-Każdy artefakt frontendowy przechodzi przez `impeccable` zanim commit.
+Każdy artefakt frontendowy przechodzi przez `impeccable` zanim commit. To są **DWA kroki**, oba obowiązkowe:
+1. **Kierunek (przed budową):** wczytaj kontekst (`PRODUCT.md`/`DESIGN.md`), zasady designu i anti-patterny;
+   przekaż tokeny + ograniczenia subagentom budującym UI.
+2. **Weryfikacja (przed commitem):** odpal `impeccable critique` (krytyka UX/designu) — i wg potrzeby
+   `audit` (a11y/perf/responsywność) / `polish` — na zbudowanym UI. Napraw realne uwagi. To NIE to samo co
+   `code-reviewer` (ten sprawdza poprawność/bezpieczeństwo). Frontend = obie kontrole: impeccable + code-reviewer.
+
+Każde nowe copy w UI = **poprawne polskie znaki** (ą/ć/ę/ł/ń/ó/ś/ź/ż), nigdy ASCII typu „Haslo"/„sie".
+
 Design reference: `WAR_ROOM/product-specs/.../03-design-source.md` + `WAR_ROOM/PRODUCT.md`
 
 ---

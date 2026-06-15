@@ -128,6 +128,7 @@ export function InspectionTool({ isTester }: InspectionToolProps) {
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
 
   const containerRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // ------------------------------------------------------------------
   // Capture-phase listener — active only while mode === 'armed'
@@ -187,6 +188,26 @@ export function InspectionTool({ isTester }: InspectionToolProps) {
     }
   }, [mode.type])
 
+  // Escape wychodzi z trybu inspekcji (armed lub form)
+  useEffect(() => {
+    if (mode.type === 'idle') return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setMode({ type: 'idle' })
+      setComment('')
+      setCategory('bug')
+      setPriority('medium')
+      removeHighlight()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [mode.type])
+
+  // Auto-focus pola komentarza po otwarciu panelu
+  useEffect(() => {
+    if (mode.type === 'form') textareaRef.current?.focus()
+  }, [mode.type])
+
   // ------------------------------------------------------------------
   // Handlers
   // ------------------------------------------------------------------
@@ -240,7 +261,7 @@ export function InspectionTool({ isTester }: InspectionToolProps) {
         cancel()
       }, 1800)
     } else {
-      setToast({ msg: `Blad: ${result.error}`, ok: false })
+      setToast({ msg: `Błąd: ${result.error}`, ok: false })
     }
   }
 
@@ -268,6 +289,8 @@ export function InspectionTool({ isTester }: InspectionToolProps) {
       >
         <button
           onClick={toggleArmed}
+          aria-pressed={isActive}
+          aria-label={isActive ? 'Wyłącz tryb inspekcji' : 'Włącz tryb inspekcji'}
           title={isActive ? 'Wyłącz tryb inspekcji' : 'Włącz tryb inspekcji'}
           style={{
             display: 'inline-flex',
@@ -301,6 +324,9 @@ export function InspectionTool({ isTester }: InspectionToolProps) {
       {/* Feedback form panel — appears near clicked element */}
       {mode.type === 'form' && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Nowy komentarz do inspekcji"
           style={{
             position: 'fixed',
             top: panelPos.top,
@@ -341,6 +367,7 @@ export function InspectionTool({ isTester }: InspectionToolProps) {
                 padding: '2px',
                 borderRadius: '4px',
               }}
+              aria-label="Anuluj"
               title="Anuluj"
             >
               <X size={14} strokeWidth={2} />
@@ -385,10 +412,19 @@ export function InspectionTool({ isTester }: InspectionToolProps) {
             </label>
             <textarea
               id="bw-inspect-comment"
+              ref={textareaRef}
               rows={3}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Opisz problem..."
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'var(--teal, #28B39B)'
+                e.currentTarget.style.boxShadow = '0 0 0 2px oklch(0.6902 0.1186 177.74 / 0.25)'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
+              placeholder="Opisz problem…"
               style={{
                 width: '100%',
                 resize: 'vertical',

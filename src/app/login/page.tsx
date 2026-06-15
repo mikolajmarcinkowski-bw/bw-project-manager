@@ -49,7 +49,7 @@ function LoginForm() {
             Project Manager
           </h1>
           <p className="font-meta text-xs text-muted-foreground mt-0.5 uppercase tracking-wide">
-            Narzedzie wewnetrzne
+            Narzędzie wewnętrzne
           </p>
         </div>
 
@@ -93,7 +93,7 @@ function LoginForm() {
               htmlFor="password"
               className="font-meta text-xs font-medium uppercase tracking-wide text-muted-foreground"
             >
-              Haslo
+              Hasło
             </label>
             <input
               id="password"
@@ -131,7 +131,7 @@ function LoginForm() {
             disabled={pending}
             className="w-full rounded-full h-10 text-sm font-semibold mt-1"
           >
-            {pending ? 'Logowanie...' : 'Zaloguj sie'}
+            {pending ? 'Logowanie…' : 'Zaloguj się'}
           </Button>
         </form>
       </div>

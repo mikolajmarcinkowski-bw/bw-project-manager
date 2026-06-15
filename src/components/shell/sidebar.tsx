@@ -11,7 +11,7 @@ export function Sidebar() {
   return (
     <aside
       className="hidden md:flex flex-col w-60 shrink-0 min-h-screen bg-sidebar border-r border-sidebar-border"
-      aria-label="Nawigacja glowna"
+      aria-label="Nawigacja główna"
     >
       {/* Logotyp */}
       <div className="flex items-center h-14 px-4 border-b border-sidebar-border shrink-0">
@@ -61,7 +61,7 @@ export function Sidebar() {
       {/* Dolna stopka sidebara */}
       <div className="px-4 py-3 border-t border-sidebar-border">
         <p className="font-meta text-[0.7rem] text-muted-foreground">
-          Tylko do uzytku wewnetrznego
+          Tylko do użytku wewnętrznego
         </p>
       </div>
     </aside>

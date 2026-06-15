@@ -5,6 +5,27 @@
 
 ---
 
+## [2026-06-15] polish | Polskie znaki w copy + krytyka impeccable (weryfikacja designu)
+
+**Polskie znaki:** całe widoczne copy poprawione na diakrytyki (login, shell, dashboard, inspekcja) —
+agenci pisali ASCII („Haslo"/„sie"). Zasada dopisana do `CLAUDE.md` + pamięci.
+
+**Doprecyzowana zasada (CLAUDE.md):** impeccable = DWA kroki — kierunek PRZED budową + `critique`/`audit`
+PRZED commitem (osobno od `code-reviewer`). Wcześniej robiłem tylko kierunek — luka.
+
+**Krytyka impeccable (critique) — detektor czysty (0 anti-patternów), przegląd designu (ui-designer):**
+- P0: dwa CTA „Dodaj klienta" na dashboardzie → usunięty nagłówkowy, jedno CTA w stanie pustym.
+- P3: pusty stan szablonowy + zła treść (Ola nigdy nie zobaczy „brak projektów") → przepisany na „Pierwsze kroki"
+  (teczka = grupa projektów; ręcznie lub Claude+MCP), bez generycznej ikony-dekoracji.
+- P1: narzędzie inspekcji a11y → dodane: Escape wychodzi z trybu, auto-focus pola, `aria-pressed` na przełączniku,
+  `role="dialog"`+`aria-label` na panelu, `aria-label` na anuluj, focus ring na textarea.
+- P1 (odłożone do Fazy 2): tokeny statusów RAG bez wariantów dark — naprawię gdy pojawią się badge statusów.
+
+**Logo:** Mikołaj podesłał logotyp BusinessWeb — czekam aż zapisze plik do `public/bw-logo.(svg|png)`, wtedy
+wstawię w login + sidebar (zastąpi tekstowy „BW", co krytyka wytknęła). tsc/build OK.
+
+---
+
 ## [2026-06-15] ui | Faza 1 UI: login + shell + narzędzie inspekcji (3 subagenci równolegle)
 
 **Zbudowane przez 3 subagentów równolegle (rozdzielone pliki):**

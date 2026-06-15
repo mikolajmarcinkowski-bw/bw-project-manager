@@ -28,7 +28,7 @@ export async function login(
   const redirectTo = isSafeRedirect(redirectToRaw) ? redirectToRaw : '/dashboard'
 
   if (!email || !password) {
-    return { error: 'Podaj adres e-mail i haslo.' }
+    return { error: 'Podaj adres e-mail i hasło.' }
   }
 
   const supabase = await createClient()
@@ -41,12 +41,12 @@ export async function login(
       code === 'invalid_credentials' ||
       error.message.includes('Invalid login credentials')
     ) {
-      return { error: 'Nieprawidlowy adres e-mail lub haslo.' }
+      return { error: 'Nieprawidłowy adres e-mail lub hasło.' }
     }
     if (error.message.toLowerCase().includes('email not confirmed')) {
-      return { error: 'Konto nie zostalo jeszcze zweryfikowane. Sprawdz skrzynke e-mail.' }
+      return { error: 'Konto nie zostało jeszcze zweryfikowane. Sprawdź skrzynkę e-mail.' }
     }
-    return { error: 'Nie mozna sie zalogowac. Sprobuj ponownie.' }
+    return { error: 'Nie można się zalogować. Spróbuj ponownie.' }
   }
 
   // redirect() throws NEXT_REDIRECT -- must be outside try/catch

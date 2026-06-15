@@ -9,7 +9,7 @@ interface TopbarProps {
 }
 
 export function Topbar({ user, title = 'Dashboard' }: TopbarProps) {
-  const displayName = user.fullName ?? user.email ?? 'Uzytkownik'
+  const displayName = user.fullName ?? user.email ?? 'Użytkownik'
 
   return (
     <header className="sticky top-0 z-40 flex items-center h-14 border-b border-border bg-background px-4 gap-4">
@@ -33,8 +33,8 @@ export function Topbar({ user, title = 'Dashboard' }: TopbarProps) {
             <button
               type="submit"
               className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="Wyloguj sie"
-              title="Wyloguj sie"
+              aria-label="Wyloguj się"
+              title="Wyloguj się"
             >
               <LogOut className="h-4 w-4" aria-hidden="true" />
             </button>
