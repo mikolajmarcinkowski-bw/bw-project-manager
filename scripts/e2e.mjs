@@ -3,9 +3,15 @@
 import { chromium } from 'playwright'
 import { mkdirSync } from 'node:fs'
 
-const BASE = 'http://localhost:3000'
-const EMAIL = 'mikolaj.marcinkowski@businessweb.pl'
-const PASS = 'BWpm-02041d2d'
+const BASE = process.env.E2E_BASE || 'http://localhost:3000'
+// Dane logowania WYŁĄCZNIE z env — nigdy w kodzie (leak GitHub 2026-06-15).
+// Użycie: E2E_EMAIL=... E2E_PASS=... node scripts/e2e.mjs
+const EMAIL = process.env.E2E_EMAIL
+const PASS = process.env.E2E_PASS
+if (!EMAIL || !PASS) {
+  console.error('Ustaw E2E_EMAIL i E2E_PASS w zmiennych środowiskowych (nie hardkoduj!).')
+  process.exit(1)
+}
 const DIR = '/tmp/e2e'
 mkdirSync(DIR, { recursive: true })
 
