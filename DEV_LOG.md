@@ -5,6 +5,14 @@
 
 ---
 
+## [2026-06-16] deploy | 🚀 Merge Faza 2b → main (produkcja) — merge `6dcd79e`
+
+- **Merge `--no-ff`** `feat/faza-2b-gantt` → `main` (11 commitów). Push `29b3722..6dcd79e`. Auto-deploy Production (prod 200).
+- **Na produkcji teraz:** widok projektu `/projects/[id]` = **Mapa klocków + phase strip** (główny) + **Harmonogram** (wierny task-level Gantt). Krok 0 (impeccable wpięty w design) + ekran 5 + ekran 6 + zwijanie + linia „dziś" + fix kamieni + QA Playwright (5 projektów) + krytyka impeccable/code-reviewer.
+- **➡️ DALEJ: Faza 2c** — interaktywne zadania (odhaczanie/statusy P7, owner+completion P8, ukrywanie P9, edycja dat P18, wyciszanie P19). Pierwsze server actions WRITE poza tworzeniem (RLS R13, audyt A4) — security-sensitive.
+
+---
+
 ## [2026-06-16] test+fix | Realne testy Playwright (5 projektów) + fix umiejscowienia kamieni
 
 - **Spawnowano 4 zróżnicowane projekty testowe** (autoryzowane) w 2 nowych klientach (Comarch, Żabka) przez klon
