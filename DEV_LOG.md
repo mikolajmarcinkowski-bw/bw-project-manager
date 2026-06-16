@@ -5,6 +5,26 @@
 
 ---
 
+## [2026-06-16] ui | Więcej delightu — teczka otwiera się na hover + kaskady wejścia — commit `33625a6`
+
+- **Sygnaturowy ruch (centrum):** `ClientCard` / `FolderGlyph` przebudowany — przednia klapka teczki uchyla
+  się w 3D (`rotateX(-30deg)`, `origin-bottom`, perspective) na hover, odsłaniając 2 kartki (stała głębia,
+  NIE liczność). Papier **adaptywny do motywu** (`dark:` warianty) — w ciemnym nie świeci jak artefakt.
+- **Kaskadowe wejście (stagger):** kafelki teczek (dashboard) i wiersze projektów wjeżdżają fade-up z
+  opóźnieniem per index. **`motion-safe:` + fail-safe** — baza = `opacity:1`, treść nie utyka na 0.
+- **ThemeToggle:** animowany swap Sun/Moon (rotate+scale+opacity) + `active:scale-90`; polskie znaki w aria-label.
+- **globals.css:** guard `prefers-reduced-motion` zerujący ruch, z wyjątkiem `.animate-spin` (spinner ładowania).
+- **Kierunek:** impeccable (register=product → delight w konkretnych momentach, nie wszędzie); orange=1 akcja, teal=struktura.
+  Subagenci: `react-specialist` (theme-toggle), centrum (folder 3D) inline — craft ruchu. Świadomie **odrzucony** puls
+  trójkąta zagrożenia (ruch na ostrzeżeniu = źle — advisor) i toast sukcesu (brak infra).
+- **Przeglądy:** code-reviewer + impeccable critique (ui-designer) + detektor `[]`. Wdrożone realne uwagi:
+  spinner pod reduced-motion, `duration-400`→`500` (nie istnieje w v4), papier w dark, głębia kartek, redundantny lift.
+- **Weryfikacja:** tsc czysty, prod build OK, E2E hover jasny+ciemny (zrzuty `/tmp/e2e/delight-*`), reduced-motion
+  opacity karty = 1, zero błędów konsoli. (Uwaga: w logu dev hydration-warning od rozszerzenia Dashlane na /login —
+  nie z naszego kodu.)
+
+---
+
 ## [2026-06-16] security + feat | ✅ Rotacja hasła (leak domknięty) + obejście logowania dev
 
 ### ✅ ROTACJA HASŁA — leak domknięty po stronie produkcji
