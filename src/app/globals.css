@@ -56,6 +56,7 @@
   --color-status-at: var(--status-at);
   --color-status-off: var(--status-off);
   --color-status-quality: var(--status-quality);
+  --color-spo: var(--spo);
 
   /* Radius scale */
   --radius-sm: calc(var(--radius) * 0.6);
@@ -136,6 +137,7 @@
   --status-at: oklch(0.7642 0.1543 70.80);           /* #EF9F27 at-risk */
   --status-off: oklch(0.6234 0.1877 24.72);          /* #E24B4A off-track */
   --status-quality: oklch(0.6232 0.1486 251.50);     /* #378ADD quality */
+  --spo: oklch(0.5500 0.2100 295);                   /* #8257E6 SPO / decyzje (diamenciki) */
 }
 
 /* ============================================================
@@ -203,6 +205,7 @@
   --status-at: oklch(0.7642 0.1543 70.80);
   --status-off: oklch(0.6234 0.1877 24.72);
   --status-quality: oklch(0.6232 0.1486 251.50);
+  --spo: oklch(0.6400 0.1900 295);                   /* jaśniejszy wariant SPO na ciemnym tle */
 }
 
 /* ============================================================

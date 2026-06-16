@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { ProjectHeader } from '@/components/projects/project-header'
-import { GanttChart } from '@/components/projects/gantt-chart'
+import { ProjectViews } from '@/components/projects/project-views'
 import { getProjectDetail } from '@/lib/data/projects'
 
 export async function generateMetadata({
@@ -29,7 +29,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   return (
     <div className="flex flex-col gap-6">
       <ProjectHeader project={project} />
-      <GanttChart project={project} />
+      <ProjectViews project={project} />
     </div>
   )
 }
