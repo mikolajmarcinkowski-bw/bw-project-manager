@@ -4,6 +4,31 @@
 
 ---
 
+## [0.7.0] — 2026-06-16 — Faza 2b: widok projektu = Gantt + klocki + „tu jesteś" (branch)
+
+> Status: branch `feat/faza-2b-gantt` (commit `8f4a2db`), NIEZMERGOWANE do `main`. Do PR/mergu po zatwierdzeniu.
+
+### Dodano
+- **Widok projektu** `/projects/[id]` (P5/P6/P11/P12): nagłówek + **wykres Gantt** na realnym kalendarzu
+- Oś CSS-grid (kolumna/tydzień), realne daty lub względne `T1..N`, **linia „dziś"**, **auto-scroll do aktywnego kroku**
+- Klocki faz wg statusu + **„Tu jesteś"** (teal); **rozwijanie krok→zadania**; **kolumna etykiet sticky-left**
+- **Kamienie** (romby) + **decyzje P11** (romby obrysowane) + legenda; tagi ∥równolegle / cykliczny
+- Data layer `getProjectDetail` (cache); włączone linki wierszy projektów (`/projekty`, `/clients/[id]`)
+
+### Jakość / przeglądy
+- code-reviewer (0 P0, wzór grid tydzień→kolumna potwierdzony) + impeccable critique (ui-designer) + detektor `[]`
+- Wdrożone uwagi: cache, niesymetryczne tygodnie, logi błędów, decyzje bez kroku, a11y, auto-scroll, sticky etykiety, kontrast dark, czytelność zadań
+- Komponenty UI + poprawki budowane przez subagentów (`react-specialist`); wzór grid i integracja weryfikowane inline
+- Zweryfikowane: tsc, prod build, E2E (nawigacja + render jasny/ciemny + rozwijanie + auto-scroll), zero błędów konsoli
+
+### Dane
+- ⚠️ Projekt testowy na produkcji zseedowany jako DEMO (za zgodą): „Kaufland — Wdrożenie CRM (DEMO Gantt)" — realny harmonogram, aktywny krok, kamienie, decyzja
+
+### Następna wersja (0.8.0)
+- Faza 2c: interaktywne zadania (P7 statusy, P8 owner+completion, P9 ukrywanie, P10 alerty) + edycja dat (P18, drag + potwierdzenie)
+
+---
+
 ## [0.6.0] — 2026-06-16 — 🚀 PRODUKCJA: merge Faza 2a → main + delight + security
 
 > Status: **ZMERGOWANE do `main`** (merge `81e9197`) → **auto-deploy Production** (`bw-project-manager.vercel.app`).

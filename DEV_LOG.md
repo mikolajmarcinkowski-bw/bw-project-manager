@@ -5,6 +5,34 @@
 
 ---
 
+## [2026-06-16] feat | Faza 2b — widok projektu = Gantt + klocki + „tu jesteś" (branch `feat/faza-2b-gantt`) — commit `8f4a2db`
+
+- **Co (P5/P6/P11/P12):** nowa trasa `/projects/[id]` — `ProjectHeader` + `GanttChart`.
+  - Oś = **CSS grid, kolumna na tydzień** (`gridColumn: wStart+1 / wEnd+2`, koniec wykluczający). Realne daty
+    gdy `start_date` sensowny (≥2000), inaczej tygodnie względne `T1..N`. Linia „dziś". **Auto-scroll do aktywnego
+    kroku** przy montażu (mierzy realną szerokość kolumny). **Kolumna etykiet faz sticky-left** (przymrożona).
+  - Klocki faz wg statusu (done/w toku/todo/pominięty), **„Tu jesteś"** = teal pierścień + pill na aktywnym kroku.
+  - **Rozwijanie krok→zadania** (status/rodzaj/godziny/osoba), panel przypięty do lewej (czytelny przy scrollu osi).
+  - **Kamienie** (romby wypełnione) + **decyzje P11** (romby obrysowane) + legenda; tagi ∥równolegle / cykliczny;
+    decyzje bez kroku nie znikają.
+- **Data layer:** `getProjectDetail` (cache, ~stała liczba zapytań); rozpiętość klocka z min/max tygodni zadań;
+  weekCount≥8; fallback bounds przy niesymetrycznych tygodniach.
+- **Realizacja:** data layer + trasa + integracja inline; komponenty Gantt + wszystkie poprawki przeglądów przez
+  `react-specialist` (zlecenie Mikołaja: kodowanie przez subagentów). Wzór grid zweryfikowany ręcznie.
+- **Przeglądy:** code-reviewer (0 P0, wzór grid potwierdzony) + impeccable critique (ui-designer) + detektor `[]`.
+  Wdrożone: `cache()`, niesymetryczne tygodnie, logowanie 6 błędów, decyzje bez kroku, a11y rozwijania,
+  off-by-one „dziś", **auto-scroll do aktywnego**, **sticky kolumna etykiet**, kontrast done w dark, czytelność zadań.
+- **Włączone linki** wierszy projektów (`/projekty`, `/clients/[id]`) — usunięto `linkDisabled` (trasa istnieje).
+- **⚠️ DANE DEMO (prod):** za zgodą Mikołaja zseedowano projekt testowy (był „gfdsg") → „Kaufland — Wdrożenie CRM
+  (DEMO Gantt)": realny start 2026-04-06, aktywny krok F3, progres faz, para równoległa, 3 kamienie, 1 decyzja.
+  To dane demonstracyjne na produkcyjnej bazie (jedna współdzielona).
+- **Weryfikacja:** tsc + prod build OK; E2E nawigacja (klient→projekt) + render jasny/ciemny + rozwijanie +
+  auto-scroll (zrzuty `/tmp/e2e/gantt-*`); zero błędów konsoli.
+- **➡️ DALEJ:** Faza 2c (interaktywne zadania P7–P10 + edycja dat P18/drag) — patrz odpowiedzi dla Mikołaja.
+  Branch 2b **niezmergowany** — do PR/mergu gdy zatwierdzony.
+
+---
+
 ## [2026-06-16] deploy | 🚀 Merge Faza 2a → main (produkcja) — merge `81e9197`
 
 - **Merge `--no-ff`** `feat/faza-2a-projekty` → `main` (13 commitów: ea4fab3…b13d291). Drzewo czyste, `main` był
