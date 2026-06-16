@@ -1,6 +1,7 @@
 'use client'
 
-import { type CSSProperties } from 'react'
+import { type CSSProperties, useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type {
   ProjectDetail,
@@ -8,6 +9,7 @@ import type {
   TaskStatus,
   TaskKind,
   MilestoneStatus,
+  GanttStep,
 } from '@/lib/data/projects'
 
 // ─── Stałe szerokości kolumn (muszą być identyczne w ghead i każdym wierszu grow) ─
@@ -232,73 +234,92 @@ export function GanttChart({ project }: GanttChartProps) {
   // Tydzień "dziś" (1-indexed, null gdy poza zakresem lub bez calendarStart)
   const todayWeek = todayWeekNumber(calendarStart, weekCount)
 
+  // ── FIX 1: Stan zwijania faz ─────────────────────────────────────────────────
+  // Domyślnie: zwinięte wszystkie fazy POZA aktywnymi (isActive) i in_progress.
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => {
+    return new Set(
+      steps
+        .filter((s) => !s.isActive && s.status !== 'in_progress')
+        .map((s) => s.id)
+    )
+  })
+
+  function togglePhase(stepId: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(stepId)) {
+        next.delete(stepId)
+      } else {
+        next.add(stepId)
+      }
+      return next
+    })
+  }
+
+  function expandAll() {
+    setCollapsed(new Set())
+  }
+
+  function collapseAll() {
+    setCollapsed(new Set(steps.map((s) => s.id)))
+  }
+
   // ── Statystyki ───────────────────────────────────────────────────────────────
 
   const allTasks = steps.flatMap((s) => s.tasks)
   const regularTasks = allTasks.filter((t) => !t.isMilestone)
   const estSum = totalEst(regularTasks)
 
-  // ── Budowanie listy wierszy (faza → zadania → milestony po fazie) ────────────
-
+  // ── Budowanie struktur: per-faza grouped ─────────────────────────────────────
+  //
+  // Przypisanie milestonów do faz liczymy ZAWSZE (niezależnie od collapsed),
+  // żeby lista tailMs była poprawna. Wynik: phaseGroups + tailMs.
+  //
   // Każdy milestone przypisujemy do fazy o największym wEnd <= ms.week.
   // Null-guard: wEnd === null traktujemy jako -∞ (nie może wygrać vs realny tydzień).
   // Milestony bez week (null) i poza zakresem → do puli "tail" (koniec listy).
 
-  type RowKind =
-    | { type: 'phase'; step: typeof steps[0] }
-    | { type: 'task'; task: GanttTask; phaseNumber: number; taskIdx: number }
-    | { type: 'ms'; ms: typeof milestones[0] }
+  type PhaseGroup = {
+    step: GanttStep
+    regularTasks: GanttTask[]
+    assignedMs: typeof milestones
+  }
 
-  const rows: RowKind[] = []
-  const tailMs: typeof milestones[0][] = []
-
-  // Kopie milestones — będziemy je oznaczać jako użyte
   const unusedMs = new Set(milestones.map((m) => m.id))
+  const phaseGroups: PhaseGroup[] = []
 
   for (const step of steps) {
-    // Wiersz fazy
-    rows.push({ type: 'phase', step })
-
-    // Wiersze zadań (bez isMilestone — te żyją jako wiersze ms)
     const regularStepTasks = step.tasks.filter((t) => !t.isMilestone)
-    regularStepTasks.forEach((task, idx) => {
-      rows.push({ type: 'task', task, phaseNumber: step.phaseNumber, taskIdx: idx + 1 })
-    })
 
-    // Milestony przypisane do tej fazy:
-    // ms.week jest w zakresie i ta faza ma największe wEnd <= ms.week (spośród wszystkich faz)
+    // Milestony przypisane do tej fazy
+    const assignedMs: typeof milestones = []
     for (const ms of milestones) {
       if (!unusedMs.has(ms.id)) continue
       if (ms.week === null || ms.week < 1 || ms.week > weekCount) continue
 
-      // Czy ta faza jest "najlepszym kandydatem" (największe wEnd <= ms.week)?
       const msWeek = ms.week
-      const stepWEnd = step.wEnd  // może być null
+      const stepWEnd = step.wEnd
 
-      // Sprawdź czy bieżąca faza kwalifikuje się (wEnd != null && wEnd <= ms.week)
       if (stepWEnd === null || stepWEnd > msWeek) continue
 
       // Sprawdź czy istnieje lepsza faza (wEnd > stepWEnd && wEnd <= ms.week)
       const betterStepExists = steps.some((other) => {
         if (other.id === step.id) return false
         const otherEnd = other.wEnd
-        if (otherEnd === null) return false  // null-guard: null != lepsze
+        if (otherEnd === null) return false
         return otherEnd > stepWEnd && otherEnd <= msWeek
       })
       if (betterStepExists) continue
 
-      rows.push({ type: 'ms', ms })
+      assignedMs.push(ms)
       unusedMs.delete(ms.id)
     }
+
+    phaseGroups.push({ step, regularTasks: regularStepTasks, assignedMs })
   }
 
-  // Milestony które nie zostały przypisane → tail
-  for (const ms of milestones) {
-    if (unusedMs.has(ms.id)) {
-      tailMs.push(ms)
-    }
-  }
-  tailMs.forEach((ms) => rows.push({ type: 'ms', ms }))
+  // Milestony które nie zostały przypisane → tail (zawsze widoczne)
+  const tailMs: typeof milestones = milestones.filter((ms) => unusedMs.has(ms.id))
 
   // ── Tygodnie 1..N ────────────────────────────────────────────────────────────
 
@@ -352,6 +373,25 @@ export function GanttChart({ project }: GanttChartProps) {
         role="region"
         aria-label="Tabela harmonogramu"
       >
+        {/* Przyciski Rozwiń/Zwiń wszystko */}
+        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border/30 bg-muted/20">
+          <button
+            type="button"
+            onClick={expandAll}
+            className="text-[0.6rem] font-heading font-semibold text-muted-foreground hover:text-foreground transition-colors rounded px-1.5 py-0.5 hover:bg-muted"
+          >
+            Rozwiń wszystko
+          </button>
+          <span className="text-muted-foreground/40 text-[0.6rem]">·</span>
+          <button
+            type="button"
+            onClick={collapseAll}
+            className="text-[0.6rem] font-heading font-semibold text-muted-foreground hover:text-foreground transition-colors rounded px-1.5 py-0.5 hover:bg-muted"
+          >
+            Zwiń wszystko
+          </button>
+        </div>
+
         {/* Poziomy scroll na wąskich ekranach */}
         <div className="overflow-x-auto">
           {/* min-w-max zapewnia że tygodnie nie zbijają się poniżej 28px */}
@@ -455,295 +495,403 @@ export function GanttChart({ project }: GanttChartProps) {
               </div>
             </div>
 
-            {/* ── Wiersze tabeli ───────────────────────────────────────────────── */}
-            {rows.length === 0 && (
+            {/* ── Wiersze tabeli (owinięte w relative dla overlay „dziś") ──────── */}
+            {phaseGroups.length === 0 && tailMs.length === 0 && (
               <div className="px-6 py-10 text-center text-sm text-muted-foreground">
                 Brak kroków dla tego projektu.
               </div>
             )}
 
-            {rows.map((row, rowIdx) => {
-              if (row.type === 'phase') {
-                /* ── Wiersz fazy .grow.phase ─────────────────────────────────── */
-                const step = row.step
-                return (
+            {/* FIX 2: kontener relative dla jednego ciągłego overlay „dziś" */}
+            <div className="relative">
+
+              {/* ── FIX 2: Overlay linia „dziś" — JEDEN element, cała wysokość ── */}
+              {todayWeek !== null && (
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 pointer-events-none z-20 flex"
+                >
+                  {/* Spacery = stałe kolumny przed obszarem tygodni */}
+                  <div className={cn(COL.id, 'shrink-0')} />
+                  <div className={cn(COL.task, 'shrink-0')} />
+                  <div className={cn(COL.kind, 'shrink-0')} />
+                  <div className={cn(COL.typ, 'shrink-0')} />
+                  <div className={cn(COL.est, 'shrink-0')} />
+                  <div className={cn(COL.own, 'shrink-0')} />
+                  {/* Kontener tygodni — grid identyczny jak w wierszach */}
                   <div
-                    key={`phase-${step.id}`}
-                    role="row"
-                    aria-label={`Faza: ${step.stepTitle}`}
-                    className="flex items-center min-h-[36px] border-t border-border/40 bg-muted/50"
+                    className={cn(COL.wk, 'shrink-0')}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: `repeat(${weekCount}, minmax(28px, 1fr))`,
+                    }}
                   >
-                    {/* # — numer fazy */}
+                    {weeks.map((k) => (
+                      <div
+                        key={k}
+                        className={cn(
+                          'h-full',
+                          k === todayWeek ? 'flex justify-center' : ''
+                        )}
+                      >
+                        {k === todayWeek && (
+                          <div
+                            className="mx-auto h-full"
+                            style={{ width: '1.5px', backgroundColor: 'rgba(40,179,155,0.70)' }}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {/* Spacer = COL.st */}
+                  <div className={cn(COL.st, 'shrink-0')} />
+                </div>
+              )}
+
+              {/* ── Wiersze per-faza (grouped) ───────────────────────────────── */}
+              {phaseGroups.map(({ step, regularTasks: phaseTasks, assignedMs }) => {
+                const isCollapsed = collapsed.has(step.id)
+                const phaseTaskCount = phaseTasks.length
+                const phaseEstSum = totalEst(phaseTasks)
+
+                return (
+                  <div key={`phase-group-${step.id}`}>
+
+                    {/* ── Wiersz fazy — klikalny, zawsze widoczny ─────────────── */}
                     <div
-                      role="cell"
-                      className={cn(
-                        COL.id,
-                        'px-1.5 py-1.5 font-mono text-[0.6rem] text-muted-foreground'
-                      )}
+                      role="row"
+                      aria-label={`Faza: ${step.stepTitle}`}
+                      className="flex items-center min-h-[36px] border-t border-border/40 bg-muted/50"
                     >
-                      {step.phaseNumber}
-                    </div>
-                    {/* Zadanie / Faza — bold, heading */}
-                    <div
-                      role="cell"
-                      className={cn(
-                        COL.task,
-                        'px-2.5 py-1.5 font-heading font-bold text-[0.7rem] text-foreground'
-                      )}
-                    >
-                      FAZA {step.phaseNumber} — {step.phaseName}
-                    </div>
-                    {/* Kind — puste */}
-                    <div role="cell" className={COL.kind} />
-                    {/* Typ — puste */}
-                    <div role="cell" className={COL.typ} />
-                    {/* Est — puste */}
-                    <div role="cell" className={COL.est} />
-                    {/* Own — puste */}
-                    <div role="cell" className={COL.own} />
-                    {/* Obszar tygodni — puste (faza nie ma paska) */}
-                    <div
-                      role="cell"
-                      className={cn(COL.wk, 'h-[36px] relative')}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: `repeat(${weekCount}, minmax(28px, 1fr))`,
-                      }}
-                    >
-                      {weeks.map((k) => (
-                        <div
-                          key={k}
+                      {/* # — chevron + numer fazy (klikalny przycisk) */}
+                      <button
+                        type="button"
+                        onClick={() => togglePhase(step.id)}
+                        aria-expanded={!isCollapsed}
+                        aria-label={`${isCollapsed ? 'Rozwiń' : 'Zwiń'} fazę: ${step.stepTitle}`}
+                        className={cn(
+                          COL.id,
+                          'flex items-center justify-center gap-0.5 px-1 py-1.5',
+                          'font-mono text-[0.6rem] text-muted-foreground',
+                          'hover:text-foreground transition-colors cursor-pointer',
+                          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-1',
+                          'rounded'
+                        )}
+                      >
+                        <ChevronRight
                           aria-hidden="true"
                           className={cn(
-                            'border-l border-border/25 h-full relative',
+                            'h-3 w-3 shrink-0 transition-transform',
+                            !isCollapsed && 'rotate-90',
+                            '@media (prefers-reduced-motion: reduce) transition-none'
                           )}
-                        >
-                          {k === todayWeek && (
-                            <div
-                              aria-hidden="true"
-                              className="pointer-events-none absolute inset-x-0 top-0 bottom-0 flex justify-center"
-                            >
-                              <div className="w-px bg-teal/40" />
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    {/* Status — puste */}
-                    <div role="cell" className={COL.st} />
-                  </div>
-                )
-              }
-
-              if (row.type === 'task') {
-                /* ── Wiersz zadania .grow ─────────────────────────────────────── */
-                const { task, phaseNumber, taskIdx } = row
-                const wStartC = clampWeek(task.wStart, weekCount)
-                const wEndC = clampWeek(task.wEnd, weekCount)
-                const hasBar = wStartC !== null && wEndC !== null
-                const barColor = KIND_COLOR[task.kind]
-
-                return (
-                  <div
-                    key={`task-${task.id}`}
-                    role="row"
-                    aria-label={task.title}
-                    className="flex items-center min-h-[36px] border-t border-border/30 hover:bg-muted/20 transition-colors"
-                  >
-                    {/* # — phaseNumber.taskIdx (mono) */}
-                    <div
-                      role="cell"
-                      className={cn(
-                        COL.id,
-                        'px-1.5 py-1.5 font-mono text-[0.6rem] text-muted-foreground'
-                      )}
-                    >
-                      {phaseNumber}.{taskIdx}
-                    </div>
-                    {/* Zadanie — truncate */}
-                    <div
-                      role="cell"
-                      className={cn(
-                        COL.task,
-                        'px-2.5 py-1.5 text-[0.7rem] text-foreground/90 truncate'
-                      )}
-                      title={task.title}
-                    >
-                      {task.title}
-                    </div>
-                    {/* Kind — chip kolorowy */}
-                    <div
-                      role="cell"
-                      className={cn(COL.kind, 'px-1 py-1.5 flex items-center justify-center')}
-                    >
-                      <KindChip kind={task.kind} />
-                    </div>
-                    {/* Typ — brak pola per-task w GanttTask (typ to pole fazy/projektu) */}
-                    <div
-                      role="cell"
-                      className={cn(
-                        COL.typ,
-                        'px-1 py-1.5 text-[0.6rem] text-muted-foreground/60 text-center'
-                      )}
-                    >
-                      —
-                    </div>
-                    {/* Est. — mono */}
-                    <div
-                      role="cell"
-                      className={cn(
-                        COL.est,
-                        'px-1 py-1.5 font-mono text-[0.65rem] text-muted-foreground'
-                      )}
-                    >
-                      {task.est != null ? `${task.est}h` : '—'}
-                    </div>
-                    {/* Own — avatar inicjałów */}
-                    <div
-                      role="cell"
-                      className={cn(COL.own, 'px-1 py-1.5 flex items-center justify-center')}
-                    >
-                      <Avatar name={task.assigneeName} />
-                    </div>
-                    {/* Obszar tygodni + pasek */}
-                    <div
-                      role="cell"
-                      className={cn(COL.wk, 'h-[36px]')}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: `repeat(${weekCount}, minmax(28px, 1fr))`,
-                        gridTemplateRows: '1fr',
-                      }}
-                    >
-                      {/* Pionowe linie tygodni — każda komórka zajmuje row 1 */}
-                      {weeks.map((k) => (
-                        <div
-                          key={k}
-                          aria-hidden="true"
-                          className="border-l border-border/25 h-full relative"
-                          style={{ gridRow: 1 }}
-                        >
-                          {k === todayWeek && (
-                            <div
-                              aria-hidden="true"
-                              className="pointer-events-none absolute inset-x-0 top-0 bottom-0 flex justify-center"
-                            >
-                              <div className="w-px bg-teal/40" />
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                      {/* Pasek .gbar — kolor wg kind; gridColumn: wStart / wEnd+1 */}
-                      {hasBar && (
-                        <div
-                          aria-hidden="true"
-                          style={{ ...barGridColumn(wStartC!, wEndC!, barColor), gridRow: 1 }}
                         />
-                      )}
-                    </div>
-                    {/* Status — pill (read-only; zmiana statusu = Faza 2c) */}
-                    <div
-                      role="cell"
-                      className={cn(COL.st, 'px-1.5 py-1.5 flex items-center justify-center')}
-                    >
-                      <TaskStatusPill status={task.status} />
-                    </div>
-                  </div>
-                )
-              }
+                        <span>{step.phaseNumber}</span>
+                      </button>
 
-              if (row.type === 'ms') {
-                /* ── Wiersz milestona .grow.ms ────────────────────────────────── */
-                const { ms } = row
-
-                return (
-                  <div
-                    key={`ms-${ms.id}`}
-                    role="row"
-                    aria-label={`Kamień milowy: ${ms.name}`}
-                    // Tło amber-soft wg makiety (.grow.ms)
-                    className="flex items-center min-h-[36px] border-t border-border/30 border-l-2 border-l-status-at/60 bg-status-at/10"
-                  >
-                    {/* # — msCode */}
-                    <div
-                      role="cell"
-                      className={cn(
-                        COL.id,
-                        'px-1.5 py-1.5 font-mono text-[0.6rem] text-muted-foreground'
-                      )}
-                    >
-                      {ms.msCode ?? 'MS'}
-                    </div>
-                    {/* Zadanie — romb + nazwa */}
-                    <div
-                      role="cell"
-                      className={cn(
-                        COL.task,
-                        'px-2.5 py-1.5 text-[0.7rem] font-medium flex items-center gap-1.5'
-                      )}
-                    >
-                      {/* ◆ romb amber wypełniony */}
-                      <span
-                        aria-hidden="true"
-                        className="shrink-0 inline-block rotate-45 rounded-[2px]"
+                      {/* Zadanie / Faza — bold, heading; zwiniete = skrót */}
+                      <div
+                        role="cell"
+                        className={cn(
+                          COL.task,
+                          'px-2.5 py-1.5 font-heading font-bold text-[0.7rem] text-foreground flex items-center gap-2'
+                        )}
+                      >
+                        <span>FAZA {step.phaseNumber} — {step.phaseName}</span>
+                        {isCollapsed && phaseTaskCount > 0 && (
+                          <span className="text-[0.6rem] font-normal font-mono text-muted-foreground shrink-0">
+                            {phaseTaskCount} {phaseTaskCount === 1 ? 'zadanie' : phaseTaskCount < 5 ? 'zadania' : 'zadań'}
+                            {phaseEstSum > 0 && ` · ${phaseEstSum}h`}
+                          </span>
+                        )}
+                      </div>
+                      {/* Kind — puste */}
+                      <div role="cell" className={COL.kind} />
+                      {/* Typ — puste */}
+                      <div role="cell" className={COL.typ} />
+                      {/* Est — puste */}
+                      <div role="cell" className={COL.est} />
+                      {/* Own — puste */}
+                      <div role="cell" className={COL.own} />
+                      {/* Obszar tygodni — tylko linie podziału, bez segmentu teal (overlay go zastąpił) */}
+                      <div
+                        role="cell"
+                        className={cn(COL.wk, 'h-[36px]')}
                         style={{
-                          width: 9,
-                          height: 9,
-                          backgroundColor: '#EF9F27',
-                          minWidth: 9,
+                          display: 'grid',
+                          gridTemplateColumns: `repeat(${weekCount}, minmax(28px, 1fr))`,
                         }}
-                      />
-                      <span className="truncate" title={ms.name}>
-                        {ms.name}
-                      </span>
+                      >
+                        {weeks.map((k) => (
+                          <div
+                            key={k}
+                            aria-hidden="true"
+                            className="border-l border-border/25 h-full"
+                          />
+                        ))}
+                      </div>
+                      {/* Status — puste */}
+                      <div role="cell" className={COL.st} />
                     </div>
-                    {/* Kind — puste */}
-                    <div role="cell" className={COL.kind} />
-                    {/* Typ — puste */}
-                    <div role="cell" className={COL.typ} />
-                    {/* Est — puste */}
-                    <div role="cell" className={COL.est} />
-                    {/* Own — puste */}
-                    <div role="cell" className={COL.own} />
-                    {/* Obszar tygodni — tylko linie, bez paska */}
-                    <div
-                      role="cell"
-                      className={cn(COL.wk, 'relative h-[36px]')}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: `repeat(${weekCount}, minmax(28px, 1fr))`,
-                      }}
-                    >
-                      {weeks.map((k) => (
-                        <div
-                          key={k}
-                          aria-hidden="true"
-                          className="border-l border-border/25 h-full relative"
-                        >
-                          {k === todayWeek && (
+
+                    {/* ── Zawartość fazy: zadania + milestony (gdy rozwinięta) ── */}
+                    {!isCollapsed && (
+                      <>
+                        {/* Zadania fazy */}
+                        {phaseTasks.map((task, idx) => {
+                          const wStartC = clampWeek(task.wStart, weekCount)
+                          const wEndC = clampWeek(task.wEnd, weekCount)
+                          const hasBar = wStartC !== null && wEndC !== null
+                          const barColor = KIND_COLOR[task.kind]
+                          const taskIdx = idx + 1
+
+                          return (
                             <div
-                              aria-hidden="true"
-                              className="pointer-events-none absolute inset-x-0 top-0 bottom-0 flex justify-center"
+                              key={`task-${task.id}`}
+                              role="row"
+                              aria-label={task.title}
+                              className="flex items-center min-h-[36px] border-t border-border/30 hover:bg-muted/20 transition-colors"
                             >
-                              <div className="w-px bg-teal/40" />
+                              {/* # — phaseNumber.taskIdx (mono) */}
+                              <div
+                                role="cell"
+                                className={cn(
+                                  COL.id,
+                                  'px-1.5 py-1.5 font-mono text-[0.6rem] text-muted-foreground'
+                                )}
+                              >
+                                {step.phaseNumber}.{taskIdx}
+                              </div>
+                              {/* Zadanie — truncate */}
+                              <div
+                                role="cell"
+                                className={cn(
+                                  COL.task,
+                                  'px-2.5 py-1.5 text-[0.7rem] text-foreground/90 truncate'
+                                )}
+                                title={task.title}
+                              >
+                                {task.title}
+                              </div>
+                              {/* Kind — chip kolorowy */}
+                              <div
+                                role="cell"
+                                className={cn(COL.kind, 'px-1 py-1.5 flex items-center justify-center')}
+                              >
+                                <KindChip kind={task.kind} />
+                              </div>
+                              {/* Typ — brak pola per-task w GanttTask */}
+                              <div
+                                role="cell"
+                                className={cn(
+                                  COL.typ,
+                                  'px-1 py-1.5 text-[0.6rem] text-muted-foreground/60 text-center'
+                                )}
+                              >
+                                —
+                              </div>
+                              {/* Est. — mono */}
+                              <div
+                                role="cell"
+                                className={cn(
+                                  COL.est,
+                                  'px-1 py-1.5 font-mono text-[0.65rem] text-muted-foreground'
+                                )}
+                              >
+                                {task.est != null ? `${task.est}h` : '—'}
+                              </div>
+                              {/* Own — avatar inicjałów */}
+                              <div
+                                role="cell"
+                                className={cn(COL.own, 'px-1 py-1.5 flex items-center justify-center')}
+                              >
+                                <Avatar name={task.assigneeName} />
+                              </div>
+                              {/* Obszar tygodni + pasek */}
+                              <div
+                                role="cell"
+                                className={cn(COL.wk, 'h-[36px]')}
+                                style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: `repeat(${weekCount}, minmax(28px, 1fr))`,
+                                  gridTemplateRows: '1fr',
+                                }}
+                              >
+                                {/* Pionowe linie tygodni — bez segmentów teal (overlay) */}
+                                {weeks.map((k) => (
+                                  <div
+                                    key={k}
+                                    aria-hidden="true"
+                                    className="border-l border-border/25 h-full"
+                                    style={{ gridRow: 1 }}
+                                  />
+                                ))}
+                                {/* Pasek .gbar — kolor wg kind */}
+                                {hasBar && (
+                                  <div
+                                    aria-hidden="true"
+                                    style={{ ...barGridColumn(wStartC!, wEndC!, barColor), gridRow: 1 }}
+                                  />
+                                )}
+                              </div>
+                              {/* Status — pill */}
+                              <div
+                                role="cell"
+                                className={cn(COL.st, 'px-1.5 py-1.5 flex items-center justify-center')}
+                              >
+                                <TaskStatusPill status={task.status} />
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    {/* Status — pill wg milestone.status */}
-                    <div
-                      role="cell"
-                      className={cn(COL.st, 'px-1.5 py-1.5 flex items-center justify-center')}
-                    >
-                      <MsStatusPill status={ms.status} />
-                    </div>
+                          )
+                        })}
+
+                        {/* Milestony przypisane do tej fazy */}
+                        {assignedMs.map((ms) => (
+                          <div
+                            key={`ms-${ms.id}`}
+                            role="row"
+                            aria-label={`Kamień milowy: ${ms.name}`}
+                            className="flex items-center min-h-[36px] border-t border-border/30 border-l-2 border-l-status-at/60 bg-status-at/10"
+                          >
+                            {/* # — msCode */}
+                            <div
+                              role="cell"
+                              className={cn(
+                                COL.id,
+                                'px-1.5 py-1.5 font-mono text-[0.6rem] text-muted-foreground'
+                              )}
+                            >
+                              {ms.msCode ?? 'MS'}
+                            </div>
+                            {/* Zadanie — romb + nazwa */}
+                            <div
+                              role="cell"
+                              className={cn(
+                                COL.task,
+                                'px-2.5 py-1.5 text-[0.7rem] font-medium flex items-center gap-1.5'
+                              )}
+                            >
+                              <span
+                                aria-hidden="true"
+                                className="shrink-0 inline-block rotate-45 rounded-[2px]"
+                                style={{ width: 9, height: 9, backgroundColor: '#EF9F27', minWidth: 9 }}
+                              />
+                              <span className="truncate" title={ms.name}>
+                                {ms.name}
+                              </span>
+                            </div>
+                            {/* Kind — puste */}
+                            <div role="cell" className={COL.kind} />
+                            {/* Typ — puste */}
+                            <div role="cell" className={COL.typ} />
+                            {/* Est — puste */}
+                            <div role="cell" className={COL.est} />
+                            {/* Own — puste */}
+                            <div role="cell" className={COL.own} />
+                            {/* Obszar tygodni — tylko linie */}
+                            <div
+                              role="cell"
+                              className={cn(COL.wk, 'h-[36px]')}
+                              style={{
+                                display: 'grid',
+                                gridTemplateColumns: `repeat(${weekCount}, minmax(28px, 1fr))`,
+                              }}
+                            >
+                              {weeks.map((k) => (
+                                <div
+                                  key={k}
+                                  aria-hidden="true"
+                                  className="border-l border-border/25 h-full"
+                                />
+                              ))}
+                            </div>
+                            {/* Status — pill */}
+                            <div
+                              role="cell"
+                              className={cn(COL.st, 'px-1.5 py-1.5 flex items-center justify-center')}
+                            >
+                              <MsStatusPill status={ms.status} />
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+
                   </div>
                 )
-              }
+              })}
 
-              return null
-            })}
+              {/* ── Milestony tail (poza zakresem faz) — zawsze widoczne ─────── */}
+              {tailMs.map((ms) => (
+                <div
+                  key={`ms-tail-${ms.id}`}
+                  role="row"
+                  aria-label={`Kamień milowy: ${ms.name}`}
+                  className="flex items-center min-h-[36px] border-t border-border/30 border-l-2 border-l-status-at/60 bg-status-at/10"
+                >
+                  {/* # — msCode */}
+                  <div
+                    role="cell"
+                    className={cn(
+                      COL.id,
+                      'px-1.5 py-1.5 font-mono text-[0.6rem] text-muted-foreground'
+                    )}
+                  >
+                    {ms.msCode ?? 'MS'}
+                  </div>
+                  {/* Zadanie — romb + nazwa */}
+                  <div
+                    role="cell"
+                    className={cn(
+                      COL.task,
+                      'px-2.5 py-1.5 text-[0.7rem] font-medium flex items-center gap-1.5'
+                    )}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="shrink-0 inline-block rotate-45 rounded-[2px]"
+                      style={{ width: 9, height: 9, backgroundColor: '#EF9F27', minWidth: 9 }}
+                    />
+                    <span className="truncate" title={ms.name}>
+                      {ms.name}
+                    </span>
+                  </div>
+                  {/* Kind — puste */}
+                  <div role="cell" className={COL.kind} />
+                  {/* Typ — puste */}
+                  <div role="cell" className={COL.typ} />
+                  {/* Est — puste */}
+                  <div role="cell" className={COL.est} />
+                  {/* Own — puste */}
+                  <div role="cell" className={COL.own} />
+                  {/* Obszar tygodni — tylko linie */}
+                  <div
+                    role="cell"
+                    className={cn(COL.wk, 'h-[36px]')}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: `repeat(${weekCount}, minmax(28px, 1fr))`,
+                    }}
+                  >
+                    {weeks.map((k) => (
+                      <div
+                        key={k}
+                        aria-hidden="true"
+                        className="border-l border-border/25 h-full"
+                      />
+                    ))}
+                  </div>
+                  {/* Status — pill */}
+                  <div
+                    role="cell"
+                    className={cn(COL.st, 'px-1.5 py-1.5 flex items-center justify-center')}
+                  >
+                    <MsStatusPill status={ms.status} />
+                  </div>
+                </div>
+              ))}
+
+            </div>{/* koniec .relative (overlay) */}
 
             {/*
               Pominięto: „Pokaż N ukrytych" — getProjectDetail nie ładuje zadań hidden=true.
