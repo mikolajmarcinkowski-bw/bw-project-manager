@@ -5,6 +5,23 @@
 
 ---
 
+## [2026-06-16] feat | Krok 0 (impeccable w design) + ekran „Mapa klocków + phase strip" — commit `e850595`
+
+- **Krok 0 (commit `9bec690`):** utworzono `PRODUCT.md` + `DESIGN.md` w repo build → impeccable wczytuje kontekst
+  (`hasProduct/hasDesign=true`). DESIGN.md = wersja NARZĘDZIOWA (tokeny + słownik komponentów makiet), NIE marketingowy
+  brand z war-roomu. To naprawia przyczynę „artefaktów AI".
+- **Ekran 5 „Mapa klocków + phase strip"** (wiernie z `06-wireframes.html`): nowe `phase-strip.tsx`, `parallel-view.tsx`,
+  `project-views.tsx` (taby Mapa | Harmonogram + wyłączone RACI/RAID/Budżet/KPI). Phase strip = ścieżka faz ze strzałkami,
+  „TU JESTEŚ" (teal) na aktywnym, diamenciki decyzji (romb obrysowany, token `--spo`) NA ścieżce (D-039). Pod stripem
+  Realizacja∥Kontrola (2 kolumny + podsumowania). Istniejący Gantt → zakładka „Harmonogram". Reużyto `getProjectDetail`.
+- **Metoda (nowa dyscyplina):** subagent buduje z makiety → impeccable critique (TYM RAZEM z wczytanym DESIGN.md) +
+  code-reviewer + detektor `[]` → poprawki → E2E jasny/ciemny → commit. Wdrożone uwagi: znak ‖ czytelny (dwa paski),
+  pill statusu z `step.status` (nie zawsze „w toku"), pomijanie `na` w liczniku, rozróżnienie Sprint 1/2, role=tabpanel, token SPO.
+- **Zweryfikowane:** tsc, prod build, E2E (zrzuty `/tmp/e2e/ps2-*`), zero błędów konsoli. Branch `feat/faza-2b-gantt` (niezmergowany).
+- **➡️ DALEJ:** wierność ekranu „Harmonogram Gantt" (ciemny header, kind-bary) wg makiety; potem Faza 2c (interaktywne zadania).
+
+---
+
 ## [2026-06-16] audit | 🔍 Holistyczny audyt luk + reconciliacja CAŁEJ dokumentacji
 
 - **Powód (feedback Mikołaja):** „wszędzie artefakty AI" + „update całej dokumentacji i zweryfikuj pracę pod luki holistycznie".
