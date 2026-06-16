@@ -10,6 +10,7 @@ import type {
   TaskKind,
   MilestoneStatus,
   GanttStep,
+  ImplType,
 } from '@/lib/data/projects'
 
 // ─── Stałe szerokości kolumn (muszą być identyczne w ghead i każdym wierszu grow) ─
@@ -29,11 +30,21 @@ const COL = {
 
 const KIND_COLOR: Record<TaskKind, string> = {
   ws: '#185FA5',       // warsztat — niebieski
-  own: '#F94213',      // własna — orange (UWAGA: to action-orange; makieta celowo go używa dla „własna" — zachowano dla wierności 1:1 z ekranem 6)
+  own: '#E06C1A',      // własna — ciepły pomarańcz (odsunięcie od orange=#F94213 = akcja per DESIGN.md)
   config: '#28B39B',   // config — teal
   test: '#EF9F27',     // testy — amber
   pm: '#9DA8A5',       // PM — szary
   ms: '#8257E6',       // kamień — fiolet SPO (używamy w gbar jeśli zadanie isMilestone)
+}
+
+// ─── Kolory ImplType (chipy Typ) ──────────────────────────────────────────────────
+
+const IMPL_TYPE_COLOR: Record<ImplType, string> = {
+  CRM: '#28B39B',
+  SPO: '#8257E6',
+  INT: '#378ADD',
+  MKT: '#EF7DAE',
+  ERP: '#EF9F27',
 }
 
 const KIND_LABEL: Record<TaskKind, string> = {
@@ -97,7 +108,7 @@ function todayWeekNumber(calendarStart: string | null, weekCount: number): numbe
     const dayMs = 24 * 60 * 60 * 1000
     const diffDays = Math.floor((today.getTime() - base.getTime()) / dayMs)
     const week = Math.floor(diffDays / 7) + 1
-    if (week < 1 || week > weekCount) return null
+    if (Number.isNaN(week) || week < 1 || week > weekCount) return null
     return week
   } catch {
     return null
@@ -126,6 +137,19 @@ function weekLabel(k: number, calendarStart: string | null): { t: string; date: 
 function clampWeek(week: number | null, weekCount: number): number | null {
   if (week === null) return null
   return Math.max(1, Math.min(week, weekCount))
+}
+
+/** ISO dzisiejszej daty 'YYYY-MM-DD' (lokalna strefa). */
+const todayISO = new Date().toISOString().slice(0, 10)
+
+/** Czy zadanie jest po terminie (ma due_date < dziś i nie jest done/na). */
+function isOverdue(task: GanttTask): boolean {
+  return (
+    task.dueDate !== null &&
+    task.dueDate < todayISO &&
+    task.status !== 'done' &&
+    task.status !== 'na'
+  )
 }
 
 /**
@@ -203,6 +227,25 @@ function KindChip({ kind }: { kind: TaskKind }) {
   )
 }
 
+// ─── Subkomponent: chipy ImplType ────────────────────────────────────────────────
+
+function ImplTypeChips({ types }: { types: ImplType[] }) {
+  if (!types.length) return null
+  return (
+    <span className="inline-flex flex-wrap gap-0.5 items-center justify-center">
+      {types.map((t) => (
+        <span
+          key={t}
+          className="rounded px-1 text-[0.5rem] font-heading font-semibold text-white leading-none py-0.5"
+          style={{ backgroundColor: IMPL_TYPE_COLOR[t] }}
+        >
+          {t}
+        </span>
+      ))}
+    </span>
+  )
+}
+
 // ─── Subkomponent: avatar inicjałów ──────────────────────────────────────────────
 
 function Avatar({ name }: { name: string | null }) {
@@ -269,14 +312,13 @@ export function GanttChart({ project }: GanttChartProps) {
   const allTasks = steps.flatMap((s) => s.tasks)
   const regularTasks = allTasks.filter((t) => !t.isMilestone)
   const estSum = totalEst(regularTasks)
+  const overdueCount = regularTasks.filter(isOverdue).length
 
   // ── Budowanie struktur: per-faza grouped ─────────────────────────────────────
   //
   // Przypisanie milestonów do faz liczymy ZAWSZE (niezależnie od collapsed),
   // żeby lista tailMs była poprawna. Wynik: phaseGroups + tailMs.
   //
-  // Każdy milestone przypisujemy do fazy o największym wEnd <= ms.week.
-  // Null-guard: wEnd === null traktujemy jako -∞ (nie może wygrać vs realny tydzień).
   // Milestony bez week (null) i poza zakresem → do puli "tail" (koniec listy).
 
   type PhaseGroup = {
@@ -356,8 +398,7 @@ export function GanttChart({ project }: GanttChartProps) {
             Po terminie
           </div>
           <div className="font-heading font-bold text-[1.5rem] mt-0.5 leading-tight">
-            {/* brak due_date w danych — pokaż 0 (TODO: uzupełnić gdy dane będą miały due_date, Faza 2c) */}
-            0
+            {overdueCount}
           </div>
         </div>
       </div>
@@ -390,14 +431,14 @@ export function GanttChart({ project }: GanttChartProps) {
         {/* Poziomy scroll na wąskich ekranach */}
         <div className="overflow-x-auto">
           {/* min-w-max zapewnia że tygodnie nie zbijają się poniżej 28px */}
-          <div className="min-w-max">
+          <div className="min-w-max" role="table" aria-label="Harmonogram zadań">
 
             {/* ── Nagłówek .ghead ─────────────────────────────────────────────── */}
             {/* Tło #222B28 wg makiety; tekst jasny; font-heading 10px */}
             <div
               role="row"
               aria-label="Nagłówek tabeli"
-              className="flex items-stretch"
+              className="flex items-stretch dark:border-b dark:border-white/10"
               style={{ backgroundColor: '#222B28', color: '#EAF2F0' }}
             >
               {/* # */}
@@ -463,17 +504,14 @@ export function GanttChart({ project }: GanttChartProps) {
                           ? 'text-teal font-semibold border-teal/40'
                           : 'border-white/8'
                       )}
-                      style={{ color: k === todayWeek ? '#28B39B' : '#9fc5bd' }}
+                      style={k !== todayWeek ? { color: '#9fc5bd' } : undefined}
                     >
                       <span className="font-heading font-semibold">{lbl.t}</span>
                       {lbl.date && (
-                        <span className="mt-0.5 text-[0.45rem] opacity-70">{lbl.date}</span>
+                        <span className="mt-0.5 text-[0.5rem] opacity-70">{lbl.date}</span>
                       )}
                       {k === todayWeek && (
-                        <span
-                          className="mt-0.5 rounded-sm px-0.5 py-px text-[0.4rem] font-heading font-bold uppercase tracking-wide leading-none text-white"
-                          style={{ backgroundColor: '#28B39B' }}
-                        >
+                        <span className="mt-0.5 rounded-sm px-0.5 py-px text-[0.45rem] font-heading font-bold uppercase tracking-wide leading-none text-white bg-teal">
                           dziś
                         </span>
                       )}
@@ -498,7 +536,7 @@ export function GanttChart({ project }: GanttChartProps) {
             )}
 
             {/* FIX 2: kontener relative dla jednego ciągłego overlay „dziś" */}
-            <div className="relative">
+            <div className="relative" role="rowgroup">
 
               {/* ── FIX 2: Overlay linia „dziś" — JEDEN element, cała wysokość ── */}
               {todayWeek !== null && (
@@ -531,8 +569,8 @@ export function GanttChart({ project }: GanttChartProps) {
                       >
                         {k === todayWeek && (
                           <div
-                            className="mx-auto h-full"
-                            style={{ width: '1.5px', backgroundColor: 'rgba(40,179,155,0.70)' }}
+                            className="mx-auto h-full bg-teal/70"
+                            style={{ width: '1.5px' }}
                           />
                         )}
                       </div>
@@ -576,9 +614,8 @@ export function GanttChart({ project }: GanttChartProps) {
                         <ChevronRight
                           aria-hidden="true"
                           className={cn(
-                            'h-3 w-3 shrink-0 transition-transform',
+                            'h-3 w-3 shrink-0 transition-transform motion-reduce:transition-none',
                             !isCollapsed && 'rotate-90',
-                            '@media (prefers-reduced-motion: reduce) transition-none'
                           )}
                         />
                         <span>{step.phaseNumber}</span>
@@ -595,7 +632,7 @@ export function GanttChart({ project }: GanttChartProps) {
                         <span>FAZA {step.phaseNumber} — {step.phaseName}</span>
                         {isCollapsed && phaseTaskCount > 0 && (
                           <span className="text-[0.6rem] font-normal font-mono text-muted-foreground shrink-0">
-                            {phaseTaskCount} {phaseTaskCount === 1 ? 'zadanie' : phaseTaskCount < 5 ? 'zadania' : 'zadań'}
+                            {phaseTaskCount} {phaseTaskCount === 1 ? 'zadanie' : (phaseTaskCount % 10 >= 2 && phaseTaskCount % 10 <= 4 && (phaseTaskCount % 100 < 10 || phaseTaskCount % 100 >= 20)) ? 'zadania' : 'zadań'}
                             {phaseEstSum > 0 && ` · ${phaseEstSum}h`}
                           </span>
                         )}
@@ -608,13 +645,14 @@ export function GanttChart({ project }: GanttChartProps) {
                       <div role="cell" className={COL.est} />
                       {/* Own — puste */}
                       <div role="cell" className={COL.own} />
-                      {/* Obszar tygodni — tylko linie podziału, bez segmentu teal (overlay go zastąpił) */}
+                      {/* Obszar tygodni — linie podziału + opcjonalny cienki pasek fazy gdy zwinięta */}
                       <div
                         role="cell"
                         className={cn(COL.wk, 'h-[36px]')}
                         style={{
                           display: 'grid',
                           gridTemplateColumns: `repeat(${weekCount}, minmax(28px, 1fr))`,
+                          gridTemplateRows: '1fr',
                         }}
                       >
                         {weeks.map((k) => (
@@ -622,8 +660,22 @@ export function GanttChart({ project }: GanttChartProps) {
                             key={k}
                             aria-hidden="true"
                             className="border-l border-border/25 h-full"
+                            style={{ gridRow: 1 }}
                           />
                         ))}
+                        {/* Cienki pasek fazy na osi gdy zwinięta — daje obraz rozłożenia w czasie */}
+                        {isCollapsed && step.wStart !== null && step.wEnd !== null && (() => {
+                          const wS = clampWeek(step.wStart, weekCount)
+                          const wE = clampWeek(step.wEnd, weekCount)
+                          if (wS === null || wE === null) return null
+                          return (
+                            <div
+                              aria-hidden="true"
+                              className="h-1 rounded-full bg-teal/40 self-center"
+                              style={{ gridColumn: `${wS} / ${wE + 1}`, gridRow: 1 }}
+                            />
+                          )
+                        })()}
                       </div>
                       {/* Status — puste */}
                       <div role="cell" className={COL.st} />
@@ -637,8 +689,10 @@ export function GanttChart({ project }: GanttChartProps) {
                           const wStartC = clampWeek(task.wStart, weekCount)
                           const wEndC = clampWeek(task.wEnd, weekCount)
                           const hasBar = wStartC !== null && wEndC !== null
-                          const barColor = KIND_COLOR[task.kind]
                           const taskIdx = idx + 1
+
+                          const taskIsOverdue = isOverdue(task)
+                          const barColor = taskIsOverdue ? 'var(--status-off)' : KIND_COLOR[task.kind]
 
                           return (
                             <div
@@ -675,15 +729,15 @@ export function GanttChart({ project }: GanttChartProps) {
                               >
                                 <KindChip kind={task.kind} />
                               </div>
-                              {/* Typ — brak pola per-task w GanttTask */}
+                              {/* Typ — kolorowe chipy ImplType */}
                               <div
                                 role="cell"
                                 className={cn(
                                   COL.typ,
-                                  'px-1 py-1.5 text-[0.6rem] text-muted-foreground/60 text-center'
+                                  'px-1 py-1.5 flex items-center justify-center'
                                 )}
                               >
-                                —
+                                <ImplTypeChips types={task.types} />
                               </div>
                               {/* Est. — mono */}
                               <div
@@ -746,7 +800,7 @@ export function GanttChart({ project }: GanttChartProps) {
                             key={`ms-${ms.id}`}
                             role="row"
                             aria-label={`Kamień milowy: ${ms.name}`}
-                            className="flex items-center min-h-[36px] border-t border-border/30 border-l-2 border-l-status-at/60 bg-status-at/10"
+                            className="flex items-center min-h-[36px] border-t border-border/30 border-l-2 border-l-status-at/60 bg-status-at/10 dark:bg-status-at/20"
                           >
                             {/* # — msCode */}
                             <div
@@ -768,8 +822,8 @@ export function GanttChart({ project }: GanttChartProps) {
                             >
                               <span
                                 aria-hidden="true"
-                                className="shrink-0 inline-block rotate-45 rounded-[2px]"
-                                style={{ width: 9, height: 9, backgroundColor: '#EF9F27', minWidth: 9 }}
+                                className="shrink-0 inline-block rotate-45 rounded-[2px] bg-status-at"
+                                style={{ width: 9, height: 9, minWidth: 9 }}
                               />
                               <span className="truncate" title={ms.name}>
                                 {ms.name}
@@ -822,7 +876,7 @@ export function GanttChart({ project }: GanttChartProps) {
                   key={`ms-tail-${ms.id}`}
                   role="row"
                   aria-label={`Kamień milowy: ${ms.name}`}
-                  className="flex items-center min-h-[36px] border-t border-border/30 border-l-2 border-l-status-at/60 bg-status-at/10"
+                  className="flex items-center min-h-[36px] border-t border-border/30 border-l-2 border-l-status-at/60 bg-status-at/10 dark:bg-status-at/20"
                 >
                   {/* # — msCode */}
                   <div
@@ -844,8 +898,8 @@ export function GanttChart({ project }: GanttChartProps) {
                   >
                     <span
                       aria-hidden="true"
-                      className="shrink-0 inline-block rotate-45 rounded-[2px]"
-                      style={{ width: 9, height: 9, backgroundColor: '#EF9F27', minWidth: 9 }}
+                      className="shrink-0 inline-block rotate-45 rounded-[2px] bg-status-at"
+                      style={{ width: 9, height: 9, minWidth: 9 }}
                     />
                     <span className="truncate" title={ms.name}>
                       {ms.name}

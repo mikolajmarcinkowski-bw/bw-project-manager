@@ -239,6 +239,10 @@ export interface GanttTask {
   wEnd: number | null
   assigneeName: string | null
   isMilestone: boolean
+  /** Typy wdrożenia zadania (CRM/SPO/INT/MKT/ERP) — kolumna „Typ" w Gantcie. */
+  types: ImplType[]
+  /** Termin zadania (do alertów „po terminie"). */
+  dueDate: string | null
 }
 
 export interface GanttStep {
@@ -308,7 +312,7 @@ export const getProjectDetail = cache(async (projectId: string): Promise<Project
       .order('step_order', { ascending: true }),
     supabase
       .from('tasks')
-      .select('id, step_id, title, status, kind, est, w_start, w_end, assignee_name, is_milestone, task_order')
+      .select('id, step_id, title, status, kind, est, w_start, w_end, assignee_name, is_milestone, type, due_date, task_order')
       .eq('project_id', projectId)
       .eq('hidden', false)
       .order('task_order', { ascending: true }),
@@ -338,6 +342,8 @@ export const getProjectDetail = cache(async (projectId: string): Promise<Project
       wEnd: t.w_end,
       assigneeName: t.assignee_name,
       isMilestone: t.is_milestone,
+      types: (t.type ?? []) as ImplType[],
+      dueDate: t.due_date ?? null,
     })
     tasksByStep.set(t.step_id, arr)
   }
