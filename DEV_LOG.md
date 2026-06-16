@@ -5,6 +5,32 @@
 
 ---
 
+## [2026-06-16] security + feat | ✅ Rotacja hasła (leak domknięty) + obejście logowania dev
+
+### ✅ ROTACJA HASŁA — leak domknięty po stronie produkcji
+- **Zrobione:** zrotowane hasło konta `mikolaj.marcinkowski@businessweb.pl` przez Supabase Auth Admin API
+  (service_role, skrypt jednorazowy `scripts/rotate-pass.mjs` — utworzony, wykonany, **usunięty**; nic w gicie).
+  Hasło generowane losowo (crypto), zweryfikowane: nowe loguje, stare (z historii `21bf0a4`) martwe.
+- **Creds E2E** zapisane do gitignored `.env.e2e` (E2E_EMAIL/E2E_PASS) — klik-testy znów działają bez creds w kodzie.
+- **➡️ Po stronie Mikołaja:** oznaczyć alert GitHub jako „revoked". (Przepisanie historii niekonieczne — hasło już martwe.)
+
+### feat | Obejście logowania dev (admin + user) — TYLKO lokalnie — commit `3ed0a2c`
+- **Co:** na `/login` w trybie dev dwa przyciski („Wejdź jako Admin", „Wejdź jako User") — klik = wejście na konto
+  dev bez wpisywania hasła. W produkcji/preview Vercela NIE istnieją (ani markup, ani działająca akcja).
+- **Architektura (defense-in-depth, fail-closed):** `page.tsx` przepisany na server component, gate
+  `NODE_ENV === 'development'` (render przycisków); akcja `devLogin(role)` w `actions.ts` twardo odmawia poza dev
+  PRZED odczytem creds. Formularz wydzielony do `login-form.tsx`, przyciski w `dev-login.tsx`.
+- **Konta dev (skrypt jednorazowy `scripts/seed-dev-accounts.mjs`, usunięty):** `dev-admin@bwmanager.pl` (admin+tester),
+  `dev-user@bwmanager.pl` (user). Losowe hasła. **Creds WYŁĄCZNIE w `.env.local`** (gitignored, NIE w Vercel).
+- **Weryfikacja:** prod build (`next build`+`next start`) — markup /login bez przycisków, grep `.next` bez creds;
+  E2E klik admin+user → /dashboard, zero błędów konsoli; tsc czysty; impeccable detect `[]`.
+- **Przeglądy:** code-reviewer (APPROVE, 0 P0/P1) + security-auditor (gate szczelny, 0 P0/P1). Wdrożone uwagi:
+  gate fail-closed (`!== 'development'`), DEV_USER ograniczony do roli `user`, doprecyzowane komentarze.
+- **⚠️ NAUCZKA (security-auditor):** `.env.local` zawiera teraz creds **produkcyjnego admina** (dev-admin) →
+  jego wyciek = kompromitacja prod, nie tylko niedogodność dev. Traktować jak sekret klasy produkcyjnej.
+
+---
+
 ## [2026-06-15] security + ui | 🔴 LEAK (do domknięcia) + upiększanie UI (foldery)
 
 ### 🔴 SECURITY — leak danych logowania (CZĘŚCIOWO domknięte, ROTACJA OTWARTA)
