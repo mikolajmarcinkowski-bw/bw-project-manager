@@ -285,41 +285,36 @@ export function GanttChart({ project }: GanttChartProps) {
     assignedMs: typeof milestones
   }
 
-  const unusedMs = new Set(milestones.map((m) => m.id))
-  const phaseGroups: PhaseGroup[] = []
-
-  for (const step of steps) {
-    const regularStepTasks = step.tasks.filter((t) => !t.isMilestone)
-
-    // Milestony przypisane do tej fazy
-    const assignedMs: typeof milestones = []
-    for (const ms of milestones) {
-      if (!unusedMs.has(ms.id)) continue
-      if (ms.week === null || ms.week < 1 || ms.week > weekCount) continue
-
-      const msWeek = ms.week
-      const stepWEnd = step.wEnd
-
-      if (stepWEnd === null || stepWEnd > msWeek) continue
-
-      // Sprawdź czy istnieje lepsza faza (wEnd > stepWEnd && wEnd <= ms.week)
-      const betterStepExists = steps.some((other) => {
-        if (other.id === step.id) return false
-        const otherEnd = other.wEnd
-        if (otherEnd === null) return false
-        return otherEnd > stepWEnd && otherEnd <= msWeek
-      })
-      if (betterStepExists) continue
-
-      assignedMs.push(ms)
-      unusedMs.delete(ms.id)
+  // Przypisanie kamienia do fazy:
+  //  1) faza ZAWIERAJĄCA tydzień kamienia (wStart ≤ week ≤ wEnd),
+  //  2) w przeciwnym razie OSTATNIA faza która już się zaczęła (wStart ≤ week),
+  //  3) inaczej → tail (koniec listy).
+  // Naprawia bug: kamień w tygodniu 1 (np. „Kick-off zakończony") nie ucieka na koniec,
+  // bo żadna faza nie kończy się przed tygodniem 1 — teraz trafia do fazy zawierającej.
+  const msAssignment = new Map<string, string>() // msId → stepId
+  for (const ms of milestones) {
+    if (ms.week === null || ms.week < 1 || ms.week > weekCount) continue
+    const w = ms.week
+    let containing: GanttStep | null = null
+    let lastStarted: GanttStep | null = null
+    for (const s of steps) {
+      if (s.wStart === null) continue
+      if (s.wStart <= w) lastStarted = s
+      // pierwsza faza zawierająca tydzień (fazy bywają nakładające się — bierzemy najwcześniejszą)
+      if (containing === null && s.wEnd !== null && s.wStart <= w && w <= s.wEnd) containing = s
     }
-
-    phaseGroups.push({ step, regularTasks: regularStepTasks, assignedMs })
+    const target = containing ?? lastStarted
+    if (target) msAssignment.set(ms.id, target.id)
   }
 
-  // Milestony które nie zostały przypisane → tail (zawsze widoczne)
-  const tailMs: typeof milestones = milestones.filter((ms) => unusedMs.has(ms.id))
+  const phaseGroups: PhaseGroup[] = steps.map((step) => ({
+    step,
+    regularTasks: step.tasks.filter((t) => !t.isMilestone),
+    assignedMs: milestones.filter((ms) => msAssignment.get(ms.id) === step.id),
+  }))
+
+  // Kamienie bez przypisania (week null / poza zakresem / brak faz z datami) → tail
+  const tailMs: typeof milestones = milestones.filter((ms) => !msAssignment.has(ms.id))
 
   // ── Tygodnie 1..N ────────────────────────────────────────────────────────────
 
