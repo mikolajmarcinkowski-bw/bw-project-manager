@@ -15,8 +15,9 @@
 | Supabase projekt | ✅ GOTOWE | https://ipptnszwnjtoqpixhefd.supabase.co (West EU London, PG17) | 2026-06-15 |
 | Schemat DB (migracje) | ✅ WDROŻONE | 29 tabel + RLS + trigger profiles + seed (13 szablonów / 86 zadań) | 2026-06-15 |
 | Supabase CLI | ✅ ZALOGOWANE | token (login --token); link `ipptnszwnjtoqpixhefd` | 2026-06-15 |
-| Auth / konta | ✅ DZIAŁA | rejestracja WYŁĄCZONA; konto Mikołaja: dev_admin+tester (hasło tymcz. — zmienić). Konta zakłada admin przez Auth Admin API | 2026-06-15 |
-| Aplikacja (Faza 1) | ✅ DZIAŁA lokalnie | login + shell + dashboard + inspekcja; branch `feat/db-foundation-auth` (niemergowany) | 2026-06-15 |
+| Auth / konta | ✅ DZIAŁA | rejestracja WYŁĄCZONA; konto Mikołaja: dev_admin+tester (hasło **zrotowane** 2026-06-16 po leaku). Konta zakłada admin przez Auth Admin API | 2026-06-16 |
+| Konta dev (lokalne) | ✅ DZIAŁA | `dev-admin`/`dev-user@bwmanager.pl` (admin/user) do obejścia logowania — creds tylko w `.env.local`, NIE w Vercel. Obejście aktywne wyłącznie w dev (gate `NODE_ENV`) | 2026-06-16 |
+| Aplikacja (Faza 1+2a) | ✅ NA PRODUKCJI | login + shell + inspekcja + dashboard teczkowy + klient/projekt (R15) + /projekty + delight; `main` (merge `81e9197`) → `bw-project-manager.vercel.app` | 2026-06-16 |
 | Resend | ✅ GOTOWE | brief@bwmanager.pl (1000 maili/mc free) | 2026-06-15 |
 | Domena własna | ⏳ TBD | — | — |
 

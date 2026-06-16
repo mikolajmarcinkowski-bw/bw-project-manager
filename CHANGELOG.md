@@ -4,9 +4,43 @@
 
 ---
 
+## [0.6.0] — 2026-06-16 — 🚀 PRODUKCJA: merge Faza 2a → main + delight + security
+
+> Status: **ZMERGOWANE do `main`** (merge `81e9197`) → **auto-deploy Production** (`bw-project-manager.vercel.app`).
+> Pierwsze wdrożenie Fazy 2a na produkcję. Faza spec + Faza 1 + Faza 2a żywe online.
+
+### Wdrożono na produkcję
+- **Faza 1:** auth (login + `proxy.ts` + DAL), design BW (tokeny, jasny/ciemny), shell, inspekcja, logo
+- **Faza 2a:** tworzenie klienta (P1) + projektu z auto-insertem R15 (P2); dashboard teczkowy + czerwony trójkąt (P13);
+  /projekty + filtry (P14); /clients/[id] (P4); /archiwum (placeholder)
+
+### Dodano (sesja 12)
+- **Obejście logowania dev** (`feat(login)` `3ed0a2c`): przyciski „Wejdź jako Admin/User" na /login — TYLKO lokalnie
+  (gate fail-closed `NODE_ENV==='development'`); w produkcji nieobecne (ani markup, ani działająca akcja). Konta dev
+  `dev-admin`/`dev-user@bwmanager.pl`, creds tylko w `.env.local` (nie w Vercel).
+- **Delight UI** (`feat(ui)` `33625a6`): teczka **otwiera się na hover** (klapka 3D + kartki), kaskadowe wejścia
+  kafelków/wierszy (reduced-motion-safe), animowany theme-toggle. Papier teczki adaptywny do motywu.
+
+### Bezpieczeństwo
+- ✅ **Leak domknięty:** hasło konta `mikolaj.marcinkowski@businessweb.pl` **zrotowane** (Auth Admin API) — stare martwe.
+  (Mikołaj: oznaczyć alert GitHub „revoked".)
+- Dev-login zweryfikowany jako nieobecny w prod buildzie (markup + grep `.next`); `.env.local`/`.env.e2e` gitignored.
+
+### Jakość / przeglądy
+- code-reviewer + security-auditor (dev-login: 0 P0/P1) + impeccable critique (delight) + detektor `[]`
+- Zweryfikowane: tsc, prod build, E2E (hover jasny+ciemny, reduced-motion opacity=1), zero błędów konsoli
+
+### Decyzje
+- **D-053:** obejście logowania dev tylko lokalnie (gate NODE_ENV) · **D-054:** edytowalne typy wdrożeń → ekran Ustawień (odłożone)
+
+### Następna wersja (0.7.0)
+- Faza 2b: widok projektu = Gantt + klocki + „tu jesteś" (P5/P6/P11/P12)
+
+---
+
 ## [0.5.0] — 2026-06-15 — Upiększanie UI (foldery) + security (leak creds)
 
-> Status: branch `feat/faza-2a-projekty`, NIEZMERGOWANE. ⚠️ Rotacja hasła konta OTWARTA (patrz DEV_LOG/STATUS).
+> Status: zmergowane do `main` w 0.6.0 (2026-06-16). ✅ Rotacja hasła konta WYKONANA (patrz 0.6.0).
 
 ### Zmieniono (UI — impeccable)
 - Teczki klientów jak **foldery** (asset Tabler Icons MIT, `public/folder.svg`, tintowany teal) zamiast CSS-zakładki

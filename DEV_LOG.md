@@ -5,6 +5,20 @@
 
 ---
 
+## [2026-06-16] deploy | 🚀 Merge Faza 2a → main (produkcja) — merge `81e9197`
+
+- **Merge `--no-ff`** `feat/faza-2a-projekty` → `main` (13 commitów: ea4fab3…b13d291). Drzewo czyste, `main` był
+  bezpośrednim przodkiem (brak konfliktów). Push `79be4d1..81e9197 main -> main`.
+- **Auto-deploy Production** uruchomiony (Vercel↔GitHub, potwierdzony w INFRASTRUCTURE) — `bw-project-manager.vercel.app`.
+- **Co trafiło na produkcję:** Faza 1 (auth+shell+inspekcja) + Faza 2a (klient/projekt+R15, dashboard teczkowy,
+  /projekty, /clients/[id], /archiwum) + upiększenie + delight + obejście logowania dev (NIEAKTYWNE w prod —
+  gate `NODE_ENV`, DEV_* nie w Vercel).
+- **Bezpieczeństwo na produkcji:** leak zamknięty (hasło zrotowane, martwe); dev-login zweryfikowany jako nieobecny
+  w prod buildzie; `.env.local`/`.env.e2e` gitignored (nie deployowane).
+- **Dokumentacja:** pełna aktualizacja po mergu (ten wpis, CHANGELOG 0.6.0, STATUS, INFRASTRUCTURE, decisions D-053/D-054).
+
+---
+
 ## [2026-06-16] ui | Więcej delightu — teczka otwiera się na hover + kaskady wejścia — commit `33625a6`
 
 - **Sygnaturowy ruch (centrum):** `ClientCard` / `FolderGlyph` przebudowany — przednia klapka teczki uchyla
