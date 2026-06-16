@@ -4,9 +4,9 @@
 
 ---
 
-## [0.7.0] — 2026-06-16 — Faza 2b: widok projektu = Gantt + klocki + „tu jesteś" (branch)
+## [0.7.0] — 2026-06-16 — Faza 2b: widok projektu = Mapa klocków + phase strip + wierny Gantt
 
-> Status: branch `feat/faza-2b-gantt` (commit `8f4a2db`), NIEZMERGOWANE do `main`. Do PR/mergu po zatwierdzeniu.
+> Status: **ZMERGOWANE → produkcja** (merge `6dcd79e`, 2026-06-16). W 2b dodatkowo: ekran „Mapa klocków + phase strip" (główny widok), wierny task-level Gantt (ciemny header, paski wg kind, zwijalne fazy, ciągła linia „dziś"), Krok 0 (impeccable wpięty w design), QA Playwright (5 projektów), krytyka impeccable + code-reviewer.
 
 ### Dodano
 - **Widok projektu** `/projects/[id]` (P5/P6/P11/P12): nagłówek + **wykres Gantt** na realnym kalendarzu
