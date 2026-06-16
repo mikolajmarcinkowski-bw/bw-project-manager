@@ -5,6 +5,23 @@
 
 ---
 
+## [2026-06-16] feat | Faza 2c START — plasterek 1: interaktywne odhaczanie/status zadania (P7/P8) — commit `8aa767e`
+
+- Branch `feat/faza-2c-zadania`. Pierwszy realny ZAPIS poza tworzeniem projektu.
+- **`updateTaskStatus`** (server action): requireUser + RLS sesji usera (R13, NIE service_role),
+  whitelist statusu, brak mass-assignment (serwer wylicza status+completion_date), completion_date przy
+  „done" (P8), audyt activity_log actor_id z sesji (A4), revalidatePath.
+- **TaskStatusControl** (Base UI Select jako klikalny pill, 5 statusów) wpięty w wiersz zadania Gantta;
+  useTransition + router.refresh; a11y. Usunięty martwy TaskStatusPill.
+- Przeglądy: code-reviewer (0 P0/P1) + security-auditor (BEZPIECZNE w modelu R1/R13, 0 high/krit).
+- E2E: „Plan"→„Gotowe" persystuje po reload; zero błędów konsoli.
+- **Ślad na V2 (z audytu, LOW):** integralność activity_log na poziomie DB (with check actor_id=auth.uid()),
+  rate-limit server actions. Do utwardzenia później.
+- **➡️ DALEJ w 2c:** owner+completion edycja (P8 pełne), ukrywanie N/A + „Pokaż N ukrytych" (P9),
+  edycja dat z potwierdzeniem (P18), wyciszanie warningu (P19), ekran „Checklist fazy" (ekran 7).
+
+---
+
 ## [2026-06-16] deploy | 🚀 Merge Faza 2b → main (produkcja) — merge `6dcd79e`
 
 - **Merge `--no-ff`** `feat/faza-2b-gantt` → `main` (11 commitów). Push `29b3722..6dcd79e`. Auto-deploy Production (prod 200).
