@@ -5,6 +5,91 @@
 
 ---
 
+## [2026-06-16] test+fix | Realne testy Playwright (5 projektów) + fix umiejscowienia kamieni
+
+- **Spawnowano 4 zróżnicowane projekty testowe** (autoryzowane) w 2 nowych klientach (Comarch, Żabka) przez klon
+  bogatego demo z wariacjami: inna aktywna faza, **brak daty startu** (tygodnie względne), **projekt po terminie**
+  (czerwony trójkąt), **completed**. Cel: testy w wielu sytuacjach.
+- **Szeroki QA Playwright** (dashboard + /projekty + 5 projektów × Mapa+Harmonogram, rozwijanie, odczyt DOM):
+  **zero błędów konsoli, zero crashy.** Potwierdzone: multi-teczka + sortowanie zagrożonych (Żabka czerwona),
+  marker „TU JESTEŚ" przenosi się per projekt (Integracja F1 vs Kaufland F3), null-date → względne T1..N (bez linii dziś),
+  completed/atRisk OK.
+- **🐛 BUG ZNALEZIONY I NAPRAWIONY (uwaga Mikołaja „kick-off poza etapami"):** kamień w tygodniu 1
+  („Kick-off zakończony") lądował na końcu listy (po FAZIE 8), bo logika szukała fazy o `wEnd ≤ tydzień`.
+  Fix: kamień → pierwsza faza ZAWIERAJĄCA tydzień (`wStart≤w≤wEnd`), inaczej ostatnia rozpoczęta, inaczej tail.
+  Zweryfikowane: kick-off po FAZIE 0, architektura po FAZIE 2, go-live przy końcu.
+- **Drobne (nie-bugi / limity):** stat „Po terminie" zahardkodowany 0 (brak due_date w data-layer → Faza 2c);
+  interaktywność (odhaczanie/statusy) wciąż brak (Faza 2c); klony testowe mają pełny zestaw zadań niezależnie od typu (artefakt seeda).
+- **Dane testowe na produkcji:** klienci Comarch/Żabka + 4 projekty (do usunięcia w razie potrzeby).
+- Wcześniej w sesji: zwijalne fazy + ciągła linia „dziś" (feedback Mikołaja).
+
+---
+
+## [2026-06-16] feat | Krok 0 (impeccable w design) + ekran „Mapa klocków + phase strip" — commit `e850595`
+
+- **Krok 0 (commit `9bec690`):** utworzono `PRODUCT.md` + `DESIGN.md` w repo build → impeccable wczytuje kontekst
+  (`hasProduct/hasDesign=true`). DESIGN.md = wersja NARZĘDZIOWA (tokeny + słownik komponentów makiet), NIE marketingowy
+  brand z war-roomu. To naprawia przyczynę „artefaktów AI".
+- **Ekran 5 „Mapa klocków + phase strip"** (wiernie z `06-wireframes.html`): nowe `phase-strip.tsx`, `parallel-view.tsx`,
+  `project-views.tsx` (taby Mapa | Harmonogram + wyłączone RACI/RAID/Budżet/KPI). Phase strip = ścieżka faz ze strzałkami,
+  „TU JESTEŚ" (teal) na aktywnym, diamenciki decyzji (romb obrysowany, token `--spo`) NA ścieżce (D-039). Pod stripem
+  Realizacja∥Kontrola (2 kolumny + podsumowania). Istniejący Gantt → zakładka „Harmonogram". Reużyto `getProjectDetail`.
+- **Metoda (nowa dyscyplina):** subagent buduje z makiety → impeccable critique (TYM RAZEM z wczytanym DESIGN.md) +
+  code-reviewer + detektor `[]` → poprawki → E2E jasny/ciemny → commit. Wdrożone uwagi: znak ‖ czytelny (dwa paski),
+  pill statusu z `step.status` (nie zawsze „w toku"), pomijanie `na` w liczniku, rozróżnienie Sprint 1/2, role=tabpanel, token SPO.
+- **Zweryfikowane:** tsc, prod build, E2E (zrzuty `/tmp/e2e/ps2-*`), zero błędów konsoli. Branch `feat/faza-2b-gantt` (niezmergowany).
+- **➡️ DALEJ:** wierność ekranu „Harmonogram Gantt" (ciemny header, kind-bary) wg makiety; potem Faza 2c (interaktywne zadania).
+
+---
+
+## [2026-06-16] audit | 🔍 Holistyczny audyt luk + reconciliacja CAŁEJ dokumentacji
+
+- **Powód (feedback Mikołaja):** „wszędzie artefakty AI" + „update całej dokumentacji i zweryfikuj pracę pod luki holistycznie".
+  Przyczyna źródłowa: widok projektu budowany z modelu danych, nie z makiet `06-wireframes.html`; impeccable leciał bez
+  wczytanego designu (`hasProduct:false`); dokumentacja w kilku miejscach opisywała Fazę 3 jak stan obecny.
+- **Audyt (3 równoległe agenty Explore):** pokrycie ekranów/stories, backend/dane/infra, spójność dokumentów. Ustalenia:
+  - Na produkcji **Faza 1 + 2a**; Gantt na branchu **niewierny makiecie**; brak ekranu „Mapa klocków + phase strip".
+  - **~70% funkcji MVP brakuje** (interaktywność zapisu zadań, MCP/Claude 0/40, daily brief, archiwizacja, admin, dokumenty).
+  - Server actions WRITE 1/26; 30 tabel w bazie, ~21 „martwych" (schema-only, pod Fazę 3).
+- **Utworzono kanon statusu:** `WAR_ROOM/wiki/product/coverage-audit.md` (macierz stories/ekrany/backend × ✅🟡❌).
+- **Naprawiono mylące dokumenty:** banner Faza-3 w `mcp-tools.md`; nota schema-only w `data-model.md` (+ „29"→„30 tabel");
+  kolumna „Wdrożenie" w `product-backlog.md`; `CHANGELOG` [0.4.0] status; `CLAUDE.md` „Plan budowy" = prawdziwe fazy
+  (2a✅/2b🟡/2c❌/3❌); `INFRASTRUCTURE.md` sekcja MCP + wiersze API/Resend = nie istnieje; `STATUS.md` blok „Prawdziwy
+  status"; `index.md` (coverage-audit, D-055, Krok 7 done); **D-055** w `decisions.md` (kanon UI = makiety; impeccable z designem).
+- **Bez zmian w kodzie aplikacji** — czysto dokumentacja/audyt.
+- **➡️ Rekomendacja kolejności:** (1) przebudować widok projektu wg makiet (Mapa klocków + phase strip + wierny Gantt,
+  impeccable z designem), (2) Faza 2c (interaktywne zadania), (3) Faza 3 (MCP, brief, admin, archiwum, dokumenty).
+
+---
+
+## [2026-06-16] feat | Faza 2b — widok projektu = Gantt + klocki + „tu jesteś" (branch `feat/faza-2b-gantt`) — commit `8f4a2db`
+
+- **Co (P5/P6/P11/P12):** nowa trasa `/projects/[id]` — `ProjectHeader` + `GanttChart`.
+  - Oś = **CSS grid, kolumna na tydzień** (`gridColumn: wStart+1 / wEnd+2`, koniec wykluczający). Realne daty
+    gdy `start_date` sensowny (≥2000), inaczej tygodnie względne `T1..N`. Linia „dziś". **Auto-scroll do aktywnego
+    kroku** przy montażu (mierzy realną szerokość kolumny). **Kolumna etykiet faz sticky-left** (przymrożona).
+  - Klocki faz wg statusu (done/w toku/todo/pominięty), **„Tu jesteś"** = teal pierścień + pill na aktywnym kroku.
+  - **Rozwijanie krok→zadania** (status/rodzaj/godziny/osoba), panel przypięty do lewej (czytelny przy scrollu osi).
+  - **Kamienie** (romby wypełnione) + **decyzje P11** (romby obrysowane) + legenda; tagi ∥równolegle / cykliczny;
+    decyzje bez kroku nie znikają.
+- **Data layer:** `getProjectDetail` (cache, ~stała liczba zapytań); rozpiętość klocka z min/max tygodni zadań;
+  weekCount≥8; fallback bounds przy niesymetrycznych tygodniach.
+- **Realizacja:** data layer + trasa + integracja inline; komponenty Gantt + wszystkie poprawki przeglądów przez
+  `react-specialist` (zlecenie Mikołaja: kodowanie przez subagentów). Wzór grid zweryfikowany ręcznie.
+- **Przeglądy:** code-reviewer (0 P0, wzór grid potwierdzony) + impeccable critique (ui-designer) + detektor `[]`.
+  Wdrożone: `cache()`, niesymetryczne tygodnie, logowanie 6 błędów, decyzje bez kroku, a11y rozwijania,
+  off-by-one „dziś", **auto-scroll do aktywnego**, **sticky kolumna etykiet**, kontrast done w dark, czytelność zadań.
+- **Włączone linki** wierszy projektów (`/projekty`, `/clients/[id]`) — usunięto `linkDisabled` (trasa istnieje).
+- **⚠️ DANE DEMO (prod):** za zgodą Mikołaja zseedowano projekt testowy (był „gfdsg") → „Kaufland — Wdrożenie CRM
+  (DEMO Gantt)": realny start 2026-04-06, aktywny krok F3, progres faz, para równoległa, 3 kamienie, 1 decyzja.
+  To dane demonstracyjne na produkcyjnej bazie (jedna współdzielona).
+- **Weryfikacja:** tsc + prod build OK; E2E nawigacja (klient→projekt) + render jasny/ciemny + rozwijanie +
+  auto-scroll (zrzuty `/tmp/e2e/gantt-*`); zero błędów konsoli.
+- **➡️ DALEJ:** Faza 2c (interaktywne zadania P7–P10 + edycja dat P18/drag) — patrz odpowiedzi dla Mikołaja.
+  Branch 2b **niezmergowany** — do PR/mergu gdy zatwierdzony.
+
+---
+
 ## [2026-06-16] deploy | 🚀 Merge Faza 2a → main (produkcja) — merge `81e9197`
 
 - **Merge `--no-ff`** `feat/faza-2a-projekty` → `main` (13 commitów: ea4fab3…b13d291). Drzewo czyste, `main` był

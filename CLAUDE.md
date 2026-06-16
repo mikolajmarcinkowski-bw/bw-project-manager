@@ -269,21 +269,25 @@ Pełne reguły R1–R15: `WAR_ROOM/product-specs/.../04-spec.md` sekcja 4.
 
 ---
 
-## Plan budowy (5 faz z 07-initial-prompt.md)
+## Plan budowy — PRAWDZIWY STAN (audyt 2026-06-16, D-055)
+
+> Pełna macierz pokrycia: `WAR_ROOM/wiki/product/coverage-audit.md`. Faza 2 rozbita na 2a/2b/2c.
 
 ```
-Faza 0: ✅ UKOŃCZONA — Next.js init, Supabase, Vercel, Resend, GitHub
-        + ✅ schemat DB (29 tabel + RLS) WDROŻONY + seed (13 szablonów / 86 zadań, D-052)
-Faza 1: 🔶 W TOKU — plumbing auth gotowy (src/proxy.ts [NIE middleware — Next 16!], update-session, DAL);
-        ZOSTAJE: brandowy UI (tokeny BW + theme toggle + shell sidebar/topbar + login) przez `impeccable`
-Faza 2: Core UI — 3 równoległe subagenty (dashboard, Gantt+klocki, zadania+alerty)
-Faza 3: MCP Server + email (Resend daily brief)
-Faza 4: Admin panel + uzupełnienia P1
-Faza 5: QA + testy + deploy finalny
+Faza 0:  ✅ UKOŃCZONA — init, Supabase, Vercel, Resend, GitHub + schemat DB (30 tabel + RLS) + seed (13/86, D-052)
+Faza 1:  ✅ UKOŃCZONA (main) — auth (login + proxy.ts + DAL), tokeny BW + jasny/ciemny, shell, inspekcja, logo
+Faza 2a: ✅ UKOŃCZONA (main) — klient (P1), projekt + auto-insert R15 (P2), dashboard teczkowy (P13), /projekty (P14), /clients/[id] (P4)
+Faza 2b: 🟡 BRANCH `feat/faza-2b-gantt` — Gantt (niezmergowany) ALE NIEWIERNY makiecie; brak ekranu „Mapa klocków + phase strip"
+Faza 2c: ❌ TODO — interaktywne zadania: statusy P7, owner+completion P8, ukrywanie P9, alerty P10, edycja dat P18, wyciszanie P19
+Faza 3:  ❌ TODO — serwer MCP (P3, 0/40), daily brief Resend (P15), panel admina (A1–A4), archiwizacja (P16/P20), dokumenty (D1)
+Faza 4:  ❌ TODO — uzupełnienia P1, integracje V2 (endpointy)
+Faza 5:  ❌ TODO — QA + testy + deploy finalny
 ```
+> ⚠️ Kanon wyglądu UI = `WAR_ROOM/product-specs/.../06-wireframes.html` (13 ekranów). Buduj WIERNIE z makiet, nie generycznie (D-055).
+> ⚠️ MCP (`mcp-tools.md`) i ~21 tabel dokumentowych = Faza 3, schema-only — NIE istnieją w kodzie MVP.
 > ⚠️ Next 16: `middleware.ts` → `proxy.ts` (w `src/`), `cookies()` async. Czytaj `node_modules/next/dist/docs/` przed kodem Next.
 
-Szczegółowy plan: `WAR_ROOM/product-specs/.../07-initial-prompt.md`
+Szczegółowy plan (oryginalny): `WAR_ROOM/product-specs/.../07-initial-prompt.md`
 
 ---
 

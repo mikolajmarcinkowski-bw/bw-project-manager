@@ -1,6 +1,7 @@
 // Read-only data layer for server components.
 // No 'use server' directive — this is not a Server Actions file.
 
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import type { ImplType } from '@/lib/actions/projects'
 
@@ -218,6 +219,208 @@ export async function getProfiles(): Promise<{ id: string; full_name: string | n
 
   return data
 }
+
+// ─── getProjectDetail (widok Gantt — P5/P6/P11/P12) ─────────────────────────────
+
+export type StepStatus = 'todo' | 'in_progress' | 'done' | 'skipped'
+export type TaskStatus = 'todo' | 'in_progress' | 'done' | 'for_quality' | 'na'
+export type TaskKind = 'ws' | 'own' | 'config' | 'test' | 'ms' | 'pm'
+export type MilestoneStatus = 'on' | 'at' | 'off' | 'done'
+export type DecisionType = 'uat' | 'change_request' | 'deviation' | 'other'
+export type DecisionStatus = 'pending' | 'yes' | 'no'
+
+export interface GanttTask {
+  id: string
+  title: string
+  status: TaskStatus
+  kind: TaskKind
+  est: number | null
+  wStart: number | null
+  wEnd: number | null
+  assigneeName: string | null
+  isMilestone: boolean
+  /** Typy wdrożenia zadania (CRM/SPO/INT/MKT/ERP) — kolumna „Typ" w Gantcie. */
+  types: ImplType[]
+  /** Termin zadania (do alertów „po terminie"). */
+  dueDate: string | null
+}
+
+export interface GanttStep {
+  id: string
+  phaseNumber: number
+  phaseName: string
+  stepTitle: string
+  status: StepStatus
+  isActive: boolean
+  isParallel: boolean
+  isRecurring: boolean
+  isDecision: boolean
+  /** Rozpiętość wyliczona z tygodni zadań (null gdy krok bez zadań). */
+  wStart: number | null
+  wEnd: number | null
+  tasks: GanttTask[]
+}
+
+export interface ProjectDetail {
+  id: string
+  name: string
+  status: string
+  startDate: string | null
+  endDate: string | null
+  /** Data startu tylko jeśli sensowna (≥ rok 2000) — inaczej oś = tygodnie względne. */
+  calendarStart: string | null
+  weekCount: number
+  types: ImplType[]
+  client: { id: string; name: string }
+  pms: { id: string; fullName: string | null }[]
+  atRisk: boolean
+  steps: GanttStep[]
+  milestones: { id: string; msCode: string | null; name: string; week: number | null; status: MilestoneStatus }[]
+  decisions: { id: string; type: DecisionType; status: DecisionStatus; title: string; stepId: string | null }[]
+}
+
+// cache(): trasa woła getProjectDetail dwa razy (generateMetadata + page) —
+// React cache dedupuje w obrębie jednego requestu.
+export const getProjectDetail = cache(async (projectId: string): Promise<ProjectDetail | null> => {
+  const supabase = await createClient()
+
+  const { data: project, error: projErr } = await supabase
+    .from('projects')
+    .select('id, name, status, start_date, end_date, client_id, clients(id, name)')
+    .eq('id', projectId)
+    .single()
+
+  if (projErr || !project) {
+    console.error('[getProjectDetail] project fetch failed:', projErr)
+    return null
+  }
+
+  const [
+    { data: typesRows, error: typesErr },
+    { data: stepsRows, error: stepsErr },
+    { data: taskRows, error: tasksErr },
+    { data: msRows, error: msErr },
+    { data: decRows, error: decErr },
+    { data: pmRows, error: pmErr },
+  ] = await Promise.all([
+    supabase.from('project_types').select('type').eq('project_id', projectId),
+    supabase
+      .from('project_steps')
+      .select('id, phase_number, phase_name, step_title, status, is_active, is_parallel, is_recurring, is_decision, step_order')
+      .eq('project_id', projectId)
+      .order('phase_number', { ascending: true })
+      .order('step_order', { ascending: true }),
+    supabase
+      .from('tasks')
+      .select('id, step_id, title, status, kind, est, w_start, w_end, assignee_name, is_milestone, type, due_date, task_order')
+      .eq('project_id', projectId)
+      .eq('hidden', false)
+      .order('task_order', { ascending: true }),
+    supabase.from('milestones').select('id, ms_code, name, week, status').eq('project_id', projectId),
+    supabase.from('decision_points').select('id, type, status, title, step_id').eq('project_id', projectId),
+    supabase.from('project_pms').select('profiles(id, full_name)').eq('project_id', projectId),
+  ])
+
+  if (typesErr) console.error('[getProjectDetail] types:', typesErr)
+  if (stepsErr) console.error('[getProjectDetail] steps:', stepsErr)
+  if (tasksErr) console.error('[getProjectDetail] tasks:', tasksErr)
+  if (msErr) console.error('[getProjectDetail] milestones:', msErr)
+  if (decErr) console.error('[getProjectDetail] decisions:', decErr)
+  if (pmErr) console.error('[getProjectDetail] pms:', pmErr)
+
+  // Zadania pogrupowane wg kroku
+  const tasksByStep = new Map<string, GanttTask[]>()
+  for (const t of taskRows ?? []) {
+    const arr = tasksByStep.get(t.step_id) ?? []
+    arr.push({
+      id: t.id,
+      title: t.title,
+      status: t.status as TaskStatus,
+      kind: t.kind as TaskKind,
+      est: t.est,
+      wStart: t.w_start,
+      wEnd: t.w_end,
+      assigneeName: t.assignee_name,
+      isMilestone: t.is_milestone,
+      types: (t.type ?? []) as ImplType[],
+      dueDate: t.due_date ?? null,
+    })
+    tasksByStep.set(t.step_id, arr)
+  }
+
+  const steps: GanttStep[] = (stepsRows ?? []).map((s) => {
+    const tasks = tasksByStep.get(s.id) ?? []
+    // Fallback na drugi bound gdy zadanie ma tylko jeden (chroni przed znikaniem paska)
+    const starts = tasks.map((t) => t.wStart ?? t.wEnd).filter((w): w is number => w != null)
+    const ends = tasks.map((t) => t.wEnd ?? t.wStart).filter((w): w is number => w != null)
+    return {
+      id: s.id,
+      phaseNumber: s.phase_number,
+      phaseName: s.phase_name,
+      stepTitle: s.step_title,
+      status: s.status as StepStatus,
+      isActive: s.is_active,
+      isParallel: s.is_parallel,
+      isRecurring: s.is_recurring,
+      isDecision: s.is_decision,
+      wStart: starts.length ? Math.min(...starts) : null,
+      wEnd: ends.length ? Math.max(...ends) : null,
+      tasks,
+    }
+  })
+
+  const milestones = (msRows ?? []).map((m) => ({
+    id: m.id,
+    msCode: m.ms_code,
+    name: m.name,
+    week: m.week,
+    status: m.status as MilestoneStatus,
+  }))
+
+  // Liczba tygodni osi = max z (końców kroków, tygodni milestone); min. 8.
+  const allEnds = [
+    ...steps.map((s) => s.wEnd ?? 0),
+    ...milestones.map((m) => m.week ?? 0),
+  ]
+  const weekCount = Math.max(8, ...allEnds)
+
+  // Data startu sensowna tylko jeśli ≥ 2000 (chroni przed śmieciowymi datami testowymi)
+  const startYear = project.start_date ? Number(project.start_date.slice(0, 4)) : 0
+  const calendarStart = startYear >= 2000 ? project.start_date : null
+
+  const clientField = Array.isArray(project.clients) ? project.clients[0] : project.clients
+  const riskIds = await getAtRiskProjectIds(supabase, [projectId])
+
+  const pms = (pmRows ?? [])
+    .map((r) => {
+      const prof = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
+      return prof ? { id: prof.id, fullName: prof.full_name } : null
+    })
+    .filter((x): x is { id: string; fullName: string | null } => x != null)
+
+  return {
+    id: project.id,
+    name: project.name,
+    status: project.status,
+    startDate: project.start_date ?? null,
+    endDate: project.end_date ?? null,
+    calendarStart,
+    weekCount,
+    types: (typesRows ?? []).map((r) => r.type as ImplType),
+    client: { id: clientField?.id ?? '', name: clientField?.name ?? '' },
+    pms,
+    atRisk: riskIds.has(projectId),
+    steps,
+    milestones,
+    decisions: (decRows ?? []).map((d) => ({
+      id: d.id,
+      type: d.type as DecisionType,
+      status: d.status as DecisionStatus,
+      title: d.title,
+      stepId: d.step_id,
+    })),
+  }
+})
 
 // ─── getClientWithProjects ────────────────────────────────────────────────────
 
