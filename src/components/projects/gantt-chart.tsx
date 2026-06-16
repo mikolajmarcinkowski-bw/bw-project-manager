@@ -6,12 +6,12 @@ import { cn } from '@/lib/utils'
 import type {
   ProjectDetail,
   GanttTask,
-  TaskStatus,
   TaskKind,
   MilestoneStatus,
   GanttStep,
   ImplType,
 } from '@/lib/data/projects'
+import { TaskStatusControl } from '@/components/projects/task-status-control'
 
 // ─── Stałe szerokości kolumn (muszą być identyczne w ghead i każdym wierszu grow) ─
 
@@ -56,23 +56,7 @@ const KIND_LABEL: Record<TaskKind, string> = {
   ms: 'kamień',
 }
 
-// ─── Statusy zadania ──────────────────────────────────────────────────────────────
-
-const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
-  todo: 'plan',
-  in_progress: 'w toku',
-  done: 'gotowe',
-  for_quality: 'QA',
-  na: 'N/D',
-}
-
-const TASK_STATUS_CLASSES: Record<TaskStatus, string> = {
-  todo: 'bg-muted text-muted-foreground',
-  in_progress: 'bg-teal/10 text-teal',
-  done: 'bg-teal/15 text-teal-strong',
-  for_quality: 'bg-status-quality/15 text-status-quality',
-  na: 'bg-muted/50 text-muted-foreground/60 line-through',
-}
+// Statusy zadania renderuje teraz interaktywny TaskStatusControl (P7) — patrz task-status-control.tsx.
 
 // ─── Statusy milestona ────────────────────────────────────────────────────────────
 
@@ -182,21 +166,6 @@ function initials(name: string | null): string {
 /** Suma est zadań w kroku (pomijamy null). */
 function totalEst(tasks: GanttTask[]): number {
   return tasks.reduce((acc, t) => acc + (t.est ?? 0), 0)
-}
-
-// ─── Subkomponent: pill statusu zadania ──────────────────────────────────────────
-
-function TaskStatusPill({ status }: { status: TaskStatus }) {
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full px-1.5 py-0.5 text-[0.6rem] font-semibold font-heading leading-none',
-        TASK_STATUS_CLASSES[status]
-      )}
-    >
-      {TASK_STATUS_LABEL[status]}
-    </span>
-  )
 }
 
 // ─── Subkomponent: pill statusu milestona ────────────────────────────────────────
@@ -783,12 +752,12 @@ export function GanttChart({ project }: GanttChartProps) {
                                   />
                                 )}
                               </div>
-                              {/* Status — pill */}
+                              {/* Status — pill interaktywny (P7) */}
                               <div
                                 role="cell"
                                 className={cn(COL.st, 'px-1.5 py-1.5 flex items-center justify-center')}
                               >
-                                <TaskStatusPill status={task.status} />
+                                <TaskStatusControl taskId={task.id} status={task.status} />
                               </div>
                             </div>
                           )
