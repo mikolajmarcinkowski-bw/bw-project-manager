@@ -52,3 +52,38 @@ export async function login(
   // redirect() throws NEXT_REDIRECT -- must be outside try/catch
   redirect(redirectTo)
 }
+
+// ── Obejście logowania (TYLKO lokalnie / development) ───────────────────────
+// Loguje na konto dev (admin lub user) bez wpisywania hasła. Twarda bramka:
+// w produkcji (i na preview Vercela, gdzie NODE_ENV='production') odmawia
+// i NIE czyta żadnych creds. Dane kont wyłącznie z .env.local (nigdy w Vercel).
+export type DevRole = 'admin' | 'user'
+
+export async function devLogin(role: DevRole): Promise<{ error: string } | void> {
+  // Fail-closed: pozwól WYŁĄCZNIE w trybie development. Każda inna wartość
+  // (production, preview, test, brak zmiennej) → odmowa, przed odczytem creds.
+  if (process.env.NODE_ENV !== 'development') {
+    return { error: 'Obejście logowania jest dostępne tylko lokalnie.' }
+  }
+
+  const email =
+    role === 'admin' ? process.env.DEV_ADMIN_EMAIL : process.env.DEV_USER_EMAIL
+  const password =
+    role === 'admin' ? process.env.DEV_ADMIN_PASS : process.env.DEV_USER_PASS
+
+  if (!email || !password) {
+    return {
+      error: 'Brak danych konta dev w .env.local (DEV_ADMIN_*/DEV_USER_*).',
+    }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error) {
+    return { error: 'Nie udało się zalogować na konto dev. Sprawdź .env.local.' }
+  }
+
+  // redirect() rzuca NEXT_REDIRECT -- poza obsługą błędu.
+  // Skrót dev: zawsze na /dashboard (świadomie pomijamy redirectTo).
+  redirect('/dashboard')
+}
