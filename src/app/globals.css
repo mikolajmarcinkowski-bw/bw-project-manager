@@ -50,6 +50,7 @@
 
   /* BW brand semantic colors */
   --color-teal: var(--teal);
+  --color-teal-strong: var(--teal-strong);
   --color-rev-green: var(--rev-green);
   --color-status-on: var(--status-on);
   --color-status-at: var(--status-at);
@@ -128,7 +129,8 @@
   --sidebar-ring: oklch(0.6902 0.1186 177.74);
 
   /* BW brand tokens */
-  --teal: oklch(0.6902 0.1186 177.74);               /* #28B39B structure/links/active */
+  --teal: oklch(0.6902 0.1186 177.74);               /* #28B39B structure/icons/borders/active */
+  --teal-strong: oklch(0.5100 0.1080 177.74);        /* ~#1a7a6a WCAG AA text on white ≥4.5:1 */
   --rev-green: oklch(0.8118 0.2218 149.90);          /* #10E76D REV.BW success */
   --status-on: oklch(0.8153 0.2315 148.76);          /* #00E965 on-track */
   --status-at: oklch(0.7642 0.1543 70.80);           /* #EF9F27 at-risk */
@@ -195,6 +197,7 @@
 
   /* BW brand tokens (same in both modes) */
   --teal: oklch(0.6902 0.1186 177.74);
+  --teal-strong: oklch(0.6902 0.1186 177.74);        /* in dark mode, original teal is light enough */
   --rev-green: oklch(0.8118 0.2218 149.90);
   --status-on: oklch(0.8153 0.2315 148.76);
   --status-at: oklch(0.7642 0.1543 70.80);
@@ -265,8 +268,36 @@
     box-shadow: 0 4px 8px rgba(20, 20, 20, 0.06);
   }
 
+  /* Elevated shadow for hover lift */
+  .shadow-whisper-lg {
+    box-shadow: 0 12px 24px rgba(20, 20, 20, 0.08), 0 4px 8px rgba(20, 20, 20, 0.04);
+  }
+
   /* Compact density override */
   .compact {
     --spacing-compact: 0.375rem;
+  }
+}
+
+/* ============================================================
+   A11Y: szanuj prefers-reduced-motion — zeruj ruch globalnie.
+   Wejścia kafelków są dodatkowo bramkowane wariantem motion-safe,
+   więc bez ruchu lądują w stanie w pełni widocznym (fail-safe).
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Wyjątek: spinnery ładowania to jedyny sygnał „pracuję" — zostawiamy ruch
+     (wyższa specyficzność niż reset na *). */
+  .animate-spin {
+    animation-duration: 0.8s !important;
+    animation-iteration-count: infinite !important;
   }
 }

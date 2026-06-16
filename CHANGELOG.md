@@ -4,6 +4,48 @@
 
 ---
 
+## [0.5.0] — 2026-06-15 — Upiększanie UI (foldery) + security (leak creds)
+
+> Status: branch `feat/faza-2a-projekty`, NIEZMERGOWANE. ⚠️ Rotacja hasła konta OTWARTA (patrz DEV_LOG/STATUS).
+
+### Zmieniono (UI — impeccable)
+- Teczki klientów jak **foldery** (asset Tabler Icons MIT, `public/folder.svg`, tintowany teal) zamiast CSS-zakładki
+- Micro-interakcje (hover-lift, press, focus teal, 0.2s ease-out); bogatszy pusty stan dashboardu
+- A11y: token `--teal-strong` (ciemniejszy, WCAG AA) na mały tekst teal; `--teal` na ikony/bordery
+
+### Bezpieczeństwo
+- 🔴 Wykryto leak (GitHub secret scanning): email+hasło konta zahardkodowane w `scripts/e2e.mjs` (commit `21bf0a4`)
+- Naprawione: creds z env (`0a2f43d`). Zakres wąski — `.env.local`/klucze NIE wyciekły.
+- **OTWARTE:** rotacja hasła konta (stare w historii gita) — do zrobienia na start
+
+### Commity sesji 11
+`8df0adc` fix bugów UI · `fd0a1f3` fix QA · `21bf0a4` E2E harness (LEAK) · `d95810b` docs ·
+`0a2f43d` security(e2e) · `b354cdb` upiększanie+foldery
+
+---
+
+## [0.4.0] — 2026-06-15 — Faza 2a: klient/projekt + dashboard teczkowy (branch, do mergu)
+
+> Status: na branchu `feat/faza-2a-projekty`, NIEZMERGOWANE do `main` (brak deployu prod).
+
+### Dodano
+- Tworzenie klienta (P1) + projektu z auto-insertem R15 wg typów wdrożenia (P2)
+- Dashboard teczkowy + czerwony trójkąt zagrożenia (P13); /projekty + filtry (P14); /clients/[id] (P4); /archiwum (placeholder)
+- Walidacja serwerowa (daty, hubspot_url, enum); `revalidatePath`; dynamiczny tytuł topbara
+
+### Naprawiono (testy: qa-expert + E2E Playwright)
+- Błąd Base UI button (render=Link → nativeButton=false); Select pokazuje nazwę nie UUID; checkmark na typach
+- atRisk/P13 działa (end_date<dziś); „Bez PM" bez fallbacku; walidacja dat; składnia enum w zapytaniu
+
+### Testy
+- E2E `scripts/e2e.mjs` (Playwright): wszystkie kroki ✅, zero błędów konsoli; R15 end-to-end potwierdzone
+- Nauczka: stale-cache dev (czarny `--primary`) → restart dev rozwiązuje (CSS był OK)
+
+### Następna wersja (0.5.0)
+- „Upiększanie" UI przez impeccable (foldery, micro-interakcje, edytowalne typy) → potem merge 2a→main
+
+---
+
 ## [0.3.0] — 2026-06-15 — Faza 1: UI (login + shell + inspekcja) + logo + hardening
 
 ### Dodano

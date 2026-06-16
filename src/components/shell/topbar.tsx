@@ -1,23 +1,21 @@
 import { ThemeToggle } from '@/components/theme-toggle'
+import { TopbarTitle } from '@/components/shell/topbar-title'
 import { logout } from '@/lib/actions/auth'
 import type { SessionUser } from '@/lib/auth/dal'
 import { LogOut } from 'lucide-react'
 
 interface TopbarProps {
   user: SessionUser
-  title?: string
 }
 
-export function Topbar({ user, title = 'Dashboard' }: TopbarProps) {
+export function Topbar({ user }: TopbarProps) {
   const displayName = user.fullName ?? user.email ?? 'Użytkownik'
 
   return (
     <header className="sticky top-0 z-40 flex items-center h-14 border-b border-border bg-background px-4 gap-4">
-      {/* Tytul sekcji / breadcrumb */}
+      {/* Tytul sekcji */}
       <div className="flex-1 min-w-0">
-        <p className="font-sans font-semibold text-sm text-foreground truncate">
-          {title}
-        </p>
+        <TopbarTitle />
       </div>
 
       {/* Prawa strona: theme toggle + uzytkownik + wyloguj */}

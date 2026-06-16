@@ -5,6 +5,119 @@
 
 ---
 
+## [2026-06-16] ui | Więcej delightu — teczka otwiera się na hover + kaskady wejścia — commit `33625a6`
+
+- **Sygnaturowy ruch (centrum):** `ClientCard` / `FolderGlyph` przebudowany — przednia klapka teczki uchyla
+  się w 3D (`rotateX(-30deg)`, `origin-bottom`, perspective) na hover, odsłaniając 2 kartki (stała głębia,
+  NIE liczność). Papier **adaptywny do motywu** (`dark:` warianty) — w ciemnym nie świeci jak artefakt.
+- **Kaskadowe wejście (stagger):** kafelki teczek (dashboard) i wiersze projektów wjeżdżają fade-up z
+  opóźnieniem per index. **`motion-safe:` + fail-safe** — baza = `opacity:1`, treść nie utyka na 0.
+- **ThemeToggle:** animowany swap Sun/Moon (rotate+scale+opacity) + `active:scale-90`; polskie znaki w aria-label.
+- **globals.css:** guard `prefers-reduced-motion` zerujący ruch, z wyjątkiem `.animate-spin` (spinner ładowania).
+- **Kierunek:** impeccable (register=product → delight w konkretnych momentach, nie wszędzie); orange=1 akcja, teal=struktura.
+  Subagenci: `react-specialist` (theme-toggle), centrum (folder 3D) inline — craft ruchu. Świadomie **odrzucony** puls
+  trójkąta zagrożenia (ruch na ostrzeżeniu = źle — advisor) i toast sukcesu (brak infra).
+- **Przeglądy:** code-reviewer + impeccable critique (ui-designer) + detektor `[]`. Wdrożone realne uwagi:
+  spinner pod reduced-motion, `duration-400`→`500` (nie istnieje w v4), papier w dark, głębia kartek, redundantny lift.
+- **Weryfikacja:** tsc czysty, prod build OK, E2E hover jasny+ciemny (zrzuty `/tmp/e2e/delight-*`), reduced-motion
+  opacity karty = 1, zero błędów konsoli. (Uwaga: w logu dev hydration-warning od rozszerzenia Dashlane na /login —
+  nie z naszego kodu.)
+
+---
+
+## [2026-06-16] security + feat | ✅ Rotacja hasła (leak domknięty) + obejście logowania dev
+
+### ✅ ROTACJA HASŁA — leak domknięty po stronie produkcji
+- **Zrobione:** zrotowane hasło konta `mikolaj.marcinkowski@businessweb.pl` przez Supabase Auth Admin API
+  (service_role, skrypt jednorazowy `scripts/rotate-pass.mjs` — utworzony, wykonany, **usunięty**; nic w gicie).
+  Hasło generowane losowo (crypto), zweryfikowane: nowe loguje, stare (z historii `21bf0a4`) martwe.
+- **Creds E2E** zapisane do gitignored `.env.e2e` (E2E_EMAIL/E2E_PASS) — klik-testy znów działają bez creds w kodzie.
+- **➡️ Po stronie Mikołaja:** oznaczyć alert GitHub jako „revoked". (Przepisanie historii niekonieczne — hasło już martwe.)
+
+### feat | Obejście logowania dev (admin + user) — TYLKO lokalnie — commit `3ed0a2c`
+- **Co:** na `/login` w trybie dev dwa przyciski („Wejdź jako Admin", „Wejdź jako User") — klik = wejście na konto
+  dev bez wpisywania hasła. W produkcji/preview Vercela NIE istnieją (ani markup, ani działająca akcja).
+- **Architektura (defense-in-depth, fail-closed):** `page.tsx` przepisany na server component, gate
+  `NODE_ENV === 'development'` (render przycisków); akcja `devLogin(role)` w `actions.ts` twardo odmawia poza dev
+  PRZED odczytem creds. Formularz wydzielony do `login-form.tsx`, przyciski w `dev-login.tsx`.
+- **Konta dev (skrypt jednorazowy `scripts/seed-dev-accounts.mjs`, usunięty):** `dev-admin@bwmanager.pl` (admin+tester),
+  `dev-user@bwmanager.pl` (user). Losowe hasła. **Creds WYŁĄCZNIE w `.env.local`** (gitignored, NIE w Vercel).
+- **Weryfikacja:** prod build (`next build`+`next start`) — markup /login bez przycisków, grep `.next` bez creds;
+  E2E klik admin+user → /dashboard, zero błędów konsoli; tsc czysty; impeccable detect `[]`.
+- **Przeglądy:** code-reviewer (APPROVE, 0 P0/P1) + security-auditor (gate szczelny, 0 P0/P1). Wdrożone uwagi:
+  gate fail-closed (`!== 'development'`), DEV_USER ograniczony do roli `user`, doprecyzowane komentarze.
+- **⚠️ NAUCZKA (security-auditor):** `.env.local` zawiera teraz creds **produkcyjnego admina** (dev-admin) →
+  jego wyciek = kompromitacja prod, nie tylko niedogodność dev. Traktować jak sekret klasy produkcyjnej.
+
+---
+
+## [2026-06-15] security + ui | 🔴 LEAK (do domknięcia) + upiększanie UI (foldery)
+
+### 🔴 SECURITY — leak danych logowania (CZĘŚCIOWO domknięte, ROTACJA OTWARTA)
+- **Co się stało:** GitHub secret scanning zgłosił „company email password". Zweryfikowane:
+  zahardkodowałem email konta + hasło w `scripts/e2e.mjs` i zacommitowałem (**commit `21bf0a4`**). Mój błąd.
+- **Zakres (sprawdzone w historii gita):** wyciekł TYLKO email+hasło konta `mikolaj.marcinkowski@businessweb.pl`.
+  `.env.local` NIGDY nie był commitowany → klucze Supabase (service_role/anon) i Resend **bezpieczne**.
+  `eyJ` w repo = tylko hash w `package-lock.json` (fałszywy alarm).
+- **Naprawione:** `scripts/e2e.mjs` czyta teraz creds z env (E2E_EMAIL/E2E_PASS), nie z kodu (**commit `0a2f43d`**).
+- **🔴 OTWARTE — DO ZROBIENIA NA START:** (1) **ROTACJA HASŁA** konta — stare wciąż działa i siedzi w historii `21bf0a4`
+  (rotacja zablokowana przez bezpiecznik, bo nieautoryzowana — Mikołaj ma napisać „rotuj"). (2) W GitHubie oznaczyć alert „revoked".
+  (3) Opcjonalnie: przepisanie historii (force-push) — po rotacji niekonieczne. (4) Po rotacji zaktualizować hasło tam, gdzie używane.
+- **NAUCZKA (→ CLAUDE.md):** NIGDY nie hardkoduj danych logowania/sekretów w kodzie. E2E/skrypty czytają z env/gitignored.
+
+### 🎨 Upiększanie UI (impeccable) — commit `b354cdb`
+- **Teczki jak foldery:** `ClientCard` używa prawdziwego folderu — asset **Tabler Icons (MIT)** w `public/folder.svg`,
+  inline tintowany teal (przez currentColor) — zamiast wcześniejszej CSS-zakładki (Mikołaj odrzucił). Folder „podnosi się" na hover.
+- **Feeling klikania:** hover-lift kart + press (active) + płynne 0.2s ease-out + focus ring teal; project-row hover/press.
+- **A11y kontrast teala:** token `--teal-strong` (ciemniejszy, ~WCAG AA) na MAŁY TEKST teal (nawigacja/breadcrumb/linki);
+  `--teal` zostaje na ikonach/borderach/markerach. W trybie ciemnym `--teal-strong` = `--teal`.
+- **Bogatszy pusty stan** dashboardu (brandowy, zapraszający, jedna orange akcja). Detektor anti-patternów: czysto. Build OK.
+- Realizacja: kierunek + zasady z `impeccable`, implementacja przez subagenta `react-specialist`, folder-asset i ClientCard dopracowane przeze mnie.
+- **NIEZWERYFIKOWANE WIZUALNIE przeze mnie** (bezpiecznik blokuje hasło w cmdline do E2E) — Mikołaj ogląda na `localhost:3000`; po rotacji podepnę creds E2E z gitignored pliku i zrobię zrzuty.
+
+---
+
+## [2026-06-15] test+fix | Testy integracyjne Fazy 2a (E2E Playwright) + naprawy bugów z testów
+
+**Naprawione bugi zgłoszone przez Mikołaja + qa-expert** (commity 8df0adc, fd0a1f3):
+- Button(render=Link) → nativeButton=false (zniknął błąd Base UI w konsoli)
+- Select PM/klient: nazwa zamiast UUID (children-as-function); checkmark na typach (peer-checked)
+- /archiwum: placeholder zamiast 404; atRisk/P13 działa (też end_date<dziś); „Bez PM" bez fallbacku;
+  walidacja dat (deadline≥start, min 2000); hubspot_url schemat; dynamiczny tytuł topbara; CTA w /projekty
+
+**E2E (Playwright headless Chromium na localhost, `scripts/e2e.mjs`, commit 21bf0a4):** wszystkie kroki ✅
+(login, ochrona tras, /projekty, formularz, klik typu=zaznacza, PM=nazwa, tryb ciemny, inspekcja),
+**ZERO błędów konsoli**. R15 potwierdzone end-to-end (Kaufland/SPO+ERP → 10 klocków/51 zadań).
+
+**⚠️ WAŻNA NAUCZKA:** „czarny przycisk / smutny UI" = **nieświeży cache dev serwera** (HMR tokenów
+Tailwind v4 `@theme` zawiódł po wielu edycjach/przełączeniach brancha — `--primary` renderował się
+jako prawie-czerń mimo poprawnego CSS). Fix: `pkill -f "next dev"` + `rm -rf .next/dev .next/cache` +
+restart. Po restarcie brand orange #F94213 renderuje się poprawnie. **Gdy kolory wyglądają źle w dev — restart.**
+
+**Następne:** przebieg „upiększania" przez `impeccable` (teczki jak foldery, micro-interakcje/feeling klikania,
+bogatsze stany, edytowalne typy wdrożeń) + odłożone a11y (kontrast teala, semantyczna tabela).
+
+---
+
+## [2026-06-15] feat | Faza 2a — tworzenie klienta/projektu + dashboard teczkowy (branch feat/faza-2a-projekty)
+
+**Zbudowane (2 subagenci równolegle):** backend (createClientAction P1, createProjectAction + auto-insert R15 P2,
+data/projects.ts: getClientsWithStats/getAllProjects/getProfiles/getClientWithProjects, atRisk) + UI
+(/dashboard teczki+trójkąt P13, /projekty + filtry P14, /clients/[id] P4, /projects/new formularz P2, dialog klienta P1).
+Komponenty clients/* projects/*; shadcn dialog/input/label/select. Commit checkpoint `ea4fab3`, next build OK.
+
+**Przeglądy (detektor czysty; code-reviewer + impeccable critique):**
+- ✅ Naprawione: `revalidatePath` w akcjach (nowy klient/projekt nie pokazywał się bez reloadu); sortowanie
+  zagrożonych teczek na górę + mocniejszy sygnał trójkąta + etykieta „Zagrożony" (P13); focus-visible na pillach
+  typów; PM „— Bez PM —" zamiast cichego preselectu; gwiazdki wymagalności `status-off`→`destructive`; ⚠ emoji→ikona lucide.
+- ⏳ ODŁOŻONE (do decyzji/następnej iteracji): **kontrast teala jako tekst (WCAG AA ~2.6:1)** — decyzja tokenowa/brandowa
+  (brand teal vs ciemniejszy wariant na małym tekście); **div-tabela /projekty → semantyczna `<table>`/role**; **tytuł
+  topbara per-trasa** (statyczny „Dashboard"); natywny `<select>` filtrów → shadcn Select; martwy param `filters` w getAllProjects.
+
+**Następne:** Faza 2b (widok projektu = Gantt + klocki + „tu jesteś", P5/P6/P11/P12). + rozważyć odłożone P1/P2 wyżej.
+
+---
+
 ## [2026-06-15] checkpoint | KONIEC SESJI 10 — Faza 1 ukończona, dokumentacja zaktualizowana
 
 **Co osiągnięto dziś (fundament → Faza 1, wszystko na produkcji/branchu `feat/db-foundation-auth`):**

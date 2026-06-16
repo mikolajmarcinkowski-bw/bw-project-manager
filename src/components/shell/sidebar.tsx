@@ -33,16 +33,16 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                'group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors',
+                'group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors duration-150',
                 isActive
-                  ? 'bg-muted text-teal'
+                  ? 'bg-muted text-teal-strong'
                   : 'text-sidebar-foreground hover:bg-muted/60 hover:text-foreground'
               )}
               aria-current={isActive ? 'page' : undefined}
             >
               <Icon
                 className={cn(
-                  'h-4 w-4 shrink-0 transition-colors',
+                  'h-4 w-4 shrink-0 transition-colors duration-150',
                   isActive ? 'text-teal' : 'text-muted-foreground group-hover:text-foreground'
                 )}
                 aria-hidden="true"
