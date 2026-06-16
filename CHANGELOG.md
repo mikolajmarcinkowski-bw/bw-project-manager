@@ -85,7 +85,7 @@
 
 ## [0.4.0] — 2026-06-15 — Faza 2a: klient/projekt + dashboard teczkowy (branch, do mergu)
 
-> Status: na branchu `feat/faza-2a-projekty`, NIEZMERGOWANE do `main` (brak deployu prod).
+> Status: zmergowane do `main` w 0.6.0 (merge `81e9197`, produkcja). [0.4.0]/[0.5.0] to notatki WIP z brancha.
 
 ### Dodano
 - Tworzenie klienta (P1) + projektu z auto-insertem R15 wg typów wdrożenia (P2)

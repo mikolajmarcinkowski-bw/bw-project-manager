@@ -5,6 +5,26 @@
 
 ---
 
+## [2026-06-16] audit | 🔍 Holistyczny audyt luk + reconciliacja CAŁEJ dokumentacji
+
+- **Powód (feedback Mikołaja):** „wszędzie artefakty AI" + „update całej dokumentacji i zweryfikuj pracę pod luki holistycznie".
+  Przyczyna źródłowa: widok projektu budowany z modelu danych, nie z makiet `06-wireframes.html`; impeccable leciał bez
+  wczytanego designu (`hasProduct:false`); dokumentacja w kilku miejscach opisywała Fazę 3 jak stan obecny.
+- **Audyt (3 równoległe agenty Explore):** pokrycie ekranów/stories, backend/dane/infra, spójność dokumentów. Ustalenia:
+  - Na produkcji **Faza 1 + 2a**; Gantt na branchu **niewierny makiecie**; brak ekranu „Mapa klocków + phase strip".
+  - **~70% funkcji MVP brakuje** (interaktywność zapisu zadań, MCP/Claude 0/40, daily brief, archiwizacja, admin, dokumenty).
+  - Server actions WRITE 1/26; 30 tabel w bazie, ~21 „martwych" (schema-only, pod Fazę 3).
+- **Utworzono kanon statusu:** `WAR_ROOM/wiki/product/coverage-audit.md` (macierz stories/ekrany/backend × ✅🟡❌).
+- **Naprawiono mylące dokumenty:** banner Faza-3 w `mcp-tools.md`; nota schema-only w `data-model.md` (+ „29"→„30 tabel");
+  kolumna „Wdrożenie" w `product-backlog.md`; `CHANGELOG` [0.4.0] status; `CLAUDE.md` „Plan budowy" = prawdziwe fazy
+  (2a✅/2b🟡/2c❌/3❌); `INFRASTRUCTURE.md` sekcja MCP + wiersze API/Resend = nie istnieje; `STATUS.md` blok „Prawdziwy
+  status"; `index.md` (coverage-audit, D-055, Krok 7 done); **D-055** w `decisions.md` (kanon UI = makiety; impeccable z designem).
+- **Bez zmian w kodzie aplikacji** — czysto dokumentacja/audyt.
+- **➡️ Rekomendacja kolejności:** (1) przebudować widok projektu wg makiet (Mapa klocków + phase strip + wierny Gantt,
+  impeccable z designem), (2) Faza 2c (interaktywne zadania), (3) Faza 3 (MCP, brief, admin, archiwum, dokumenty).
+
+---
+
 ## [2026-06-16] feat | Faza 2b — widok projektu = Gantt + klocki + „tu jesteś" (branch `feat/faza-2b-gantt`) — commit `8f4a2db`
 
 - **Co (P5/P6/P11/P12):** nowa trasa `/projects/[id]` — `ProjectHeader` + `GanttChart`.
