@@ -29,7 +29,7 @@ export default async function DashboardPage() {
           className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
           aria-label="Lista teczek klientów"
         >
-          {clients.map((client) => (
+          {clients.map((client, i) => (
             <ClientCard
               key={client.id}
               id={client.id}
@@ -37,6 +37,7 @@ export default async function DashboardPage() {
               projectCount={client.projectCount}
               activeCount={client.activeCount}
               atRisk={client.atRisk}
+              index={i}
             />
           ))}
         </div>

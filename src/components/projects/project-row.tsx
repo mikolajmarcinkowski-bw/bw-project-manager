@@ -20,7 +20,12 @@ interface ProjectRowProps {
   project: ProjectRowData
   showClient?: boolean
   linkDisabled?: boolean
+  /** Pozycja na liście — steruje kaskadą wejścia (stagger). */
+  index?: number
 }
+
+// Wejście: animacja tylko gdy ruch dozwolony; baza = widoczna (fail-safe).
+const ENTER = 'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:fill-mode-both motion-safe:duration-500'
 
 function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return 'b.d.'
@@ -28,7 +33,8 @@ function formatDate(dateStr: string | null | undefined): string {
   return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-export function ProjectRow({ project, showClient = false, linkDisabled = false }: ProjectRowProps) {
+export function ProjectRow({ project, showClient = false, linkDisabled = false, index }: ProjectRowProps) {
+  const enterStyle = index != null ? { animationDelay: `${Math.min(index, 14) * 40}ms` } : undefined
   const inner = (
     <div
       className={cn(
@@ -100,6 +106,8 @@ export function ProjectRow({ project, showClient = false, linkDisabled = false }
       <div
         aria-label={`Projekt: ${project.name}${project.atRisk ? ', zagrożony' : ''}`}
         title="Widok projektu niedostępny w tej wersji"
+        style={enterStyle}
+        className={ENTER}
       >
         {inner}
       </div>
@@ -110,7 +118,8 @@ export function ProjectRow({ project, showClient = false, linkDisabled = false }
     <a
       href={`/projects/${project.id}`}
       aria-label={`Projekt: ${project.name}${project.atRisk ? ', zagrożony' : ''}`}
-      className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-1 rounded-md"
+      style={enterStyle}
+      className={cn('block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-1', ENTER)}
     >
       {inner}
     </a>

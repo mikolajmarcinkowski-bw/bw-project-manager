@@ -23,12 +23,13 @@ export function ProjectList({
 
   return (
     <div className="flex flex-col divide-y divide-border/60">
-      {projects.map((project) => (
+      {projects.map((project, i) => (
         <ProjectRow
           key={project.id}
           project={project}
           showClient={showClient}
           linkDisabled={linkDisabled}
+          index={i}
         />
       ))}
     </div>

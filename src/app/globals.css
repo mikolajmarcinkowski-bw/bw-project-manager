@@ -278,3 +278,26 @@
     --spacing-compact: 0.375rem;
   }
 }
+
+/* ============================================================
+   A11Y: szanuj prefers-reduced-motion — zeruj ruch globalnie.
+   Wejścia kafelków są dodatkowo bramkowane wariantem motion-safe,
+   więc bez ruchu lądują w stanie w pełni widocznym (fail-safe).
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Wyjątek: spinnery ładowania to jedyny sygnał „pracuję" — zostawiamy ruch
+     (wyższa specyficzność niż reset na *). */
+  .animate-spin {
+    animation-duration: 0.8s !important;
+    animation-iteration-count: infinite !important;
+  }
+}

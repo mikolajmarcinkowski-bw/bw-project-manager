@@ -27,14 +27,29 @@ export function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      aria-label={isDark ? "Przejdz do trybu jasnego" : "Przejdz do trybu ciemnego"}
+      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-90"
+      aria-label={isDark ? "Przejdź do trybu jasnego" : "Przejdź do trybu ciemnego"}
     >
-      {isDark ? (
-        <Sun className="h-4 w-4" aria-hidden="true" />
-      ) : (
-        <Moon className="h-4 w-4" aria-hidden="true" />
-      )}
+      <span className="relative h-4 w-4">
+        {/* Sun — widoczna w trybie ciemnym */}
+        <Sun
+          className={`absolute inset-0 h-4 w-4 transition-all duration-300 ease-out ${
+            isDark
+              ? "rotate-0 scale-100 opacity-100"
+              : "-rotate-90 scale-0 opacity-0"
+          }`}
+          aria-hidden="true"
+        />
+        {/* Moon — widoczna w trybie jasnym */}
+        <Moon
+          className={`absolute inset-0 h-4 w-4 transition-all duration-300 ease-out ${
+            isDark
+              ? "rotate-90 scale-0 opacity-0"
+              : "rotate-0 scale-100 opacity-100"
+          }`}
+          aria-hidden="true"
+        />
+      </span>
     </button>
   );
 }
