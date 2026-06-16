@@ -5,6 +5,26 @@
 
 ---
 
+## [2026-06-16] test+fix | Realne testy Playwright (5 projektów) + fix umiejscowienia kamieni
+
+- **Spawnowano 4 zróżnicowane projekty testowe** (autoryzowane) w 2 nowych klientach (Comarch, Żabka) przez klon
+  bogatego demo z wariacjami: inna aktywna faza, **brak daty startu** (tygodnie względne), **projekt po terminie**
+  (czerwony trójkąt), **completed**. Cel: testy w wielu sytuacjach.
+- **Szeroki QA Playwright** (dashboard + /projekty + 5 projektów × Mapa+Harmonogram, rozwijanie, odczyt DOM):
+  **zero błędów konsoli, zero crashy.** Potwierdzone: multi-teczka + sortowanie zagrożonych (Żabka czerwona),
+  marker „TU JESTEŚ" przenosi się per projekt (Integracja F1 vs Kaufland F3), null-date → względne T1..N (bez linii dziś),
+  completed/atRisk OK.
+- **🐛 BUG ZNALEZIONY I NAPRAWIONY (uwaga Mikołaja „kick-off poza etapami"):** kamień w tygodniu 1
+  („Kick-off zakończony") lądował na końcu listy (po FAZIE 8), bo logika szukała fazy o `wEnd ≤ tydzień`.
+  Fix: kamień → pierwsza faza ZAWIERAJĄCA tydzień (`wStart≤w≤wEnd`), inaczej ostatnia rozpoczęta, inaczej tail.
+  Zweryfikowane: kick-off po FAZIE 0, architektura po FAZIE 2, go-live przy końcu.
+- **Drobne (nie-bugi / limity):** stat „Po terminie" zahardkodowany 0 (brak due_date w data-layer → Faza 2c);
+  interaktywność (odhaczanie/statusy) wciąż brak (Faza 2c); klony testowe mają pełny zestaw zadań niezależnie od typu (artefakt seeda).
+- **Dane testowe na produkcji:** klienci Comarch/Żabka + 4 projekty (do usunięcia w razie potrzeby).
+- Wcześniej w sesji: zwijalne fazy + ciągła linia „dziś" (feedback Mikołaja).
+
+---
+
 ## [2026-06-16] feat | Krok 0 (impeccable w design) + ekran „Mapa klocków + phase strip" — commit `e850595`
 
 - **Krok 0 (commit `9bec690`):** utworzono `PRODUCT.md` + `DESIGN.md` w repo build → impeccable wczytuje kontekst
