@@ -103,7 +103,6 @@ export default async function ProjektyPage({ searchParams }: ProjektyPageProps) 
               ? 'Żaden projekt nie pasuje do wybranych filtrów.'
               : 'Brak projektów w systemie.'
           }
-          linkDisabled
         />
       </div>
 

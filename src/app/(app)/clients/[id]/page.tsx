@@ -142,7 +142,6 @@ export default async function ClientPage({ params }: ClientPageProps) {
             projects={projectRows}
             showClient={false}
             emptyMessage="Ten klient nie ma jeszcze żadnych projektów. Dodaj pierwszy przez przycisk powyżej."
-            linkDisabled
           />
         </div>
       </div>
