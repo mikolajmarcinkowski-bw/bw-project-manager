@@ -20,7 +20,7 @@
 | Aplikacja (Faza 1+2a+2b) | ✅ NA PRODUKCJI | login + shell + inspekcja + dashboard teczkowy + klient/projekt (R15) + /projekty + delight + **widok projektu (Mapa klocków + phase strip + Harmonogram Gantt)**; `main` (merge `6dcd79e`) → `bw-project-manager.vercel.app` | 2026-06-16 |
 | Faza 2c (interaktywne zadania) | 🔶 W TOKU (branch) | plasterek 1 = odhaczanie/status zadania (`updateTaskStatus`) na `feat/faza-2c-zadania`, niezmergowane. Dalej: P8/P9/P18/P19 + ekran „Checklist fazy" | 2026-06-16 |
 | Warstwa API / MCP | ❌ NIE ISTNIEJE | brak `src/app/api` — 0/40 operacji MCP (Faza 3). Tworzenie projektu = formularz `createProjectAction` | 2026-06-16 |
-| Daily brief (Resend kod) | ❌ NIE ISTNIEJE | klucz/domena gotowe, ale brak kodu wysyłki/cron (P15, Faza 3) | 2026-06-16 |
+| Daily brief (Resend kod) | ✅ ZAIMPLEMENTOWANE | `src/app/api/cron/daily-brief/route.ts` + Vercel Cron 04:30 UTC pon-pt (`vercel.json`). **CRON_SECRET musi być dodany do Vercel env vars** (production + preview). Lokalnie: `.env.local`. | 2026-06-17 |
 | Resend (konto/klucz) | ✅ GOTOWE | brief@bwmanager.pl (1000 maili/mc free) | 2026-06-15 |
 | Domena własna | ⏳ TBD | — | — |
 

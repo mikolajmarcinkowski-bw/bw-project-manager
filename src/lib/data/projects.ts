@@ -3,6 +3,7 @@
 
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import type { ImplType } from '@/lib/actions/projects'
 
 // Re-export for consumers who only import from this module
@@ -595,4 +596,125 @@ export async function getTaskTemplatesForCreation(): Promise<TaskTemplateForCrea
       }
     })
     .filter((t): t is TaskTemplateForCreation => t !== null && !t.isMilestone)
+}
+
+// ─── getProjectsForBrief (Cron P15 — daily brief) ────────────────────────────
+// Używa admin client (service_role) — cron nie ma sesji użytkownika.
+// Nie korzysta z getAtRiskProjectIds żeby uniknąć niezgodności typów klientów.
+
+export interface BriefAtRiskProject {
+  name: string
+  clientName: string
+}
+
+export interface BriefTask {
+  title: string
+  projectName: string
+  assigneeName: string | null
+  dueDate: string
+}
+
+export interface BriefData {
+  atRiskProjects: BriefAtRiskProject[]
+  tasksDueToday: BriefTask[]
+  tasksDueSoon: BriefTask[]
+}
+
+export async function getProjectsForBrief(): Promise<BriefData> {
+  const supabase = createAdminClient()
+  const today = new Date().toISOString().slice(0, 10)
+
+  // Zagrożone projekty: zadanie po terminie lub aktywny projekt po end_date
+  const [
+    { data: riskTaskRows },
+    { data: riskProjectRows },
+  ] = await Promise.all([
+    supabase
+      .from('tasks')
+      .select('project_id')
+      .lt('due_date', today)
+      .not('status', 'in', '(done,na)'),
+    supabase
+      .from('projects')
+      .select('id')
+      .eq('status', 'active')
+      .lt('end_date', today),
+  ])
+
+  const riskIds = new Set<string>()
+  for (const t of riskTaskRows ?? []) riskIds.add(t.project_id)
+  for (const p of riskProjectRows ?? []) riskIds.add(p.id)
+
+  // Pobierz dane projektów zagrożonych (name + clientName)
+  let atRiskProjects: BriefAtRiskProject[] = []
+  if (riskIds.size > 0) {
+    const { data: riskProjectData } = await supabase
+      .from('projects')
+      .select('name, clients(name)')
+      .in('id', [...riskIds])
+      .order('name', { ascending: true })
+
+    atRiskProjects = (riskProjectData ?? []).map((p) => {
+      const clientsField = p.clients
+      const clientRow = Array.isArray(clientsField)
+        ? (clientsField[0] as { name: string } | undefined) ?? null
+        : (clientsField as { name: string } | null)
+      return {
+        name: p.name,
+        clientName: clientRow?.name ?? '',
+      }
+    })
+  }
+
+  // Zadania na dziś (due_date = today, status != done/na)
+  const { data: todayTaskRows } = await supabase
+    .from('tasks')
+    .select('title, assignee_name, due_date, projects(name)')
+    .eq('due_date', today)
+    .not('status', 'in', '(done,na)')
+    .order('title', { ascending: true })
+
+  const tasksDueToday: BriefTask[] = (todayTaskRows ?? []).map((t) => {
+    const projectsField = t.projects
+    const projectRow = Array.isArray(projectsField)
+      ? (projectsField[0] as { name: string } | undefined) ?? null
+      : (projectsField as { name: string } | null)
+    return {
+      title: t.title,
+      projectName: projectRow?.name ?? '',
+      assigneeName: t.assignee_name ?? null,
+      dueDate: t.due_date ?? today,
+    }
+  })
+
+  // Zadania w ciągu 2 dni (jutro i pojutrze, status != done/na)
+  const d1 = new Date()
+  d1.setDate(d1.getDate() + 1)
+  const d2 = new Date()
+  d2.setDate(d2.getDate() + 2)
+  const tomorrow = d1.toISOString().slice(0, 10)
+  const dayAfter = d2.toISOString().slice(0, 10)
+
+  const { data: soonTaskRows } = await supabase
+    .from('tasks')
+    .select('title, assignee_name, due_date, projects(name)')
+    .gte('due_date', tomorrow)
+    .lte('due_date', dayAfter)
+    .not('status', 'in', '(done,na)')
+    .order('due_date', { ascending: true })
+
+  const tasksDueSoon: BriefTask[] = (soonTaskRows ?? []).map((t) => {
+    const projectsField = t.projects
+    const projectRow = Array.isArray(projectsField)
+      ? (projectsField[0] as { name: string } | undefined) ?? null
+      : (projectsField as { name: string } | null)
+    return {
+      title: t.title,
+      projectName: projectRow?.name ?? '',
+      assigneeName: t.assignee_name ?? null,
+      dueDate: t.due_date ?? tomorrow,
+    }
+  })
+
+  return { atRiskProjects, tasksDueToday, tasksDueSoon }
 }
