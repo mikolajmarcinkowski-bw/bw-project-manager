@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { AddProjectForm } from '@/components/projects/add-project-form'
-import { getClientsWithStats, getProfiles } from '@/lib/data/projects'
+import { getClientsWithStats, getProfiles, getTaskTemplatesForCreation } from '@/lib/data/projects'
 
 export const metadata = {
   title: 'Nowy projekt · BW Project Manager',
@@ -13,9 +13,10 @@ interface NewProjectPageProps {
 export default async function NewProjectPage({ searchParams }: NewProjectPageProps) {
   const { clientId } = await searchParams
 
-  const [clientStats, profiles] = await Promise.all([
+  const [clientStats, profiles, taskTemplates] = await Promise.all([
     getClientsWithStats(),
     getProfiles(),
+    getTaskTemplatesForCreation(),
   ])
 
   const clients = clientStats.map((c) => ({ id: c.id, name: c.name }))
@@ -77,6 +78,7 @@ export default async function NewProjectPage({ searchParams }: NewProjectPagePro
         <AddProjectForm
           clients={clients}
           profiles={safeProfiles}
+          taskTemplates={taskTemplates}
           defaultClientId={clientId}
         />
       </div>

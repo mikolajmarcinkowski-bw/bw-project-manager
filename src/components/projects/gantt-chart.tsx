@@ -255,10 +255,15 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
     setCollapsed(new Set(steps.map((s) => s.id)))
   }
 
+  // ── P9: toggle „Pokaż N ukrytych" ───────────────────────────────────────────
+  const [showHidden, setShowHidden] = useState(false)
+
   // ── Statystyki ───────────────────────────────────────────────────────────────
 
   const allTasks = steps.flatMap((s) => s.tasks)
-  const regularTasks = allTasks.filter((t) => !t.isMilestone)
+  // Statystyki tylko na widocznych zadaniach (hidden=false)
+  const regularTasks = allTasks.filter((t) => !t.isMilestone && !t.hidden)
+  const hiddenTaskCount = allTasks.filter((t) => !t.isMilestone && t.hidden).length
   const estSum = totalEst(regularTasks)
   const overdueCount = regularTasks.filter(isOverdue).length
 
@@ -271,7 +276,8 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
 
   type PhaseGroup = {
     step: GanttStep
-    regularTasks: GanttTask[]
+    regularTasks: GanttTask[]      // visible (hidden=false)
+    hiddenTasks: GanttTask[]       // hidden (hidden=true) — tylko gdy showHidden=true
     assignedMs: typeof milestones
   }
 
@@ -299,7 +305,8 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
 
   const phaseGroups: PhaseGroup[] = steps.map((step) => ({
     step,
-    regularTasks: step.tasks.filter((t) => !t.isMilestone),
+    regularTasks: step.tasks.filter((t) => !t.isMilestone && !t.hidden),
+    hiddenTasks: step.tasks.filter((t) => !t.isMilestone && t.hidden),
     assignedMs: milestones.filter((ms) => msAssignment.get(ms.id) === step.id),
   }))
 
@@ -357,7 +364,7 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
         role="region"
         aria-label="Tabela harmonogramu"
       >
-        {/* Przyciski Rozwiń/Zwiń wszystko */}
+        {/* Przyciski Rozwiń/Zwiń + P9 „Pokaż ukryte" */}
         <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border/30 bg-muted/20">
           <button
             type="button"
@@ -374,6 +381,26 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
           >
             Zwiń wszystko
           </button>
+          {hiddenTaskCount > 0 && (
+            <>
+              <span className="text-muted-foreground/40 text-[0.6rem]">·</span>
+              <button
+                type="button"
+                onClick={() => setShowHidden((v) => !v)}
+                className={cn(
+                  'text-[0.6rem] font-heading font-semibold transition-colors rounded px-1.5 py-0.5',
+                  showHidden
+                    ? 'text-teal bg-teal/10 hover:bg-teal/20'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                )}
+                aria-pressed={showHidden}
+              >
+                {showHidden
+                  ? `Ukryj N/A (${hiddenTaskCount})`
+                  : `Pokaż N/A (${hiddenTaskCount})`}
+              </button>
+            </>
+          )}
         </div>
 
         {/* Poziomy scroll na wąskich ekranach */}
@@ -530,7 +557,7 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
               )}
 
               {/* ── Wiersze per-faza (grouped) ───────────────────────────────── */}
-              {phaseGroups.map(({ step, regularTasks: phaseTasks, assignedMs }) => {
+              {phaseGroups.map(({ step, regularTasks: phaseTasks, hiddenTasks: phaseHiddenTasks, assignedMs }) => {
                 const isCollapsed = collapsed.has(step.id)
                 const phaseTaskCount = phaseTasks.length
                 const phaseEstSum = totalEst(phaseTasks)
@@ -754,6 +781,53 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
                           )
                         })}
 
+                        {/* P9: ukryte zadania fazy — widoczne gdy showHidden=true */}
+                        {showHidden && phaseHiddenTasks.map((task, idx) => {
+                          const wStartC = clampWeek(task.wStart, weekCount)
+                          const wEndC = clampWeek(task.wEnd, weekCount)
+                          const hasBar = wStartC !== null && wEndC !== null
+                          const taskIdx = phaseTasks.length + idx + 1
+
+                          return (
+                            <div
+                              key={`task-hidden-${task.id}`}
+                              role="row"
+                              aria-label={`[N/A] ${task.title}`}
+                              className="flex items-center min-h-[34px] border-t border-dashed border-border/20 opacity-50"
+                            >
+                              <div role="cell" className={cn(COL.id, 'px-1.5 py-1 font-mono text-[0.6rem] text-muted-foreground/60')}>
+                                {step.phaseNumber}.{taskIdx}
+                              </div>
+                              <div role="cell" className={cn(COL.task, 'px-2.5 py-1 text-[0.7rem] text-muted-foreground line-through truncate')} title={task.title}>
+                                {task.title}
+                              </div>
+                              <div role="cell" className={cn(COL.kind, 'px-1 py-1 flex items-center justify-center')}>
+                                <KindChip kind={task.kind} />
+                              </div>
+                              <div role="cell" className={cn(COL.typ, 'px-1 py-1 flex items-center justify-center')}>
+                                <ImplTypeChips types={task.types} />
+                              </div>
+                              <div role="cell" className={cn(COL.est, 'px-1 py-1 font-mono text-[0.65rem] text-muted-foreground/60')}>
+                                {task.est != null ? `${task.est}h` : '—'}
+                              </div>
+                              <div role="cell" className={cn(COL.own, 'px-1 py-1 flex items-center justify-center')}>
+                                <TaskAssigneeControl taskId={task.id} assigneeName={task.assigneeName} profiles={profiles} />
+                              </div>
+                              <div role="cell" className={cn(COL.wk, 'h-[34px]')} style={{ display: 'grid', gridTemplateColumns: `repeat(${weekCount}, minmax(28px, 1fr))`, gridTemplateRows: '1fr' }}>
+                                {weeks.map((k) => (
+                                  <div key={k} aria-hidden="true" className="border-l border-border/15 h-full" style={{ gridRow: 1 }} />
+                                ))}
+                                {hasBar && (
+                                  <div aria-hidden="true" style={{ ...barGridColumn(wStartC!, wEndC!, 'var(--muted-foreground)'), opacity: 0.3, gridRow: 1 }} />
+                                )}
+                              </div>
+                              <div role="cell" className={cn(COL.st, 'px-1.5 py-1 flex items-center justify-center')}>
+                                <TaskStatusControl taskId={task.id} status={task.status} />
+                              </div>
+                            </div>
+                          )
+                        })}
+
                         {/* Milestony przypisane do tej fazy */}
                         {assignedMs.map((ms) => (
                           <div
@@ -902,14 +976,7 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
 
             </div>{/* koniec .relative (overlay) */}
 
-            {/*
-              Pominięto: „Pokaż N ukrytych" — getProjectDetail nie ładuje zadań hidden=true.
-              Toggle wymagałby rozszerzenia data-layer (Faza 2c / P9).
-            */}
-
-            {/*
-              Pominięto: karty msgrid pod tabelą — priorytet to tabela; msgrid opcjonalne (Faza 2c).
-            */}
+            {/* karty msgrid pod tabelą — opcjonalne (Faza 3) */}
 
           </div>
         </div>

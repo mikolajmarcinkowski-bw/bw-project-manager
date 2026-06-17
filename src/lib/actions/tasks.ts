@@ -46,9 +46,12 @@ export async function updateTaskStatus(
   if (status === 'done') completion_date = before.completion_date ?? today
   else if (before.status === 'done') completion_date = null
 
+  // hidden (P9): na=ukryte, każdy inny status=widoczne.
+  const hidden = status === 'na'
+
   const { error: updErr } = await supabase
     .from('tasks')
-    .update({ status, completion_date })
+    .update({ status, completion_date, hidden })
     .eq('id', taskId)
 
   if (updErr) {
