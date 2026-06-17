@@ -1,6 +1,7 @@
 'use client'
 
-import { type CSSProperties, useState, useEffect, useMemo } from 'react'
+import { type CSSProperties, useState, useEffect, useMemo, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type {
@@ -14,6 +15,7 @@ import type {
 import { TaskStatusControl } from '@/components/projects/task-status-control'
 import { TaskAssigneeControl, type Profile } from '@/components/projects/task-assignee-control'
 import { TaskDateControl } from '@/components/projects/task-date-control'
+import { muteTaskWarning } from '@/lib/actions/tasks'
 
 // ─── Stałe szerokości kolumn (muszą być identyczne w ghead i każdym wierszu grow) ─
 
@@ -146,6 +148,16 @@ function daysUntilDue(dueDateISO: string): number {
 }
 
 /**
+ * P10: Czy zadanie jest „wkrótce po terminie" (≤ 2 dni, nie ukończone, nie wyciszone).
+ * Żółty alert — ostrzeżenie przed przekroczeniem terminu.
+ */
+function isSoonDue(task: GanttTask): boolean {
+  if (!task.dueDate || task.status === 'done' || task.status === 'na' || task.warningMuted) return false
+  const d = daysUntilDue(task.dueDate)
+  return d >= 0 && d <= 2
+}
+
+/**
  * Styl CSS paska .gbar jako dziecko gridu tygodni.
  * Wzór: gridColumn `${wStart} / ${wEnd + 1}` (koniec wykluczający).
  * Element nie jest absolute — dzięki temu uczestniczy w flow gridu i gridColumn działa poprawnie.
@@ -231,6 +243,16 @@ interface GanttChartProps {
 
 export function GanttChart({ project, profiles = [], targetStepId, onTargetConsumed }: GanttChartProps) {
   const { steps, milestones, weekCount, calendarStart } = project
+  const router = useRouter()
+  const [, startTransition] = useTransition()
+
+  // P19: Wyciszenie alertu — wywołuje server action + odświeża dane
+  async function handleMute(taskId: string) {
+    startTransition(async () => {
+      await muteTaskWarning(taskId)
+      router.refresh()
+    })
+  }
 
   // Tydzień "dziś" (1-indexed, null gdy poza zakresem lub bez calendarStart)
   const todayWeek = todayWeekNumber(calendarStart, weekCount)
@@ -738,14 +760,23 @@ export function GanttChart({ project, profiles = [], targetStepId, onTargetConsu
                           const taskIdx = idx + 1
 
                           const taskIsOverdue = isOverdue(task)
-                          const barColor = taskIsOverdue ? 'var(--status-off)' : KIND_COLOR[task.kind]
+                          const taskIsSoon = isSoonDue(task)
+                          const barColor = taskIsOverdue
+                            ? 'var(--status-off)'
+                            : taskIsSoon
+                              ? 'var(--status-at)'
+                              : KIND_COLOR[task.kind]
 
                           return (
                             <div
                               key={`task-${task.id}`}
                               role="row"
                               aria-label={task.title}
-                              className="flex items-center min-h-[36px] border-t border-border/30 hover:bg-muted/20 transition-colors"
+                              className={cn(
+                                'flex items-center min-h-[36px] border-t border-border/30 hover:bg-muted/20 transition-colors',
+                                taskIsSoon && 'bg-status-at/5',
+                                task.warningMuted && 'opacity-60',
+                              )}
                             >
                               {/* # — phaseNumber.taskIdx (mono) */}
                               <div
@@ -833,7 +864,7 @@ export function GanttChart({ project, profiles = [], targetStepId, onTargetConsu
                                   />
                                 )}
                               </div>
-                              {/* Status (P7) + termin klikalny (P18) + data ukończenia (P8) */}
+                              {/* Status (P7) + termin klikalny (P18) + data ukończenia (P8) + wyciszanie (P19) */}
                               <div
                                 role="cell"
                                 className={cn(COL.st, 'px-1.5 py-1 flex flex-col items-center gap-0.5')}
@@ -850,15 +881,24 @@ export function GanttChart({ project, profiles = [], targetStepId, onTargetConsu
                                   <TaskDateControl
                                     taskId={task.id}
                                     dueDate={task.dueDate}
-                                    alertLevel={
-                                      taskIsOverdue ? 'overdue'
-                                      : task.dueDate && !taskIsOverdue
-                                        && daysUntilDue(task.dueDate) >= 0
-                                        && daysUntilDue(task.dueDate) <= 2
-                                        ? 'soon'
-                                      : undefined
-                                    }
+                                    alertLevel={taskIsOverdue ? 'overdue' : taskIsSoon ? 'soon' : undefined}
                                   />
+                                )}
+                                {/* P19: Przycisk wyciszenia — widoczny gdy aktywny alert i nie jest wyciszony */}
+                                {(taskIsOverdue || taskIsSoon) && !task.warningMuted && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMute(task.id)}
+                                    className="text-[0.55rem] font-meta text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded hover:bg-muted"
+                                  >
+                                    Wycisz
+                                  </button>
+                                )}
+                                {/* P19: Etykieta wyciszonego alertu */}
+                                {task.warningMuted && (
+                                  <span className="text-[0.5rem] font-meta text-muted-foreground/60 leading-none">
+                                    wyciszony
+                                  </span>
                                 )}
                               </div>
                             </div>

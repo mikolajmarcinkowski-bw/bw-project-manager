@@ -187,6 +187,58 @@ export async function updateTaskDueDate(
   return { ok: true }
 }
 
+// Faza 2c · P19 — Wyciszanie alertu zadania.
+// Idempotent: ponowne wywołanie dla już wyciszonego zadania zwraca { ok: true } bez zapisu.
+// Automatycznie cofane przez updateTaskDueDate gdy PM zmienia termin (R5c).
+export async function muteTaskWarning(
+  taskId: string
+): Promise<{ ok: true } | { error: string }> {
+  const user = await requireUser()
+  const supabase = await createClient()
+
+  const { data: before, error: fetchErr } = await supabase
+    .from('tasks')
+    .select('id, project_id, warning_muted')
+    .eq('id', taskId)
+    .single()
+
+  if (fetchErr || !before) {
+    return { error: 'Nie znaleziono zadania.' }
+  }
+
+  if (before.warning_muted === true) {
+    return { ok: true } // idempotent
+  }
+
+  const { error: updErr } = await supabase
+    .from('tasks')
+    .update({
+      warning_muted: true,
+      muted_at: new Date().toISOString(),
+      muted_by: user.id,
+    })
+    .eq('id', taskId)
+
+  if (updErr) {
+    console.error('[muteTaskWarning] update failed:', updErr)
+    return { error: 'Nie udało się wyciszyć alertu.' }
+  }
+
+  // Audyt A4 (nieblokujący)
+  const { error: logErr } = await supabase.from('activity_log').insert({
+    entity: 'task',
+    entity_id: taskId,
+    action: 'mute_task_warning',
+    actor_id: user.id,
+    before: { warning_muted: false },
+    after: { warning_muted: true },
+  })
+  if (logErr) console.error('[muteTaskWarning] activity_log failed:', logErr)
+
+  revalidatePath(`/projects/${before.project_id}`)
+  return { ok: true }
+}
+
 // Historia zmian terminu zadania — do wyświetlenia w modalu P18.
 export async function getTaskDateHistory(taskId: string): Promise<
   { actorName: string | null; before: string | null; after: string | null; at: string }[]
