@@ -7,17 +7,26 @@ import type { ProjectDetail } from '@/lib/data/projects'
 import { PhaseStrip } from './phase-strip'
 import { ParallelView } from './parallel-view'
 import { GanttChart } from './gantt-chart'
+import { PhaseChecklist } from './phase-checklist'
 import type { Profile } from './task-assignee-control'
 
 // Widok projektu z zakładkami (ekran „Mapa klocków + phase strip" wg 06-wireframes.html).
-// Domyślnie „Mapa klocków"; „Harmonogram" = Gantt. Pozostałe zakładki = Faza 3 (empty state).
-type Tab = 'mapa' | 'harmonogram' | 'RACI' | 'RAID' | 'Budżet' | 'KPI'
+// Domyślnie „Mapa klocków"; „Harmonogram" = Gantt; „checklist" = Ekran 7 po kliknięciu klocka.
+// Pozostałe zakładki = Faza 3 (empty state).
+type Tab = 'mapa' | 'harmonogram' | 'checklist' | 'RACI' | 'RAID' | 'Budżet' | 'KPI'
 
 const FUTURE_TABS: Array<'RACI' | 'RAID' | 'Budżet' | 'KPI'> = ['RACI', 'RAID', 'Budżet', 'KPI']
 
 export function ProjectViews({ project, profiles = [] }: { project: ProjectDetail; profiles?: Profile[] }) {
   const [tab, setTab] = useState<Tab>('mapa')
   const [targetStepId, setTargetStepId] = useState<string | null>(null)
+  // Ekran 7: id kroku wybranego przez klik klocka na Mapie klocków
+  const [checklistStepId, setChecklistStepId] = useState<string | null>(null)
+
+  function handleSelectStep(stepId: string) {
+    setChecklistStepId(stepId)
+    setTab('checklist')
+  }
 
   return (
     <section className="flex flex-col gap-4" aria-label="Widoki projektu">
@@ -25,6 +34,17 @@ export function ProjectViews({ project, profiles = [] }: { project: ProjectDetai
       <div role="tablist" aria-label="Widoki projektu" className="flex flex-wrap items-center gap-1.5 border-b border-border pb-3">
         <TabPill id="tab-mapa" controls="panel-mapa" active={tab === 'mapa'} onClick={() => setTab('mapa')}>Mapa klocków</TabPill>
         <TabPill id="tab-harmonogram" controls="panel-harmonogram" active={tab === 'harmonogram'} onClick={() => setTab('harmonogram')}>Harmonogram</TabPill>
+        {/* Zakładka „Checklist fazy" pojawia się tylko po wybraniu klocka */}
+        {checklistStepId !== null && (
+          <TabPill
+            id="tab-checklist"
+            controls="panel-checklist"
+            active={tab === 'checklist'}
+            onClick={() => setTab('checklist')}
+          >
+            Checklist fazy
+          </TabPill>
+        )}
         {FUTURE_TABS.map((t) => (
           <button
             key={t}
@@ -57,7 +77,7 @@ export function ProjectViews({ project, profiles = [] }: { project: ProjectDetai
           <PhaseStrip
             steps={project.steps}
             decisions={project.decisions}
-            onSelectStep={(stepId: string) => { setTargetStepId(stepId); setTab('harmonogram') }}
+            onSelectStep={handleSelectStep}
           />
           <ParallelView steps={project.steps} decisions={project.decisions} />
         </div>
@@ -69,6 +89,19 @@ export function ProjectViews({ project, profiles = [] }: { project: ProjectDetai
             targetStepId={targetStepId}
             onTargetConsumed={() => setTargetStepId(null)}
           />
+        </div>
+      ) : tab === 'checklist' && checklistStepId !== null ? (
+        <div role="tabpanel" id="panel-checklist" aria-labelledby="tab-checklist">
+          {(() => {
+            const selectedStep = project.steps.find((s) => s.id === checklistStepId)
+            return selectedStep ? (
+              <PhaseChecklist step={selectedStep} profiles={profiles} />
+            ) : (
+              <p className="font-meta text-xs text-muted-foreground py-8 text-center">
+                Nie znaleziono fazy.
+              </p>
+            )
+          })()}
         </div>
       ) : (
         /* Faza 3 — zakładka istnieje ale treść jeszcze nie */
