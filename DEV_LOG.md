@@ -5,6 +5,37 @@
 
 ---
 
+## [2026-06-17] fix | Cztery odłożone naprawy (deferred) — commit `0e22834` → merge `e9d17a8`
+
+- **showHidden auto-reset** — `useEffect` w GanttChart: gdy `hiddenTaskCount` spada do 0, toggle P9 automatycznie się zamyka. Eliminuje stan gdzie toggle pozostał aktywny po odheblowaniu ostatniego N/A.
+- **`getClientWithProjects` + `cache()`** — eliminuje podwójne zapytanie DB per request (`generateMetadata` + `ClientPage`).
+- **Zakładki RACI/RAID/Budżet/KPI** — z niemych `<span aria-disabled>` stały się klikalnymi buttonami. Kliknięcie → empty state „dostępne wkrótce" zamiast ciszy.
+- **Phase strip scroll indicator** — `ResizeObserver` + gradient fade po prawej gdy jest co scrollować; cienki scrollbar WebKit (3px).
+- **➡️ DALEJ:** P18 (edycja dat z potwierdzeniem), P19 (wyciszanie), ekran 7 „Checklist fazy".
+
+---
+
+## [2026-06-17] fix | Feedback inspekcji: jasne kartki w teczce w dark mode — commit `3d77dea`
+
+- **Feedback #2** (2026-06-17, visual/low): „W trybie ciemnym kartka w teczce powinna być biała a jest czarna".
+- Kartki `FolderGlyph`: `dark:bg-[oklch(0.30/0.38...)]` → `dark:bg-[oklch(0.82/0.94...)]`. Papier teraz jasny, wyraźnie widoczny na tle ciemnej teczki.
+- **Feedback #1** (2026-06-15, content/high): „Brak polskich znaków" — STAŁY: ten ekran (stary empty state) nie istnieje od sesji 9.
+
+---
+
+## [2026-06-17] fix | Bugi z testów penetracyjnych (3 persony) — commit `5dc5b8a` → merge `78d6648`
+
+- Branch `fix/pen-test-issues`. Testy przeprowadzone przez 3 subagentów (Developer, Senior PM, Junior).
+- **[WYSOKI]** `todayISO` const na poziomie modułu → przeniesiony wewnątrz `isOverdue()` (nie starzeje się po restarcie serwera).
+- **[WYSOKI]** Walidacja deadline < data startu + start < 2000-01-01 w kroku 1 kreatora (brak = przechodzilo do kroku 2).
+- **[WYSOKI]** `align="end"` → `align="start"` w Base UI Select (TaskStatusControl + TaskAssigneeControl) — dropdown nie ucina się przy prawej krawędzi Gantta.
+- **[WYSOKI]** `router.refresh()` przed `push()` po stworzeniu projektu — lista projektów na stronie klienta nie jest pusta po redirect.
+- **[ŚREDNI]** Custom `not-found.tsx` — polska 404 w layoucie aplikacji (`app/(app)/`) + root (`app/`).
+- **[ŚREDNI]** `maxLength={200}` na polu nazwy projektu — 500 znaków nie przechodzi.
+- **False positives** (nie bugi): `type="submit"` na wylogowaniu (poprawne — wewnątrz `<form action>`), hover-teal na wierszach projektów (zamierzony efekt), "TU JESTEŚF3" (artefakt `textContent()` Playwright — vizualnie OK).
+
+---
+
 ## [2026-06-17] feat | Kreator projektu krok 2 + P9 toggle (D-056) — commit `9d196d5`
 
 - Branch `feat/task-config-creation` (ortogonalny do 2c). Decyzja Mikołaja sesja 13.

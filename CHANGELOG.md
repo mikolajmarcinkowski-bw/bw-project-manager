@@ -4,9 +4,52 @@
 
 ---
 
+## [0.9.0] — 2026-06-17 — 🚀 PRODUKCJA: Faza 2c (P7/P8/P9) + kreator krok 2 + testy penetracyjne + bugfixy
+
+> Status: **ZMERGOWANE → produkcja** (`main`, commity `5defef6`…`e9d17a8`). Sesja 13.
+> Największy release od 0.7.0 — interaktywne zadania + nowy wizard + naprawione 12 bugów ze 3 testów i feedbacku.
+
+### Dodano — interaktywne zadania (Faza 2c)
+- **P7 — StatusControl** (`updateTaskStatus`): klikalny dropdown w Gantcie (5 statusów: Plan/W toku/Gotowe/QA/N/D). Session-scoped client, whitelist statusu, audyt A4, `revalidatePath`.
+- **P8 — AssigneeControl** (`updateTaskAssignee`): klikalny avatar inicjałów w kolumnie Own → Base UI Select z listą profili + „Brak osoby". Max 120 znaków, audyt A4.
+- **P8 — completion_date chip**: data ukończenia `dd.MM.YYYY` widoczna pod statusem gdy zadanie `done`.
+- **P9 — toggle „Pokaż N/A (N)"**: przycisk w toolbarze Ganttu gdy są ukryte zadania; ukryte zadania widoczne z `opacity-50 line-through` po kliknięciu.
+- **P9 / D-056 — kreator krok 2**: formularz tworzenia projektu zmieniony na wizard 2-krokowy. Krok 2 pokazuje zadania które zostaną wstawione (R15 filtr), PM odznacza N/A przed zapisem → `hidden=true` od początku.
+- `updateTaskStatus` synchronizuje `hidden`: zmiana na `na` → `hidden=true`; wyjście z `na` → `hidden=false`.
+- `getProjectDetail` pobiera WSZYSTKIE zadania (hidden included) — Gantt steruje widocznością kliencko.
+- `taskMatchesTypes` (predykat R15) wydzielony do `lib/utils.ts` (izolacja server/client).
+
+### Naprawiono — testy penetracyjne (3 persony: Developer, Senior PM, Junior)
+- `todayISO` przeniesiony wewnątrz `isOverdue()` — nie starzeje się po restarcie serwera produkcyjnego.
+- Walidacja client-side: deadline < start_date + start < 2000-01-01 w kroku 1 kreatora.
+- `align="start"` w Base UI Select (Status + Assignee) — dropdown nie ucina się przy prawej krawędzi Gantta.
+- `router.refresh()` przed `router.push()` po stworzeniu projektu — lista projektów świeża bez ręcznego odświeżania.
+- Custom `not-found.tsx` — polska 404 w layoucie `(app)/` + root fallback.
+- `maxLength={200}` na polu nazwy projektu.
+
+### Naprawiono — feedback narzędzia inspekcji
+- Kartki `FolderGlyph` w dark mode: `oklch(0.30/0.38)` → `oklch(0.82/0.94)` — papier biały/jasny jak oczekiwał użytkownik.
+
+### Naprawiono — odłożone (deferred)
+- `showHidden` auto-reset: `useEffect` gdy `hiddenTaskCount === 0` — toggle P9 zamyka się sam gdy nie ma N/A zadań.
+- `getClientWithProjects` owinięty `cache()` — eliminuje podwójne zapytanie DB per request.
+- Zakładki RACI/RAID/Budżet/KPI: klikalne → empty state „dostępne wkrótce" zamiast cichego braku reakcji.
+- Phase strip: gradient fade + cienki scrollbar WebKit (3px) — wskazuje że można scrollować w prawo.
+
+### Jakość
+- code-reviewer (0 P0/P1) + security-auditor (0 CRITICAL/HIGH, LOW zastosowane) na każdym większym kawałku.
+- 3-persona pen test (Developer/Senior PM/Junior) przez `ui-ux-tester` subagenty.
+- TSC czysty, prod build OK, E2E zielony przez cały cykl.
+- Decyzja architektoniczna: **D-056** (kreator krok 2 + semantyka hidden=true).
+
+### Serwer actions WRITE (aktualnie): 4/26
+`createClientAction` · `createProjectAction` · `updateTaskStatus` · `updateTaskAssignee`
+
+---
+
 ## [0.8.0] — 2026-06-16 — Faza 2c (START): interaktywne zadania — odhaczanie statusów (branch)
 
-> Status: branch `feat/faza-2c-zadania`, NIEZMERGOWANE (plasterek 1). Pierwszy realny zapis poza tworzeniem projektu.
+> Status: **WCHŁONIĘTE w 0.9.0** (zmiany trafiły na `main` via `feat/task-config-creation`). Branch `feat/faza-2c-zadania` historyczny.
 
 ### Dodano
 - **`updateTaskStatus`** (server action) — zmiana statusu zadania (P7) z RLS sesji usera (R13), whitelist statusu, `completion_date` przy „Gotowe" (P8), audyt `activity_log` (A4).
