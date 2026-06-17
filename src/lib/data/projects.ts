@@ -357,13 +357,36 @@ export const getProjectDetail = cache(async (projectId: string): Promise<Project
     // Fallback na drugi bound gdy zadanie ma tylko jeden (chroni przed znikaniem paska)
     const starts = tasks.map((t) => t.wStart ?? t.wEnd).filter((w): w is number => w != null)
     const ends = tasks.map((t) => t.wEnd ?? t.wStart).filter((w): w is number => w != null)
+
+    // Zadania które liczą się do statusu fazy: widoczne, nie-N/A, nie-milestone
+    const activeTasks = tasks.filter((t) => !t.hidden && t.status !== 'na' && !t.isMilestone)
+
+    // Status fazy wyprowadzany z zadań (Opcja A — D-037 / automatyczny):
+    //   skipped = ręczna decyzja z DB (zachowujemy)
+    //   done    = wszystkie aktywne zadania done
+    //   in_progress = przynajmniej jedno in_progress lub for_quality
+    //   todo    = żadne nie zaczęte
+    //   brak zadań = zostawiamy wartość z DB
+    const derivedStatus: StepStatus = (() => {
+      if (s.status === 'skipped') return 'skipped'
+      if (activeTasks.length === 0) return s.status as StepStatus
+      if (activeTasks.some((t) => t.status === 'in_progress' || t.status === 'for_quality')) return 'in_progress'
+      if (activeTasks.every((t) => t.status === 'done')) return 'done'
+      return 'todo'
+    })()
+
+    // isActive = „TU JESTEŚ" na Mapie klocków: faza jest aktywna gdy trwa w niej praca
+    const derivedIsActive = activeTasks.some(
+      (t) => t.status === 'in_progress' || t.status === 'for_quality'
+    )
+
     return {
       id: s.id,
       phaseNumber: s.phase_number,
       phaseName: s.phase_name,
       stepTitle: s.step_title,
-      status: s.status as StepStatus,
-      isActive: s.is_active,
+      status: derivedStatus,
+      isActive: derivedIsActive,
       isParallel: s.is_parallel,
       isRecurring: s.is_recurring,
       isDecision: s.is_decision,
