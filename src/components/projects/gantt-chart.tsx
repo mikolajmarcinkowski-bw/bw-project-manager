@@ -13,6 +13,7 @@ import type {
 } from '@/lib/data/projects'
 import { TaskStatusControl } from '@/components/projects/task-status-control'
 import { TaskAssigneeControl, type Profile } from '@/components/projects/task-assignee-control'
+import { TaskDateControl } from '@/components/projects/task-date-control'
 
 // ─── Stałe szerokości kolumn (muszą być identyczne w ghead i każdym wierszu grow) ─
 
@@ -766,19 +767,35 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
                                   />
                                 )}
                               </div>
-                              {/* Status — pill interaktywny (P7) + data ukończenia (P8) */}
+                              {/* Status (P7) + termin klikalny (P18) + data ukończenia (P8) */}
                               <div
                                 role="cell"
                                 className={cn(COL.st, 'px-1.5 py-1 flex flex-col items-center gap-0.5')}
                               >
                                 <TaskStatusControl taskId={task.id} status={task.status} />
-                                {task.status === 'done' && task.completionDate && (
+                                {task.status === 'done' && task.completionDate ? (
                                   <span
                                     className="text-[0.5rem] font-mono text-teal-strong/70 leading-none"
                                     title={`Ukończono: ${formatDate(task.completionDate)}`}
                                   >
-                                    {formatDate(task.completionDate)}
+                                    ✓ {formatDate(task.completionDate)}
                                   </span>
+                                ) : (
+                                  <TaskDateControl
+                                    taskId={task.id}
+                                    dueDate={task.dueDate}
+                                    alertLevel={
+                                      taskIsOverdue ? 'overdue'
+                                      : task.dueDate && (() => {
+                                          const d = new Date(task.dueDate)
+                                          const now = new Date()
+                                          now.setHours(0,0,0,0)
+                                          const diff = Math.floor((d.getTime() - now.getTime()) / 86400000)
+                                          return diff >= 0 && diff <= 2
+                                        })() ? 'soon'
+                                      : undefined
+                                    }
+                                  />
                                 )}
                               </div>
                             </div>
