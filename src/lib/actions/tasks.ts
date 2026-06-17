@@ -125,3 +125,97 @@ export async function updateTaskAssignee(
   revalidatePath(`/projects/${before.project_id}`)
   return { ok: true }
 }
+
+// Faza 2c · P18 — Edycja terminu zadania z potwierdzeniem (R6/D-022).
+// Wymaga wpisania słowa „change" w UI przed wywołaniem (walidacja client-side).
+// Automatycznie zeruje warning_muted gdy data się zmienia (R5c).
+export async function updateTaskDueDate(
+  taskId: string,
+  newDate: string | null
+): Promise<{ ok: true } | { error: string }> {
+  if (newDate !== null) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+      return { error: 'Nieprawidłowy format daty (wymagane RRRR-MM-DD).' }
+    }
+    if (newDate < '2000-01-01') {
+      return { error: 'Data jest nierealistycznie wczesna.' }
+    }
+  }
+
+  const user = await requireUser()
+  const supabase = await createClient()
+
+  const { data: before, error: fetchErr } = await supabase
+    .from('tasks')
+    .select('id, due_date, project_id, warning_muted')
+    .eq('id', taskId)
+    .single()
+
+  if (fetchErr || !before) {
+    return { error: 'Nie znaleziono zadania.' }
+  }
+
+  if (before.due_date === newDate) {
+    return { ok: true }
+  }
+
+  const { error: updErr } = await supabase
+    .from('tasks')
+    .update({
+      due_date: newDate,
+      // Zmiana daty gasi aktywne wyciszenie (R5c) — PM potwierdza nową datę
+      ...(before.warning_muted ? { warning_muted: false, muted_at: null, muted_by: null } : {}),
+    })
+    .eq('id', taskId)
+
+  if (updErr) {
+    console.error('[updateTaskDueDate] update failed:', updErr)
+    return { error: 'Nie udało się zapisać terminu.' }
+  }
+
+  const { error: logErr } = await supabase.from('activity_log').insert({
+    entity: 'task',
+    entity_id: taskId,
+    action: 'update_task_due_date',
+    actor_id: user.id,
+    before: { due_date: before.due_date },
+    after: { due_date: newDate },
+  })
+  if (logErr) console.error('[updateTaskDueDate] activity_log failed:', logErr)
+
+  revalidatePath(`/projects/${before.project_id}`)
+  return { ok: true }
+}
+
+// Historia zmian terminu zadania — do wyświetlenia w modalu P18.
+export async function getTaskDateHistory(taskId: string): Promise<
+  { actorName: string | null; before: string | null; after: string | null; at: string }[]
+> {
+  await requireUser()
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('activity_log')
+    .select('before, after, created_at, actor_id, profiles(full_name)')
+    .eq('entity_id', taskId)
+    .eq('action', 'update_task_due_date')
+    .order('created_at', { ascending: false })
+    .limit(10)
+
+  if (error || !data) {
+    console.error('[getTaskDateHistory] fetch failed:', error)
+    return []
+  }
+
+  return data.map((row) => {
+    const prof = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
+    const b = (row.before as { due_date?: string | null } | null)?.due_date ?? null
+    const a = (row.after as { due_date?: string | null } | null)?.due_date ?? null
+    return {
+      actorName: (prof as { full_name?: string | null } | null)?.full_name ?? null,
+      before: b,
+      after: a,
+      at: row.created_at,
+    }
+  })
+}
