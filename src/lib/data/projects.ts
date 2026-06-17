@@ -41,6 +41,18 @@ async function getAtRiskProjectIds(supabase: Db, projectIds?: string[]): Promise
   return ids
 }
 
+// ─── getClientsBasic — tylko id+name, do dropdownów filtrów (1 query) ────────
+
+export async function getClientsBasic(): Promise<{ id: string; name: string }[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('clients')
+    .select('id, name')
+    .order('name', { ascending: true })
+  if (error || !data) return []
+  return data
+}
+
 // ─── getClientsWithStats ──────────────────────────────────────────────────────
 
 export async function getClientsWithStats(): Promise<

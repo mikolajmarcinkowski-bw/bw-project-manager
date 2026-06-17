@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { useCallback, useTransition } from 'react'
+import { useCallback, useTransition, useRef } from 'react'
 import { AlertTriangle, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ImplType } from '@/lib/data/projects'
@@ -65,6 +65,15 @@ export function ProjectFilters({ clients, profiles = [], currentUserId }: Projec
     })
   }
 
+  // Debounce na search — czeka 300ms po ostatnim naciśnięciu zamiast nawigować per keystroke
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const handleSearch = (value: string) => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
+    searchDebounceRef.current = setTimeout(() => {
+      setFilter('q', value)
+    }, 300)
+  }
+
   const toggleAtRisk = () => {
     const qs = createQueryString({ atRisk: currentAtRisk ? '' : '1' })
     startTransition(() => {
@@ -83,8 +92,8 @@ export function ProjectFilters({ clients, profiles = [], currentUserId }: Projec
         <Search className="pointer-events-none absolute left-2 h-3 w-3 text-muted-foreground" aria-hidden="true" />
         <input
           type="search"
-          value={currentQ}
-          onChange={(e) => setFilter('q', e.target.value)}
+          defaultValue={currentQ}
+          onChange={(e) => handleSearch(e.target.value)}
           placeholder="Szukaj projektu…"
           className="h-7 rounded-full border border-border bg-background pl-6 pr-2.5 font-meta text-xs text-foreground placeholder:text-muted-foreground/60 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 hover:border-teal/40 w-44"
           aria-label="Szukaj projektu po nazwie lub kliencie"
