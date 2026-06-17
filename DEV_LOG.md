@@ -5,6 +5,22 @@
 
 ---
 
+## [2026-06-17] feat | P15 daily brief — Resend + Vercel Cron — branch `feat/p15-daily-brief`, commits `4d56668`, `b759108`
+
+- **Zaimplementowano P15** (daily brief mailem) na branchu `feat/p15-daily-brief`.
+- **`vercel.json`** — Vercel Cron: `GET /api/cron/daily-brief` o 04:30 UTC (06:30 PL lato) pon-pt.
+- **`src/app/api/cron/daily-brief/route.ts`** — handler GET z autoryzacją (`x-vercel-cron` lub `Bearer CRON_SECRET`), lazy-init Resend (fix bledu "Missing API key" przy build), formatowanie subject i body w pl-PL.
+- **`src/lib/data/projects.ts`** — dodano `getProjectsForBrief()` (admin client, inline at-risk queries), typy `BriefData`, `BriefAtRiskProject`, `BriefTask`.
+- **`buildBriefHtml()`** — czysty HTML template z sekcjami: zagrozonych projektow, zadan na dzis, nadchodzacych (2 dni), all-clear.
+- **TSC**: 0 bledow. **Build**: przeszedl cleanly.
+- **Push**: `origin/feat/p15-daily-brief` (gotowy do PR i merge do main).
+- **CRON_SECRET dodany do Vercel** (production + preview/feat/p15-daily-brief) — 2026-06-17.
+- **Smoke test**: `curl -H "Authorization: Bearer bw-cron-secret-2026" localhost:3000/api/cron/daily-brief` → autoryzacja OK, Supabase OK, Resend dotarly do API (blad 403: domena `bwmanager.pl` niezweryfikowana w Resend dashboard — to konfiguracja Resend, nie blad kodu).
+- ⚠️ **Do zrobienia przed pierwszym realnym wyslaniem**: zweryfikuj domene `bwmanager.pl` w https://resend.com/domains (dodaj rekordy DNS).
+- **Nastepny krok**: merge PR `feat/p15-daily-brief` → `main`.
+
+---
+
 ## [2026-06-17] fix | Cztery odłożone naprawy (deferred) — commit `0e22834` → merge `e9d17a8`
 
 - **showHidden auto-reset** — `useEffect` w GanttChart: gdy `hiddenTaskCount` spada do 0, toggle P9 automatycznie się zamyka. Eliminuje stan gdzie toggle pozostał aktywny po odheblowaniu ostatniego N/A.
