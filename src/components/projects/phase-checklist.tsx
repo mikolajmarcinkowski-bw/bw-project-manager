@@ -131,13 +131,18 @@ function TaskRow({ task, profiles }: TaskRowProps) {
         <KindChip kind={task.kind} />
       )}
 
-      {/* Owner — avatar inicjałów klikalny */}
-      <div className="shrink-0">
+      {/* Owner — avatar inicjałów + imię (spec: „inicjały + imię") */}
+      <div className="shrink-0 flex items-center gap-1.5">
         <TaskAssigneeControl
           taskId={task.id}
           assigneeName={task.assigneeName}
           profiles={profiles}
         />
+        {task.assigneeName && (
+          <span className="font-meta text-[0.65rem] text-muted-foreground whitespace-nowrap hidden sm:inline">
+            {task.assigneeName}
+          </span>
+        )}
       </div>
 
       {/* Termin — klikalny, kolor wg alertLevel */}
@@ -166,8 +171,9 @@ export function PhaseChecklist({ step, profiles }: PhaseChecklistProps) {
   const visibleTasks = step.tasks.filter((t) => !t.hidden)
   const hiddenTasks = step.tasks.filter((t) => t.hidden)
 
-  // Licznik ukończonych: widoczne + nie-N/A + nie-milestone (spójna z gantt-chart nagłówek zwiniętej fazy ~L630)
-  const countableTasks = visibleTasks.filter((t) => !t.isMilestone && t.status !== 'na')
+  // Licznik ukończonych: widoczne + nie-milestone (spójna z gantt-chart L631: `!t.isMilestone && !t.hidden`).
+  // Celowo NIE wyklucza status==='na' z total — zgodnie z Ganttem, tak że oba widoki dają ten sam ułamek.
+  const countableTasks = visibleTasks.filter((t) => !t.isMilestone)
   const doneCount = countableTasks.filter((t) => t.status === 'done').length
   const totalCount = countableTasks.length
 
@@ -251,7 +257,7 @@ export function PhaseChecklist({ step, profiles }: PhaseChecklistProps) {
           <TaskRow key={task.id} task={task} profiles={profiles} />
         ))}
 
-        {/* Toggle ukrytych zadań N/A */}
+        {/* Toggle ukrytych zadań */}
         {hiddenTasks.length > 0 && (
           <>
             <button
@@ -276,8 +282,8 @@ export function PhaseChecklist({ step, profiles }: PhaseChecklistProps) {
                 ▶
               </span>
               {showHidden
-                ? `Ukryj ${hiddenTasks.length} zadań N/A`
-                : `Pokaż ${hiddenTasks.length} ukrytych zadań N/A`}
+                ? `Ukryj ${hiddenTasks.length} ukrytych`
+                : `Pokaż ${hiddenTasks.length} ukrytych`}
             </button>
 
             {showHidden &&
@@ -290,8 +296,7 @@ export function PhaseChecklist({ step, profiles }: PhaseChecklistProps) {
 
       {/* ── Nota R2 ──────────────────────────────────────────────────────── */}
       <p className="pt-3 font-meta text-[0.65rem] text-muted-foreground/70 leading-relaxed">
-        Ukończenie fazy nie wymaga zamknięcia wszystkich zadań (R2). Zadania oznaczone jako N/D
-        są wykluczone z licznika postępu.
+        Ukończenie fazy nie wymaga zamknięcia wszystkich zadań (R2). Milestony są wykluczone z licznika postępu.
       </p>
     </div>
   )
