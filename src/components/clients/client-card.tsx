@@ -26,10 +26,10 @@ function FolderGlyph({ atRisk }: { atRisk: boolean }) {
       <span className={cn('absolute left-0 top-0 h-2.5 w-5 rounded-t-[5px]', body)} />
       {/* Tylna ścianka */}
       <span className={cn('absolute inset-x-0 bottom-0 top-1.5 rounded-[6px]', body)} />
-      {/* Kartki (stała głębia: jest coś w środku) — papier adaptywny do motywu,
-          żeby w ciemnym nie świecił jak artefakt UI; wyraźna różnica jasności. */}
-      <span className="absolute inset-x-[7px] top-[6px] h-[19px] rounded-[3px] bg-[oklch(0.90_0.007_236)] transition-transform duration-300 ease-out group-hover:-translate-y-[3px] dark:bg-[oklch(0.30_0.010_236)]" />
-      <span className="absolute inset-x-[5px] top-[10px] h-[19px] rounded-[3px] bg-[oklch(0.985_0.004_236)] shadow-[0_2px_3px_rgba(20,20,20,0.12)] transition-transform duration-300 ease-out group-hover:-translate-y-[7px] dark:bg-[oklch(0.38_0.008_236)]" />
+      {/* Kartki (stała głębia: jest coś w środku). Feedback: w dark mode papier
+          powinien być biały/jasny żeby kontrastował z ciemną teczką. */}
+      <span className="absolute inset-x-[7px] top-[6px] h-[19px] rounded-[3px] bg-[oklch(0.90_0.007_236)] transition-transform duration-300 ease-out group-hover:-translate-y-[3px] dark:bg-[oklch(0.82_0.006_236)]" />
+      <span className="absolute inset-x-[5px] top-[10px] h-[19px] rounded-[3px] bg-[oklch(0.985_0.004_236)] shadow-[0_2px_3px_rgba(20,20,20,0.12)] transition-transform duration-300 ease-out group-hover:-translate-y-[7px] dark:bg-[oklch(0.94_0.004_236)]" />
       {/* Przednia klapka — odchyla się do przodu (rotateX) odsłaniając kartki */}
       <span
         className={cn(
