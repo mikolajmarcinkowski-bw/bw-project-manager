@@ -5,6 +5,19 @@
 
 ---
 
+## [2026-06-17] feat | Faza 2c plasterek 2 — owner + completion date (P8) — commit `2488484`
+
+- Branch `feat/faza-2c-zadania`. Drugi plasterek 2c.
+- **`updateTaskAssignee`** (server action): requireUser + session client (RLS R13), trim + max 120 znaków, brak mass-assignment, audyt activity_log (actor_id z sesji, A4), revalidatePath.
+- **`TaskAssigneeControl`** (nowy komponent): klikalny avatar inicjałów (hover teal border) → Base UI Select z listą aktywnych profili + „— Brak osoby"; wyłącza profile bez `full_name` (nie zapisuje UUID). Pattern identyczny z TaskStatusControl.
+- **Gantt `completionDate` chip**: data ukończenia `dd.MM.YYYY` (teal, mono, 0.5rem) pod statusem gdy status=done i completionDate ustawiona.
+- **Data layer**: `GanttTask.completionDate` + `completion_date` w query SELECT; `profiles` pobierane równolegle z `getProjectDetail` w page.tsx.
+- **Przeglądy**: code-reviewer (0 P0/P1, P2 naprawiony — filtr profili bez full_name) + security-auditor (CZYSTO, 0 high/critical). TSC czyste, prod build OK, E2E zielony.
+- **Ślad (LOW)**: activity_log best-effort (akceptowalny); escapowanie assignee_name przy daily brief Resend (Faza 3).
+- **➡️ DALEJ w 2c:** P9 (ukrywanie N/A + „Pokaż N ukrytych"), P18 (edycja dat z potwierdzeniem), P19 (wyciszanie warningu), ekran 7 „Checklist fazy".
+
+---
+
 ## [2026-06-16] feat | Faza 2c START — plasterek 1: interaktywne odhaczanie/status zadania (P7/P8) — commit `8aa767e`
 
 - Branch `feat/faza-2c-zadania`. Pierwszy realny ZAPIS poza tworzeniem projektu.
