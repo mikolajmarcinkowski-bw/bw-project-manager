@@ -51,6 +51,40 @@
 
 ---
 
+## [2026-06-17] feat | Edycja projektu i klienta — commit `ae0debb` → merge `fe210a2`
+
+- Branch `feat/edit-project-client`. Brakujące podstawowe CRUD — bez edycji aplikacja nie nadawała się do pracy.
+- **`updateClientAction`**: update clients (name, NIP/10-cyfr, hubspot_url). Walidacja identyczna z create.
+- **`updateProjectAction`**: update projects (name, description, start_date, end_date) + delete+re-insert project_types + delete+re-insert project_pms. Pobiera client_id do revalidatePath. Activity log.
+- **`EditClientDialog`**: dialog z ołówkiem na stronie klienta, pre-fill z istniejących danych.
+- **`EditProjectDialog`**: dialog w nagłówku projektu, wszystkie pola łącznie z typami i PM-em.
+- **`getProjectDetail`** rozszerzone o `description`.
+- **Uwaga**: zmiana typów w edycji NIE uruchamia R15 (nie dodaje nowych zadań). R15 tylko przy tworzeniu.
+- TSC czyste, build OK.
+
+---
+
+## [2026-06-17] feat | 50 ulepszeń UX (QoL wave 1) — merge `79ffb84`
+
+- Branch `feat/qol-improvements`. 6 agentów sekwencyjnych, 20 plików, +527 linii.
+- Gantt: sticky header, Typ/PM labels, done/total stats, klik klocka→scroll (stepId → expand+scroll), filtr Po terminie, progress bar ParallelView, cursor-wait.
+- Nav: Moje projekty, breadcrumb 3-poziomowy, archiwum link, topbar dynamiczny, ostatnio otwarte (localStorage), logout label.
+- Dashboard: data dnia, liczniki portfela.
+- Klient: toggle Aktywne/Wszystkie.
+- Formularze: autofocus, inline validation, N/A info, scroll do góry, per-faza licznik, toast sukces, NIP walidacja.
+- /projekty: search ?q=, sort date/name, filtr PM (DB-side, `pmId` w `getAllProjects`).
+- UI: `active:scale-[0.97]`, ProjectVisitTracker.
+- TSC czyste, build OK, E2E zielony.
+
+---
+
+## [2026-06-17] fix | Faza aktywna z zadań (Opcja A) — commit `df1caea` → merge `b303421`
+
+- `is_active` i `status` fazy wyliczane z zadań: `in_progress`/`for_quality` → faza aktywna (TU JESTEŚ).
+- Zmiana wyłącznie w `getProjectDetail` (data layer), bez migracji DB.
+
+---
+
 ## [2026-06-17] feat | Faza 2c plasterek 2 — owner + completion date (P8) — commit `2488484`
 
 - Branch `feat/faza-2c-zadania`. Drugi plasterek 2c.

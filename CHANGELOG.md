@@ -4,6 +4,75 @@
 
 ---
 
+## [1.0.0] — 2026-06-17 — 🚀 PRODUKCJA: Faza 2c kompletna + 50 ulepszeń UX + edycja projektu/klienta
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `fe210a2`). Sesja 14.
+> Pierwsza wersja z kompletnym widokiem projektu, interaktywnością zadań, edycją danych i pełnym UX polish.
+
+### Dodano — edycja danych (CRUD kompletny)
+- **Edycja projektu** — dialog w nagłówku projektu: nazwa, typy, PM, daty, opis (`updateProjectAction`, replace-all typów i PM-ów)
+- **Edycja klienta** — dialog na stronie klienta: nazwa, NIP (walidacja 10 cyfr), link HubSpot (`updateClientAction`)
+- `getProjectDetail` rozszerzony o pole `description`
+
+### Dodano — P18 edycja terminu z potwierdzeniem
+- Klikalny termin w Gantcie — modal z potwierdzeniem „change", historia zmian z `activity_log`, żółty alert ≤2 dni
+- `daysUntilDue()` helper (spójny z `parseLocalDate`, brak skoku UTC/lokalna)
+- `updateTaskDueDate` + `getTaskDateHistory` server actions
+
+### Dodano — faza aktywna z zadań (fix architektoniczny)
+- `is_active` i `status` fazy wyliczane z zadań zamiast z DB — kliknięcie „W toku" na zadaniu od razu podświetla fazę na Mapie klocków
+
+### Dodano — 50 ulepszeń UX (przegląd 3-osobowy)
+
+**Gantt / Harmonogram:**
+- Sticky nagłówek tygodni przy scrollu
+- „Typ" / „PM" zamiast „Kind" / „Own"
+- Karta statystyk: „Zadania gotowe: N/M"
+- Zwinieta faza: „N/M gotowe · Xh"
+- Kliknięcie klocka → scroll do fazy w Harmonogramie (stepId przekazany)
+- Filtr „Po terminie" przez kliknięcie karty statystyk
+- Progress bar w ParallelView
+- cursor-wait przy pending
+
+**Nawigacja:**
+- „Moje projekty" w sidebarze
+- Breadcrumb 3-poziomowy: Teczki klientów / Klient / Projekt
+- Link powrotu w archiwum
+- Topbar tytuł dynamiczny
+- Ostatnio otwarte projekty (localStorage, max 3)
+- Etykieta „Wyloguj" na xl+
+
+**Dashboard:**
+- Data dnia (środa, 17 czerwca 2026)
+- Liczniki portfela (N aktywnych projektów)
+
+**Strona klienta:**
+- Toggle Aktywne / Wszystkie
+
+**Formularze:**
+- Autofocus na Select klienta gdy nie ma presetu
+- Błędy znikają przy poprawieniu pola
+- Scroll do góry przy przejściu krok 1→2
+- Info o zachowaniu N/A
+- Wyższy kontener zadań w kroku 2
+- Licznik per faza (X/Y aktywnych)
+- Toast sukcesu po stworzeniu projektu
+- Walidacja NIP (10 cyfr)
+
+**Lista /projekty:**
+- Szukaj po nazwie / kliencie (URL param ?q=)
+- Sortowanie: termin ↑/↓, nazwa A-Z/Z-A
+- Filtr PM (dropdown + „Moje projekty") — DB-side filter
+
+**UI / komponenty:**
+- `active:scale-[0.97]` na wszystkich przyciskach
+- ProjectVisitTracker zapisuje do localStorage
+
+### Server actions WRITE (aktualnie): 6/26
+`createClientAction` · `updateClientAction` · `createProjectAction` · `updateProjectAction` · `updateTaskStatus` · `updateTaskAssignee` · `updateTaskDueDate`
+
+---
+
 ## [0.9.0] — 2026-06-17 — 🚀 PRODUKCJA: Faza 2c (P7/P8/P9) + kreator krok 2 + testy penetracyjne + bugfixy
 
 > Status: **ZMERGOWANE → produkcja** (`main`, commity `5defef6`…`e9d17a8`). Sesja 13.
