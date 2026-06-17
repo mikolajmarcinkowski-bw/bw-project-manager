@@ -12,6 +12,7 @@ import type {
   ImplType,
 } from '@/lib/data/projects'
 import { TaskStatusControl } from '@/components/projects/task-status-control'
+import { TaskAssigneeControl, type Profile } from '@/components/projects/task-assignee-control'
 
 // ─── Stałe szerokości kolumn (muszą być identyczne w ghead i każdym wierszu grow) ─
 
@@ -153,16 +154,6 @@ function barGridColumn(wStart: number, wEnd: number, color: string): CSSProperti
   }
 }
 
-/** Inicjały z imienia i nazwiska (max 2 znaki). */
-function initials(name: string | null): string {
-  if (!name) return '—'
-  const parts = name.trim().split(/\s+/)
-  if (parts.length >= 2) {
-    return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase()
-  }
-  return (parts[0]?.slice(0, 2) ?? '').toUpperCase()
-}
-
 /** Suma est zadań w kroku (pomijamy null). */
 function totalEst(tasks: GanttTask[]): number {
   return tasks.reduce((acc, t) => acc + (t.est ?? 0), 0)
@@ -215,32 +206,20 @@ function ImplTypeChips({ types }: { types: ImplType[] }) {
   )
 }
 
-// ─── Subkomponent: avatar inicjałów ──────────────────────────────────────────────
-
-function Avatar({ name }: { name: string | null }) {
-  const ini = initials(name)
-  if (ini === '—') {
-    return <span className="text-[0.65rem] text-muted-foreground">—</span>
-  }
-  return (
-    <span
-      className="inline-grid place-items-center rounded-full bg-muted border border-border font-heading font-semibold text-[0.55rem] text-muted-foreground"
-      style={{ width: 20, height: 20 }}
-      title={name ?? undefined}
-      aria-label={name ?? undefined}
-    >
-      {ini}
-    </span>
-  )
+/** Formatuje 'YYYY-MM-DD' → 'dd.MM.YYYY' (polskie). */
+function formatDate(iso: string): string {
+  const [y, m, d] = iso.split('-')
+  return `${d}.${m}.${y}`
 }
 
 // ─── Komponent główny: GanttChart ──────────────────────────────────────────────
 
 interface GanttChartProps {
   project: ProjectDetail
+  profiles?: Profile[]
 }
 
-export function GanttChart({ project }: GanttChartProps) {
+export function GanttChart({ project, profiles = [] }: GanttChartProps) {
   const { steps, milestones, weekCount, calendarStart } = project
 
   // Tydzień "dziś" (1-indexed, null gdy poza zakresem lub bez calendarStart)
@@ -718,12 +697,16 @@ export function GanttChart({ project }: GanttChartProps) {
                               >
                                 {task.est != null ? `${task.est}h` : '—'}
                               </div>
-                              {/* Own — avatar inicjałów */}
+                              {/* Own — klikalny avatar (P8) */}
                               <div
                                 role="cell"
                                 className={cn(COL.own, 'px-1 py-1.5 flex items-center justify-center')}
                               >
-                                <Avatar name={task.assigneeName} />
+                                <TaskAssigneeControl
+                                  taskId={task.id}
+                                  assigneeName={task.assigneeName}
+                                  profiles={profiles}
+                                />
                               </div>
                               {/* Obszar tygodni + pasek */}
                               <div
@@ -752,12 +735,20 @@ export function GanttChart({ project }: GanttChartProps) {
                                   />
                                 )}
                               </div>
-                              {/* Status — pill interaktywny (P7) */}
+                              {/* Status — pill interaktywny (P7) + data ukończenia (P8) */}
                               <div
                                 role="cell"
-                                className={cn(COL.st, 'px-1.5 py-1.5 flex items-center justify-center')}
+                                className={cn(COL.st, 'px-1.5 py-1 flex flex-col items-center gap-0.5')}
                               >
                                 <TaskStatusControl taskId={task.id} status={task.status} />
+                                {task.status === 'done' && task.completionDate && (
+                                  <span
+                                    className="text-[0.5rem] font-mono text-teal-strong/70 leading-none"
+                                    title={`Ukończono: ${formatDate(task.completionDate)}`}
+                                  >
+                                    {formatDate(task.completionDate)}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           )

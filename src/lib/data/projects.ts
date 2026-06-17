@@ -243,6 +243,8 @@ export interface GanttTask {
   types: ImplType[]
   /** Termin zadania (do alertów „po terminie"). */
   dueDate: string | null
+  /** Data faktycznego ukończenia (P8 — auto-ustawiana gdy status → done). */
+  completionDate: string | null
 }
 
 export interface GanttStep {
@@ -312,7 +314,7 @@ export const getProjectDetail = cache(async (projectId: string): Promise<Project
       .order('step_order', { ascending: true }),
     supabase
       .from('tasks')
-      .select('id, step_id, title, status, kind, est, w_start, w_end, assignee_name, is_milestone, type, due_date, task_order')
+      .select('id, step_id, title, status, kind, est, w_start, w_end, assignee_name, is_milestone, type, due_date, completion_date, task_order')
       .eq('project_id', projectId)
       .eq('hidden', false)
       .order('task_order', { ascending: true }),
@@ -344,6 +346,7 @@ export const getProjectDetail = cache(async (projectId: string): Promise<Project
       isMilestone: t.is_milestone,
       types: (t.type ?? []) as ImplType[],
       dueDate: t.due_date ?? null,
+      completionDate: t.completion_date ?? null,
     })
     tasksByStep.set(t.step_id, arr)
   }

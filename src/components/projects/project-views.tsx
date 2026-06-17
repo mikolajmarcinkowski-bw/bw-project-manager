@@ -6,6 +6,7 @@ import type { ProjectDetail } from '@/lib/data/projects'
 import { PhaseStrip } from './phase-strip'
 import { ParallelView } from './parallel-view'
 import { GanttChart } from './gantt-chart'
+import type { Profile } from './task-assignee-control'
 
 // Widok projektu z zakładkami (ekran „Mapa klocków + phase strip" wg 06-wireframes.html).
 // Domyślnie „Mapa klocków"; „Harmonogram" = istniejący Gantt. Pozostałe zakładki = Faza 3 (wyłączone).
@@ -13,7 +14,7 @@ type Tab = 'mapa' | 'harmonogram'
 
 const FUTURE_TABS = ['RACI', 'RAID', 'Budżet', 'KPI'] as const
 
-export function ProjectViews({ project }: { project: ProjectDetail }) {
+export function ProjectViews({ project, profiles = [] }: { project: ProjectDetail; profiles?: Profile[] }) {
   const [tab, setTab] = useState<Tab>('mapa')
 
   return (
@@ -52,7 +53,7 @@ export function ProjectViews({ project }: { project: ProjectDetail }) {
         </div>
       ) : (
         <div role="tabpanel" id="panel-harmonogram" aria-labelledby="tab-harmonogram">
-          <GanttChart project={project} />
+          <GanttChart project={project} profiles={profiles} />
         </div>
       )}
     </section>

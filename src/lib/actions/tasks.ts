@@ -8,6 +8,7 @@ import type { Database } from '@/types/supabase'
 export type TaskStatus = Database['public']['Enums']['task_status']
 
 const VALID_STATUSES: TaskStatus[] = ['todo', 'in_progress', 'done', 'for_quality', 'na']
+const ASSIGNEE_MAX_LENGTH = 120
 
 // Faza 2c · P7 (statusy) + P8 (completion_date). Zmiana statusu zadania = odhaczanie.
 // RLS: tasks „for all to authenticated using(true)" (R13) — każdy zalogowany PM może edytować.
@@ -65,6 +66,58 @@ export async function updateTaskStatus(
     after: { status, completion_date },
   })
   if (logErr) console.error('[updateTaskStatus] activity_log failed:', logErr)
+
+  revalidatePath(`/projects/${before.project_id}`)
+  return { ok: true }
+}
+
+// Faza 2c · P8 (owner). Zmiana osoby odpowiedzialnej zadania.
+// assigneeName: null → brak osoby; ciąg → imię i nazwisko (max 120 znaków).
+export async function updateTaskAssignee(
+  taskId: string,
+  assigneeName: string | null
+): Promise<{ ok: true } | { error: string }> {
+  const trimmed = assigneeName?.trim() ?? null
+  if (trimmed !== null && (trimmed.length === 0 || trimmed.length > ASSIGNEE_MAX_LENGTH)) {
+    return { error: 'Nieprawidłowa nazwa osoby.' }
+  }
+
+  const user = await requireUser()
+  const supabase = await createClient()
+
+  const { data: before, error: fetchErr } = await supabase
+    .from('tasks')
+    .select('id, assignee_name, project_id')
+    .eq('id', taskId)
+    .single()
+
+  if (fetchErr || !before) {
+    return { error: 'Nie znaleziono zadania.' }
+  }
+
+  if (before.assignee_name === trimmed) {
+    return { ok: true }
+  }
+
+  const { error: updErr } = await supabase
+    .from('tasks')
+    .update({ assignee_name: trimmed })
+    .eq('id', taskId)
+
+  if (updErr) {
+    console.error('[updateTaskAssignee] update failed:', updErr)
+    return { error: 'Nie udało się zapisać osoby odpowiedzialnej.' }
+  }
+
+  const { error: logErr } = await supabase.from('activity_log').insert({
+    entity: 'task',
+    entity_id: taskId,
+    action: 'update_task_assignee',
+    actor_id: user.id,
+    before: { assignee_name: before.assignee_name },
+    after: { assignee_name: trimmed },
+  })
+  if (logErr) console.error('[updateTaskAssignee] activity_log failed:', logErr)
 
   revalidatePath(`/projects/${before.project_id}`)
   return { ok: true }
