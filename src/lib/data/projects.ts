@@ -239,10 +239,13 @@ export interface GanttTask {
   wEnd: number | null
   assigneeName: string | null
   isMilestone: boolean
+  hidden: boolean
   /** Typy wdrożenia zadania (CRM/SPO/INT/MKT/ERP) — kolumna „Typ" w Gantcie. */
   types: ImplType[]
   /** Termin zadania (do alertów „po terminie"). */
   dueDate: string | null
+  /** Data faktycznego ukończenia (P8 — auto-ustawiana gdy status → done). */
+  completionDate: string | null
 }
 
 export interface GanttStep {
@@ -312,9 +315,8 @@ export const getProjectDetail = cache(async (projectId: string): Promise<Project
       .order('step_order', { ascending: true }),
     supabase
       .from('tasks')
-      .select('id, step_id, title, status, kind, est, w_start, w_end, assignee_name, is_milestone, type, due_date, task_order')
+      .select('id, step_id, title, status, kind, est, w_start, w_end, assignee_name, is_milestone, hidden, type, due_date, completion_date, task_order')
       .eq('project_id', projectId)
-      .eq('hidden', false)
       .order('task_order', { ascending: true }),
     supabase.from('milestones').select('id, ms_code, name, week, status').eq('project_id', projectId),
     supabase.from('decision_points').select('id, type, status, title, step_id').eq('project_id', projectId),
@@ -342,8 +344,10 @@ export const getProjectDetail = cache(async (projectId: string): Promise<Project
       wEnd: t.w_end,
       assigneeName: t.assignee_name,
       isMilestone: t.is_milestone,
+      hidden: t.hidden ?? false,
       types: (t.type ?? []) as ImplType[],
       dueDate: t.due_date ?? null,
+      completionDate: t.completion_date ?? null,
     })
     tasksByStep.set(t.step_id, arr)
   }
@@ -496,4 +500,71 @@ export async function getClientWithProjects(clientId: string): Promise<{
       atRisk: riskProjectIds.has(p.id),
     })),
   }
+}
+
+// ─── getTaskTemplatesForCreation (krok 2 kreatora projektu — D-056) ──────────
+
+export interface TaskTemplateForCreation {
+  id: string
+  stepTemplateId: string
+  phaseNumber: number
+  phaseName: string
+  stepTitle: string
+  taskTitle: string
+  kind: TaskKind
+  /** Puste = dotyczy wszystkich typów (R15 konwencja). */
+  appliesTo: ImplType[]
+  est: number | null
+  isMilestone: boolean
+}
+
+export async function getTaskTemplatesForCreation(): Promise<TaskTemplateForCreation[]> {
+  const supabase = await createClient()
+
+  const { data: steps, error: stepsErr } = await supabase
+    .from('step_templates')
+    .select('id, phase_number, phase_name, step_title, step_order')
+    .in('phase_number', [0, 1, 2, 3, 4, 5, 6, 7, 8])
+    .eq('is_recurring', false)
+    .order('phase_number', { ascending: true })
+    .order('step_order', { ascending: true })
+
+  if (stepsErr || !steps || steps.length === 0) {
+    console.error('[getTaskTemplatesForCreation] steps fetch failed:', stepsErr)
+    return []
+  }
+
+  const stepIds = steps.map((s) => s.id)
+
+  const { data: tasks, error: tasksErr } = await supabase
+    .from('step_task_templates')
+    .select('id, step_template_id, task_title, kind, applies_to_types, est, is_milestone, task_order')
+    .in('step_template_id', stepIds)
+    .order('task_order', { ascending: true })
+
+  if (tasksErr) {
+    console.error('[getTaskTemplatesForCreation] tasks fetch failed:', tasksErr)
+    return []
+  }
+
+  const stepMap = new Map(steps.map((s) => [s.id, s]))
+
+  return (tasks ?? [])
+    .map((t) => {
+      const step = stepMap.get(t.step_template_id)
+      if (!step) return null
+      return {
+        id: t.id,
+        stepTemplateId: t.step_template_id,
+        phaseNumber: step.phase_number,
+        phaseName: step.phase_name,
+        stepTitle: step.step_title,
+        taskTitle: t.task_title,
+        kind: t.kind as TaskKind,
+        appliesTo: (t.applies_to_types ?? []) as ImplType[],
+        est: t.est,
+        isMilestone: t.is_milestone,
+      }
+    })
+    .filter((t): t is TaskTemplateForCreation => t !== null && !t.isMilestone)
 }

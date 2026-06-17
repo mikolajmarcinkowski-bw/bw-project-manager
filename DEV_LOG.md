@@ -5,6 +5,51 @@
 
 ---
 
+## [2026-06-17] feat | Kreator projektu krok 2 + P9 toggle (D-056) — commit `9d196d5`
+
+- Branch `feat/task-config-creation` (ortogonalny do 2c). Decyzja Mikołaja sesja 13.
+- **Formularz tworzenia projektu** → 2-krokowy wizard: krok 1 = dane (bez zmian), krok 2 = lista zadań filtrowanych przez R15 (phaseName grupowanie, per-faza „Ukryj wszystkie"), PM odznacza N/A → `hidden=true` przy tworzeniu.
+- **`createProjectAction`** rozszerzony o `na_template_ids?: string[]` — zadania zaznaczone N/A dostają `status:'na', hidden:true` od razu.
+- **`getTaskTemplatesForCreation()`** (nowa funkcja data layer) — pobiera szablony kroków + zadań dla kroku 2.
+- **`taskMatchesTypes`** przeniesione do `lib/utils.ts` (izolacja server-only / client — fix buildu).
+- **P9 toggle w Gantcie** — przycisk „Pokaż N/A (N)" gdy `hiddenTaskCount > 0`; ukryte zadania renderowane z `opacity-50 line-through` gdy toggle = on.
+- **`updateTaskStatus`** zsynchronizowany: zmiana na `na` → `hidden=true`; zmiana z `na` → `hidden=false` (koherencja).
+- **`getProjectDetail`** pobiera WSZYSTKIE zadania (usunięte `.eq('hidden', false)`) + `hidden` w GanttTask.
+- TSC czyste, prod build OK, E2E zielony. Przeglądy przed mergem.
+- **➡️ DALEJ:** code-reviewer + security-auditor → merge do main; potem wrócić na `feat/faza-2c-zadania` i kontynuować P9/P18/P19.
+
+---
+
+## [2026-06-17] feat | Faza 2c plasterek 2 — owner + completion date (P8) — commit `2488484`
+
+- Branch `feat/faza-2c-zadania`. Drugi plasterek 2c.
+- **`updateTaskAssignee`** (server action): requireUser + session client (RLS R13), trim + max 120 znaków, brak mass-assignment, audyt activity_log (actor_id z sesji, A4), revalidatePath.
+- **`TaskAssigneeControl`** (nowy komponent): klikalny avatar inicjałów (hover teal border) → Base UI Select z listą aktywnych profili + „— Brak osoby"; wyłącza profile bez `full_name` (nie zapisuje UUID). Pattern identyczny z TaskStatusControl.
+- **Gantt `completionDate` chip**: data ukończenia `dd.MM.YYYY` (teal, mono, 0.5rem) pod statusem gdy status=done i completionDate ustawiona.
+- **Data layer**: `GanttTask.completionDate` + `completion_date` w query SELECT; `profiles` pobierane równolegle z `getProjectDetail` w page.tsx.
+- **Przeglądy**: code-reviewer (0 P0/P1, P2 naprawiony — filtr profili bez full_name) + security-auditor (CZYSTO, 0 high/critical). TSC czyste, prod build OK, E2E zielony.
+- **Ślad (LOW)**: activity_log best-effort (akceptowalny); escapowanie assignee_name przy daily brief Resend (Faza 3).
+- **➡️ DALEJ w 2c:** P9 (ukrywanie N/A + „Pokaż N ukrytych"), P18 (edycja dat z potwierdzeniem), P19 (wyciszanie warningu), ekran 7 „Checklist fazy".
+
+---
+
+## [2026-06-16] feat | Faza 2c START — plasterek 1: interaktywne odhaczanie/status zadania (P7/P8) — commit `8aa767e`
+
+- Branch `feat/faza-2c-zadania`. Pierwszy realny ZAPIS poza tworzeniem projektu.
+- **`updateTaskStatus`** (server action): requireUser + RLS sesji usera (R13, NIE service_role),
+  whitelist statusu, brak mass-assignment (serwer wylicza status+completion_date), completion_date przy
+  „done" (P8), audyt activity_log actor_id z sesji (A4), revalidatePath.
+- **TaskStatusControl** (Base UI Select jako klikalny pill, 5 statusów) wpięty w wiersz zadania Gantta;
+  useTransition + router.refresh; a11y. Usunięty martwy TaskStatusPill.
+- Przeglądy: code-reviewer (0 P0/P1) + security-auditor (BEZPIECZNE w modelu R1/R13, 0 high/krit).
+- E2E: „Plan"→„Gotowe" persystuje po reload; zero błędów konsoli.
+- **Ślad na V2 (z audytu, LOW):** integralność activity_log na poziomie DB (with check actor_id=auth.uid()),
+  rate-limit server actions. Do utwardzenia później.
+- **➡️ DALEJ w 2c:** owner+completion edycja (P8 pełne), ukrywanie N/A + „Pokaż N ukrytych" (P9),
+  edycja dat z potwierdzeniem (P18), wyciszanie warningu (P19), ekran „Checklist fazy" (ekran 7).
+
+---
+
 ## [2026-06-16] deploy | 🚀 Merge Faza 2b → main (produkcja) — merge `6dcd79e`
 
 - **Merge `--no-ff`** `feat/faza-2b-gantt` → `main` (11 commitów). Push `29b3722..6dcd79e`. Auto-deploy Production (prod 200).

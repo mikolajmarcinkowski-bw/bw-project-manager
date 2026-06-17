@@ -17,7 +17,8 @@
 | Supabase CLI | ✅ ZALOGOWANE | token (login --token); link `ipptnszwnjtoqpixhefd` | 2026-06-15 |
 | Auth / konta | ✅ DZIAŁA | rejestracja WYŁĄCZONA; konto Mikołaja: dev_admin+tester (hasło **zrotowane** 2026-06-16 po leaku). Konta zakłada admin przez Auth Admin API | 2026-06-16 |
 | Konta dev (lokalne) | ✅ DZIAŁA | `dev-admin`/`dev-user@bwmanager.pl` (admin/user) do obejścia logowania — creds tylko w `.env.local`, NIE w Vercel. Obejście aktywne wyłącznie w dev (gate `NODE_ENV`) | 2026-06-16 |
-| Aplikacja (Faza 1+2a) | ✅ NA PRODUKCJI | login + shell + inspekcja + dashboard teczkowy + klient/projekt (R15) + /projekty + delight; `main` (merge `81e9197`) → `bw-project-manager.vercel.app` | 2026-06-16 |
+| Aplikacja (Faza 1+2a+2b) | ✅ NA PRODUKCJI | login + shell + inspekcja + dashboard teczkowy + klient/projekt (R15) + /projekty + delight + **widok projektu (Mapa klocków + phase strip + Harmonogram Gantt)**; `main` (merge `6dcd79e`) → `bw-project-manager.vercel.app` | 2026-06-16 |
+| Faza 2c (interaktywne zadania) | 🔶 W TOKU (branch) | plasterek 1 = odhaczanie/status zadania (`updateTaskStatus`) na `feat/faza-2c-zadania`, niezmergowane. Dalej: P8/P9/P18/P19 + ekran „Checklist fazy" | 2026-06-16 |
 | Warstwa API / MCP | ❌ NIE ISTNIEJE | brak `src/app/api` — 0/40 operacji MCP (Faza 3). Tworzenie projektu = formularz `createProjectAction` | 2026-06-16 |
 | Daily brief (Resend kod) | ❌ NIE ISTNIEJE | klucz/domena gotowe, ale brak kodu wysyłki/cron (P15, Faza 3) | 2026-06-16 |
 | Resend (konto/klucz) | ✅ GOTOWE | brief@bwmanager.pl (1000 maili/mc free) | 2026-06-15 |

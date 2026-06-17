@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { ProjectHeader } from '@/components/projects/project-header'
 import { ProjectViews } from '@/components/projects/project-views'
-import { getProjectDetail } from '@/lib/data/projects'
+import { getProjectDetail, getProfiles } from '@/lib/data/projects'
 
 export async function generateMetadata({
   params,
@@ -20,7 +20,10 @@ interface ProjectPageProps {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { id } = await params
-  const project = await getProjectDetail(id)
+  const [project, profiles] = await Promise.all([
+    getProjectDetail(id),
+    getProfiles(),
+  ])
 
   if (!project) {
     notFound()
@@ -29,7 +32,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   return (
     <div className="flex flex-col gap-6">
       <ProjectHeader project={project} />
-      <ProjectViews project={project} />
+      <ProjectViews project={project} profiles={profiles} />
     </div>
   )
 }

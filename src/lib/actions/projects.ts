@@ -17,6 +17,8 @@ export async function createProjectAction(input: {
   start_date: string
   end_date?: string
   description?: string
+  /** IDs szablonów zadań które PM oznaczył jako N/A przy tworzeniu (D-056). */
+  na_template_ids?: string[]
 }): Promise<{ ok: true; id: string } | { error: string }> {
   const supabase = await createClient()
 
@@ -175,6 +177,12 @@ export async function createProjectAction(input: {
   }
 
   const selectedTypesSet = new Set<string>(input.types)
+  // Sanitizacja na_template_ids: akceptujemy tylko niepuste stringi (spójna walidacja jak types/start_date)
+  const naSet = new Set<string>(
+    Array.isArray(input.na_template_ids)
+      ? input.na_template_ids.filter((x): x is string => typeof x === 'string' && x.length > 0)
+      : []
+  )
 
   // Pętla: insert krok → pobierz id → batch insert jego zadań
   for (const st of stepTemplates) {
@@ -215,20 +223,23 @@ export async function createProjectAction(input: {
     if (filteredTasks.length === 0) continue
 
     const { error: tasksInsertError } = await supabase.from('tasks').insert(
-      filteredTasks.map((tt) => ({
-        step_id: stepId,
-        project_id: projectId,
-        task_order: tt.task_order,
-        title: tt.task_title,
-        kind: tt.kind,
-        type: tt.applies_to_types as ImplType[],
-        w_start: tt.w_start,
-        w_end: tt.w_end,
-        est: tt.est,
-        is_milestone: tt.is_milestone,
-        status: 'todo' as const,
-        hidden: false,
-      }))
+      filteredTasks.map((tt) => {
+        const isNa = naSet.has(tt.id)
+        return {
+          step_id: stepId,
+          project_id: projectId,
+          task_order: tt.task_order,
+          title: tt.task_title,
+          kind: tt.kind,
+          type: tt.applies_to_types as ImplType[],
+          w_start: tt.w_start,
+          w_end: tt.w_end,
+          est: tt.est,
+          is_milestone: tt.is_milestone,
+          status: isNa ? ('na' as const) : ('todo' as const),
+          hidden: isNa,
+        }
+      })
     )
 
     if (tasksInsertError) {

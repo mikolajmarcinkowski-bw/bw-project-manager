@@ -6,12 +6,13 @@ import { cn } from '@/lib/utils'
 import type {
   ProjectDetail,
   GanttTask,
-  TaskStatus,
   TaskKind,
   MilestoneStatus,
   GanttStep,
   ImplType,
 } from '@/lib/data/projects'
+import { TaskStatusControl } from '@/components/projects/task-status-control'
+import { TaskAssigneeControl, type Profile } from '@/components/projects/task-assignee-control'
 
 // ─── Stałe szerokości kolumn (muszą być identyczne w ghead i każdym wierszu grow) ─
 
@@ -56,23 +57,7 @@ const KIND_LABEL: Record<TaskKind, string> = {
   ms: 'kamień',
 }
 
-// ─── Statusy zadania ──────────────────────────────────────────────────────────────
-
-const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
-  todo: 'plan',
-  in_progress: 'w toku',
-  done: 'gotowe',
-  for_quality: 'QA',
-  na: 'N/D',
-}
-
-const TASK_STATUS_CLASSES: Record<TaskStatus, string> = {
-  todo: 'bg-muted text-muted-foreground',
-  in_progress: 'bg-teal/10 text-teal',
-  done: 'bg-teal/15 text-teal-strong',
-  for_quality: 'bg-status-quality/15 text-status-quality',
-  na: 'bg-muted/50 text-muted-foreground/60 line-through',
-}
+// Statusy zadania renderuje teraz interaktywny TaskStatusControl (P7) — patrz task-status-control.tsx.
 
 // ─── Statusy milestona ────────────────────────────────────────────────────────────
 
@@ -169,34 +154,9 @@ function barGridColumn(wStart: number, wEnd: number, color: string): CSSProperti
   }
 }
 
-/** Inicjały z imienia i nazwiska (max 2 znaki). */
-function initials(name: string | null): string {
-  if (!name) return '—'
-  const parts = name.trim().split(/\s+/)
-  if (parts.length >= 2) {
-    return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase()
-  }
-  return (parts[0]?.slice(0, 2) ?? '').toUpperCase()
-}
-
 /** Suma est zadań w kroku (pomijamy null). */
 function totalEst(tasks: GanttTask[]): number {
   return tasks.reduce((acc, t) => acc + (t.est ?? 0), 0)
-}
-
-// ─── Subkomponent: pill statusu zadania ──────────────────────────────────────────
-
-function TaskStatusPill({ status }: { status: TaskStatus }) {
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full px-1.5 py-0.5 text-[0.6rem] font-semibold font-heading leading-none',
-        TASK_STATUS_CLASSES[status]
-      )}
-    >
-      {TASK_STATUS_LABEL[status]}
-    </span>
-  )
 }
 
 // ─── Subkomponent: pill statusu milestona ────────────────────────────────────────
@@ -246,32 +206,20 @@ function ImplTypeChips({ types }: { types: ImplType[] }) {
   )
 }
 
-// ─── Subkomponent: avatar inicjałów ──────────────────────────────────────────────
-
-function Avatar({ name }: { name: string | null }) {
-  const ini = initials(name)
-  if (ini === '—') {
-    return <span className="text-[0.65rem] text-muted-foreground">—</span>
-  }
-  return (
-    <span
-      className="inline-grid place-items-center rounded-full bg-muted border border-border font-heading font-semibold text-[0.55rem] text-muted-foreground"
-      style={{ width: 20, height: 20 }}
-      title={name ?? undefined}
-      aria-label={name ?? undefined}
-    >
-      {ini}
-    </span>
-  )
+/** Formatuje 'YYYY-MM-DD' → 'dd.MM.YYYY' (polskie). */
+function formatDate(iso: string): string {
+  const [y, m, d] = iso.split('-')
+  return `${d}.${m}.${y}`
 }
 
 // ─── Komponent główny: GanttChart ──────────────────────────────────────────────
 
 interface GanttChartProps {
   project: ProjectDetail
+  profiles?: Profile[]
 }
 
-export function GanttChart({ project }: GanttChartProps) {
+export function GanttChart({ project, profiles = [] }: GanttChartProps) {
   const { steps, milestones, weekCount, calendarStart } = project
 
   // Tydzień "dziś" (1-indexed, null gdy poza zakresem lub bez calendarStart)
@@ -307,10 +255,15 @@ export function GanttChart({ project }: GanttChartProps) {
     setCollapsed(new Set(steps.map((s) => s.id)))
   }
 
+  // ── P9: toggle „Pokaż N ukrytych" ───────────────────────────────────────────
+  const [showHidden, setShowHidden] = useState(false)
+
   // ── Statystyki ───────────────────────────────────────────────────────────────
 
   const allTasks = steps.flatMap((s) => s.tasks)
-  const regularTasks = allTasks.filter((t) => !t.isMilestone)
+  // Statystyki tylko na widocznych zadaniach (hidden=false)
+  const regularTasks = allTasks.filter((t) => !t.isMilestone && !t.hidden)
+  const hiddenTaskCount = allTasks.filter((t) => !t.isMilestone && t.hidden).length
   const estSum = totalEst(regularTasks)
   const overdueCount = regularTasks.filter(isOverdue).length
 
@@ -323,7 +276,8 @@ export function GanttChart({ project }: GanttChartProps) {
 
   type PhaseGroup = {
     step: GanttStep
-    regularTasks: GanttTask[]
+    regularTasks: GanttTask[]      // visible (hidden=false)
+    hiddenTasks: GanttTask[]       // hidden (hidden=true) — tylko gdy showHidden=true
     assignedMs: typeof milestones
   }
 
@@ -351,7 +305,8 @@ export function GanttChart({ project }: GanttChartProps) {
 
   const phaseGroups: PhaseGroup[] = steps.map((step) => ({
     step,
-    regularTasks: step.tasks.filter((t) => !t.isMilestone),
+    regularTasks: step.tasks.filter((t) => !t.isMilestone && !t.hidden),
+    hiddenTasks: step.tasks.filter((t) => !t.isMilestone && t.hidden),
     assignedMs: milestones.filter((ms) => msAssignment.get(ms.id) === step.id),
   }))
 
@@ -409,7 +364,7 @@ export function GanttChart({ project }: GanttChartProps) {
         role="region"
         aria-label="Tabela harmonogramu"
       >
-        {/* Przyciski Rozwiń/Zwiń wszystko */}
+        {/* Przyciski Rozwiń/Zwiń + P9 „Pokaż ukryte" */}
         <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border/30 bg-muted/20">
           <button
             type="button"
@@ -426,6 +381,26 @@ export function GanttChart({ project }: GanttChartProps) {
           >
             Zwiń wszystko
           </button>
+          {hiddenTaskCount > 0 && (
+            <>
+              <span className="text-muted-foreground/40 text-[0.6rem]">·</span>
+              <button
+                type="button"
+                onClick={() => setShowHidden((v) => !v)}
+                className={cn(
+                  'text-[0.6rem] font-heading font-semibold transition-colors rounded px-1.5 py-0.5',
+                  showHidden
+                    ? 'text-teal bg-teal/10 hover:bg-teal/20'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                )}
+                aria-pressed={showHidden}
+              >
+                {showHidden
+                  ? `Ukryj N/A (${hiddenTaskCount})`
+                  : `Pokaż N/A (${hiddenTaskCount})`}
+              </button>
+            </>
+          )}
         </div>
 
         {/* Poziomy scroll na wąskich ekranach */}
@@ -582,7 +557,7 @@ export function GanttChart({ project }: GanttChartProps) {
               )}
 
               {/* ── Wiersze per-faza (grouped) ───────────────────────────────── */}
-              {phaseGroups.map(({ step, regularTasks: phaseTasks, assignedMs }) => {
+              {phaseGroups.map(({ step, regularTasks: phaseTasks, hiddenTasks: phaseHiddenTasks, assignedMs }) => {
                 const isCollapsed = collapsed.has(step.id)
                 const phaseTaskCount = phaseTasks.length
                 const phaseEstSum = totalEst(phaseTasks)
@@ -749,12 +724,16 @@ export function GanttChart({ project }: GanttChartProps) {
                               >
                                 {task.est != null ? `${task.est}h` : '—'}
                               </div>
-                              {/* Own — avatar inicjałów */}
+                              {/* Own — klikalny avatar (P8) */}
                               <div
                                 role="cell"
                                 className={cn(COL.own, 'px-1 py-1.5 flex items-center justify-center')}
                               >
-                                <Avatar name={task.assigneeName} />
+                                <TaskAssigneeControl
+                                  taskId={task.id}
+                                  assigneeName={task.assigneeName}
+                                  profiles={profiles}
+                                />
                               </div>
                               {/* Obszar tygodni + pasek */}
                               <div
@@ -783,12 +762,67 @@ export function GanttChart({ project }: GanttChartProps) {
                                   />
                                 )}
                               </div>
-                              {/* Status — pill */}
+                              {/* Status — pill interaktywny (P7) + data ukończenia (P8) */}
                               <div
                                 role="cell"
-                                className={cn(COL.st, 'px-1.5 py-1.5 flex items-center justify-center')}
+                                className={cn(COL.st, 'px-1.5 py-1 flex flex-col items-center gap-0.5')}
                               >
-                                <TaskStatusPill status={task.status} />
+                                <TaskStatusControl taskId={task.id} status={task.status} />
+                                {task.status === 'done' && task.completionDate && (
+                                  <span
+                                    className="text-[0.5rem] font-mono text-teal-strong/70 leading-none"
+                                    title={`Ukończono: ${formatDate(task.completionDate)}`}
+                                  >
+                                    {formatDate(task.completionDate)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+
+                        {/* P9: ukryte zadania fazy — widoczne gdy showHidden=true */}
+                        {showHidden && phaseHiddenTasks.map((task, idx) => {
+                          const wStartC = clampWeek(task.wStart, weekCount)
+                          const wEndC = clampWeek(task.wEnd, weekCount)
+                          const hasBar = wStartC !== null && wEndC !== null
+                          const taskIdx = phaseTasks.length + idx + 1
+
+                          return (
+                            <div
+                              key={`task-hidden-${task.id}`}
+                              role="row"
+                              aria-label={`[N/A] ${task.title}`}
+                              className="flex items-center min-h-[34px] border-t border-dashed border-border/20 opacity-50"
+                            >
+                              <div role="cell" className={cn(COL.id, 'px-1.5 py-1 font-mono text-[0.6rem] text-muted-foreground/60')}>
+                                {step.phaseNumber}.{taskIdx}
+                              </div>
+                              <div role="cell" className={cn(COL.task, 'px-2.5 py-1 text-[0.7rem] text-muted-foreground line-through truncate')} title={task.title}>
+                                {task.title}
+                              </div>
+                              <div role="cell" className={cn(COL.kind, 'px-1 py-1 flex items-center justify-center')}>
+                                <KindChip kind={task.kind} />
+                              </div>
+                              <div role="cell" className={cn(COL.typ, 'px-1 py-1 flex items-center justify-center')}>
+                                <ImplTypeChips types={task.types} />
+                              </div>
+                              <div role="cell" className={cn(COL.est, 'px-1 py-1 font-mono text-[0.65rem] text-muted-foreground/60')}>
+                                {task.est != null ? `${task.est}h` : '—'}
+                              </div>
+                              <div role="cell" className={cn(COL.own, 'px-1 py-1 flex items-center justify-center')}>
+                                <TaskAssigneeControl taskId={task.id} assigneeName={task.assigneeName} profiles={profiles} />
+                              </div>
+                              <div role="cell" className={cn(COL.wk, 'h-[34px]')} style={{ display: 'grid', gridTemplateColumns: `repeat(${weekCount}, minmax(28px, 1fr))`, gridTemplateRows: '1fr' }}>
+                                {weeks.map((k) => (
+                                  <div key={k} aria-hidden="true" className="border-l border-border/15 h-full" style={{ gridRow: 1 }} />
+                                ))}
+                                {hasBar && (
+                                  <div aria-hidden="true" style={{ ...barGridColumn(wStartC!, wEndC!, 'var(--muted-foreground)'), opacity: 0.3, gridRow: 1 }} />
+                                )}
+                              </div>
+                              <div role="cell" className={cn(COL.st, 'px-1.5 py-1 flex items-center justify-center')}>
+                                <TaskStatusControl taskId={task.id} status={task.status} />
                               </div>
                             </div>
                           )
@@ -942,14 +976,7 @@ export function GanttChart({ project }: GanttChartProps) {
 
             </div>{/* koniec .relative (overlay) */}
 
-            {/*
-              Pominięto: „Pokaż N ukrytych" — getProjectDetail nie ładuje zadań hidden=true.
-              Toggle wymagałby rozszerzenia data-layer (Faza 2c / P9).
-            */}
-
-            {/*
-              Pominięto: karty msgrid pod tabelą — priorytet to tabela; msgrid opcjonalne (Faza 2c).
-            */}
+            {/* karty msgrid pod tabelą — opcjonalne (Faza 3) */}
 
           </div>
         </div>

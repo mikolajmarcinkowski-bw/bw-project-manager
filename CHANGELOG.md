@@ -4,6 +4,23 @@
 
 ---
 
+## [0.8.0] — 2026-06-16 — Faza 2c (START): interaktywne zadania — odhaczanie statusów (branch)
+
+> Status: branch `feat/faza-2c-zadania`, NIEZMERGOWANE (plasterek 1). Pierwszy realny zapis poza tworzeniem projektu.
+
+### Dodano
+- **`updateTaskStatus`** (server action) — zmiana statusu zadania (P7) z RLS sesji usera (R13), whitelist statusu, `completion_date` przy „Gotowe" (P8), audyt `activity_log` (A4).
+- **TaskStatusControl** — klikalny status w Gantcie (Base UI Select, 5 statusów), useTransition + refresh.
+
+### Jakość
+- code-reviewer (0 P0/P1) + security-auditor (bezpieczne w R1/R13, 0 high/krit) + detektor `[]`. E2E: zmiana statusu persystuje.
+- Ślady na V2 (LOW): integralność `activity_log` w DB, rate-limit server actions.
+
+### Następne plasterki 2c
+- P8 (owner + completion UI), P9 (ukrywanie N/A + „Pokaż N ukrytych"), P18 (edycja dat z potwierdzeniem), P19 (wyciszanie), ekran „Checklist fazy" (ekran 7).
+
+---
+
 ## [0.7.0] — 2026-06-16 — Faza 2b: widok projektu = Mapa klocków + phase strip + wierny Gantt
 
 > Status: **ZMERGOWANE → produkcja** (merge `6dcd79e`, 2026-06-16). W 2b dodatkowo: ekran „Mapa klocków + phase strip" (główny widok), wierny task-level Gantt (ciemny header, paski wg kind, zwijalne fazy, ciągła linia „dziś"), Krok 0 (impeccable wpięty w design), QA Playwright (5 projektów), krytyka impeccable + code-reviewer.
