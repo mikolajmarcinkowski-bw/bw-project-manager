@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties, useState } from 'react'
+import { type CSSProperties, useState, useEffect } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type {
@@ -263,6 +263,11 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
   // Statystyki tylko na widocznych zadaniach (hidden=false)
   const regularTasks = allTasks.filter((t) => !t.isMilestone && !t.hidden)
   const hiddenTaskCount = allTasks.filter((t) => !t.isMilestone && t.hidden).length
+
+  // Auto-zamknij toggle gdy nie ma już żadnych ukrytych zadań (wszystkie odblokowane)
+  useEffect(() => {
+    if (hiddenTaskCount === 0) setShowHidden(false)
+  }, [hiddenTaskCount])
   const estSum = totalEst(regularTasks)
   const overdueCount = regularTasks.filter(isOverdue).length
 

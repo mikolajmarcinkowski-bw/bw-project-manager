@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef, useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import type { GanttStep, ProjectDetail } from '@/lib/data/projects'
 
@@ -178,6 +179,25 @@ function Arrow() {
  *                    klocka lub diamencika (stepId decyzji)
  */
 export function PhaseStrip({ steps, decisions, onSelectStep }: PhaseStripProps) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const check = () => {
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
+    }
+    check()
+    el.addEventListener('scroll', check, { passive: true })
+    const ro = new ResizeObserver(check)
+    ro.observe(el)
+    return () => {
+      el.removeEventListener('scroll', check)
+      ro.disconnect()
+    }
+  }, [])
+
   // Budujemy uporządkowaną listę elementów paska:
   // każdy krok może mieć dopasowane decyzje (stepId === step.id).
   // Porządek: klocek → [decyzje powiązane z tym krokiem] → strzałka (jeśli nie ostatni).
@@ -208,9 +228,19 @@ export function PhaseStrip({ steps, decisions, onSelectStep }: PhaseStripProps) 
   }
 
   return (
+    <div className="relative">
+      {/* Gradient fade prawa krawędź — wskazuje że można scrollować */}
+      {canScrollRight && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 w-12 z-10 bg-gradient-to-l from-card to-transparent"
+        />
+      )}
     <div
+      ref={scrollRef}
       // pt-4 żeby pill „TU JESTEŚ" nie był przycinany przez overflow-x-auto
-      className="flex items-stretch overflow-x-auto pb-3 pt-4 gap-0"
+      // [&::-webkit-scrollbar] — cienki scrollbar na WebKit zamiast grubego domyślnego
+      className="flex items-stretch overflow-x-auto pb-3 pt-4 gap-0 [&::-webkit-scrollbar]:h-[3px] [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:transparent"
       role="navigation"
       aria-label="Ścieżka faz projektu"
     >
@@ -235,6 +265,7 @@ export function PhaseStrip({ steps, decisions, onSelectStep }: PhaseStripProps) 
           </div>
         )
       })}
+    </div>
     </div>
   )
 }
