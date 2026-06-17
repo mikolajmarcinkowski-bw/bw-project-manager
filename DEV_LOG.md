@@ -5,6 +5,21 @@
 
 ---
 
+## [2026-06-17] feat | Kreator projektu krok 2 + P9 toggle (D-056) — commit `9d196d5`
+
+- Branch `feat/task-config-creation` (ortogonalny do 2c). Decyzja Mikołaja sesja 13.
+- **Formularz tworzenia projektu** → 2-krokowy wizard: krok 1 = dane (bez zmian), krok 2 = lista zadań filtrowanych przez R15 (phaseName grupowanie, per-faza „Ukryj wszystkie"), PM odznacza N/A → `hidden=true` przy tworzeniu.
+- **`createProjectAction`** rozszerzony o `na_template_ids?: string[]` — zadania zaznaczone N/A dostają `status:'na', hidden:true` od razu.
+- **`getTaskTemplatesForCreation()`** (nowa funkcja data layer) — pobiera szablony kroków + zadań dla kroku 2.
+- **`taskMatchesTypes`** przeniesione do `lib/utils.ts` (izolacja server-only / client — fix buildu).
+- **P9 toggle w Gantcie** — przycisk „Pokaż N/A (N)" gdy `hiddenTaskCount > 0`; ukryte zadania renderowane z `opacity-50 line-through` gdy toggle = on.
+- **`updateTaskStatus`** zsynchronizowany: zmiana na `na` → `hidden=true`; zmiana z `na` → `hidden=false` (koherencja).
+- **`getProjectDetail`** pobiera WSZYSTKIE zadania (usunięte `.eq('hidden', false)`) + `hidden` w GanttTask.
+- TSC czyste, prod build OK, E2E zielony. Przeglądy przed mergem.
+- **➡️ DALEJ:** code-reviewer + security-auditor → merge do main; potem wrócić na `feat/faza-2c-zadania` i kontynuować P9/P18/P19.
+
+---
+
 ## [2026-06-17] feat | Faza 2c plasterek 2 — owner + completion date (P8) — commit `2488484`
 
 - Branch `feat/faza-2c-zadania`. Drugi plasterek 2c.
