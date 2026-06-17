@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { GanttStep, GanttTask, TaskKind } from '@/lib/data/projects'
 import { TaskStatusControl } from './task-status-control'
@@ -157,19 +158,25 @@ function TaskRow({ task, profiles }: TaskRowProps) {
 export interface PhaseChecklistProps {
   step: GanttStep
   profiles: Profile[]
+  /** Wszystkie fazy projektu — do nawigacji między fazami */
+  allSteps?: GanttStep[]
+  /** Callback gdy PM wybiera inną fazę */
+  onSelectStep?: (stepId: string) => void
 }
 
-export function PhaseChecklist({ step, profiles }: PhaseChecklistProps) {
+export function PhaseChecklist({ step, profiles, allSteps, onSelectStep }: PhaseChecklistProps) {
   const [showHidden, setShowHidden] = useState(false)
 
-  // Kolejność tablicy zachowuje task_order (warstwa danych sortuje po task_order przy fetch)
   const visibleTasks = step.tasks.filter((t) => !t.hidden)
   const hiddenTasks = step.tasks.filter((t) => t.hidden)
-
-  // Licznik ukończonych: widoczne + nie-N/A + nie-milestone (spójna z gantt-chart nagłówek zwiniętej fazy ~L630)
   const countableTasks = visibleTasks.filter((t) => !t.isMilestone && t.status !== 'na')
   const doneCount = countableTasks.filter((t) => t.status === 'done').length
   const totalCount = countableTasks.length
+
+  // Nawigacja między fazami
+  const currentIdx = allSteps?.findIndex((s) => s.id === step.id) ?? -1
+  const prevStep = currentIdx > 0 ? allSteps![currentIdx - 1] : null
+  const nextStep = allSteps && currentIdx < allSteps.length - 1 ? allSteps[currentIdx + 1] : null
 
   return (
     <div
@@ -177,23 +184,63 @@ export function PhaseChecklist({ step, profiles }: PhaseChecklistProps) {
       role="region"
       aria-label={`Checklist fazy ${step.phaseNumber}: ${step.phaseName}`}
     >
-      {/* ── Nagłówek breadcrumb ───────────────────────────────────────── */}
+      {/* ── Nagłówek z nawigacją ─────────────────────────────────────── */}
       <div className="flex flex-col gap-1.5 pb-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest">
-            FAZA {step.phaseNumber}
-          </span>
-          <span className="font-mono text-[0.6rem] text-muted-foreground/40" aria-hidden="true">
-            —
-          </span>
-          <span className="font-heading font-semibold text-sm text-foreground">
-            {step.phaseName}
-          </span>
-          {step.isActive && (
-            <span className="inline-flex items-center rounded-full bg-teal/10 text-teal border border-teal/30 px-2 py-0.5 text-[0.6rem] font-heading font-semibold uppercase tracking-[0.04em] leading-none">
-              TU JESTEŚ
-            </span>
-          )}
+        <div className="flex items-center justify-between gap-2">
+          {/* Strzałka wstecz */}
+          <button
+            type="button"
+            onClick={() => prevStep && onSelectStep?.(prevStep.id)}
+            disabled={!prevStep || !onSelectStep}
+            aria-label={prevStep ? `Poprzednia faza: ${prevStep.phaseName}` : 'Brak poprzedniej fazy'}
+            className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            {prevStep && (
+              <span className="font-meta text-[0.65rem] hidden sm:inline">F{prevStep.phaseNumber}</span>
+            )}
+          </button>
+
+          {/* Tytuł fazy + dropdown */}
+          <div className="flex items-center gap-2 flex-1 justify-center flex-wrap">
+            {allSteps && allSteps.length > 1 && onSelectStep ? (
+              <select
+                value={step.id}
+                onChange={(e) => onSelectStep(e.target.value)}
+                className="font-heading font-semibold text-sm text-foreground bg-transparent border-none outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-teal rounded px-1"
+                aria-label="Wybierz fazę"
+              >
+                {allSteps.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    F{s.phaseNumber} — {s.phaseName}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="font-heading font-semibold text-sm text-foreground">
+                FAZA {step.phaseNumber} — {step.phaseName}
+              </span>
+            )}
+            {step.isActive && (
+              <span className="inline-flex items-center rounded-full bg-teal/10 text-teal border border-teal/30 px-2 py-0.5 text-[0.6rem] font-heading font-semibold uppercase tracking-[0.04em] leading-none">
+                TU JESTEŚ
+              </span>
+            )}
+          </div>
+
+          {/* Strzałka dalej */}
+          <button
+            type="button"
+            onClick={() => nextStep && onSelectStep?.(nextStep.id)}
+            disabled={!nextStep || !onSelectStep}
+            aria-label={nextStep ? `Następna faza: ${nextStep.phaseName}` : 'Brak następnej fazy'}
+            className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
+          >
+            {nextStep && (
+              <span className="font-meta text-[0.65rem] hidden sm:inline">F{nextStep.phaseNumber}</span>
+            )}
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
         </div>
 
         {/* Licznik ukończonych + pasek postępu */}
