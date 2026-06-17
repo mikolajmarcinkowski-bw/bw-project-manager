@@ -107,7 +107,7 @@ export function TaskStatusControl({ taskId, status }: TaskStatusControlProps) {
           <SelectPrimitive.Positioner
             side="bottom"
             sideOffset={4}
-            align="end"
+            align="start"
             className="isolate z-50"
           >
             <SelectPrimitive.Popup

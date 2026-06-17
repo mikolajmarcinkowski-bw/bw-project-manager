@@ -124,11 +124,10 @@ function clampWeek(week: number | null, weekCount: number): number | null {
   return Math.max(1, Math.min(week, weekCount))
 }
 
-/** ISO dzisiejszej daty 'YYYY-MM-DD' (lokalna strefa). */
-const todayISO = new Date().toISOString().slice(0, 10)
-
-/** Czy zadanie jest po terminie (ma due_date < dziś i nie jest done/na). */
+/** Czy zadanie jest po terminie (ma due_date < dziś i nie jest done/na).
+ *  Data wyliczana per-wywołanie żeby nie starzała się po restarcie serwera. */
 function isOverdue(task: GanttTask): boolean {
+  const todayISO = new Date().toISOString().slice(0, 10)
   return (
     task.dueDate !== null &&
     task.dueDate < todayISO &&

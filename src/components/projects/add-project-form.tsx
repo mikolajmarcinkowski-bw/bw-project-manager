@@ -162,6 +162,14 @@ function Step1Form({ clients, profiles, defaultClientId, onNext, initialData }: 
       setValidationError('Data startu jest wymagana.')
       return
     }
+    if (start_date < '2000-01-01') {
+      setValidationError('Data startu jest nierealistycznie wczesna (minimum 2000-01-01).')
+      return
+    }
+    if (end_dateRaw && end_dateRaw < start_date) {
+      setValidationError('Deadline nie może być wcześniejszy niż data startu.')
+      return
+    }
 
     onNext({
       client_id,
@@ -219,6 +227,7 @@ function Step1Form({ clients, profiles, defaultClientId, onNext, initialData }: 
           placeholder="np. Wdrożenie CRM dla Klienta ABC"
           defaultValue={initialData?.name ?? ''}
           autoFocus={!defaultClientId}
+          maxLength={200}
         />
       </div>
 
@@ -667,6 +676,8 @@ export function AddProjectForm({
       if ('error' in result) {
         setSubmitError(result.error)
       } else {
+        // refresh() inwaliduje kliencki RSC cache → dane na docelowej stronie są świeże
+        router.refresh()
         if (step1Data.client_id === defaultClientId && defaultClientId) {
           router.push(`/clients/${defaultClientId}`)
         } else {
