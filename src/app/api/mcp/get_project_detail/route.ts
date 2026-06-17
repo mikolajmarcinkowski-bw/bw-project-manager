@@ -78,8 +78,25 @@ export async function POST(request: NextRequest) {
     if (decErr) console.error('[mcp/get_project_detail] decisions:', decErr)
     if (pmErr) console.error('[mcp/get_project_detail] pms:', pmErr)
 
+    type TaskShape = {
+      id: string
+      title: string
+      status: string
+      kind: string
+      est: number | null
+      wStart: number | null
+      wEnd: number | null
+      assigneeName: string | null
+      isMilestone: boolean
+      hidden: boolean
+      types: string[]
+      dueDate: string | null
+      completionDate: string | null
+      warningMuted: boolean
+    }
+
     // Group tasks by step
-    const tasksByStep = new Map<string, object[]>()
+    const tasksByStep = new Map<string, TaskShape[]>()
     for (const t of taskRows ?? []) {
       const arr = tasksByStep.get(t.step_id) ?? []
       arr.push({
@@ -93,7 +110,7 @@ export async function POST(request: NextRequest) {
         assigneeName: t.assignee_name,
         isMilestone: t.is_milestone,
         hidden: t.hidden ?? false,
-        types: (t.type ?? []),
+        types: (t.type ?? []) as string[],
         dueDate: t.due_date ?? null,
         completionDate: t.completion_date ?? null,
         warningMuted: t.warning_muted ?? false,
@@ -103,13 +120,30 @@ export async function POST(request: NextRequest) {
 
     const steps = (stepsRows ?? []).map((s) => {
       const tasks = tasksByStep.get(s.id) ?? []
+
+      // D-037: derive step status from tasks (same logic as UI — DB column is non-authoritative)
+      const activeTasks = tasks.filter(
+        (t) => !t.hidden && t.status !== 'na' && !t.isMilestone
+      )
+      const derivedStatus = (() => {
+        if (s.status === 'skipped') return 'skipped'
+        if (activeTasks.length === 0) return s.status
+        if (activeTasks.some((t) => t.status === 'in_progress' || t.status === 'for_quality'))
+          return 'in_progress'
+        if (activeTasks.every((t) => t.status === 'done')) return 'done'
+        return 'todo'
+      })()
+      const derivedIsActive = activeTasks.some(
+        (t) => t.status === 'in_progress' || t.status === 'for_quality'
+      )
+
       return {
         id: s.id,
         phaseNumber: s.phase_number,
         phaseName: s.phase_name,
         stepTitle: s.step_title,
-        status: s.status,
-        isActive: s.is_active,
+        status: derivedStatus,
+        isActive: derivedIsActive,
         isParallel: s.is_parallel,
         isRecurring: s.is_recurring,
         isDecision: s.is_decision,
