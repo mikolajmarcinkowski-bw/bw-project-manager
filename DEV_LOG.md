@@ -15,7 +15,7 @@
 - **TSC**: 0 bledow. **Build**: przeszedl cleanly.
 - **Push**: `origin/feat/p15-daily-brief` (gotowy do PR i merge do main).
 - **CRON_SECRET dodany do Vercel** (production + preview/feat/p15-daily-brief) — 2026-06-17.
-- **Smoke test**: `curl -H "Authorization: Bearer bw-cron-secret-2026" localhost:3000/api/cron/daily-brief` → autoryzacja OK, Supabase OK, Resend dotarly do API (blad 403: domena `bwmanager.pl` niezweryfikowana w Resend dashboard — to konfiguracja Resend, nie blad kodu).
+- **Smoke test**: `curl -H "Authorization: Bearer $CRON_SECRET" localhost:3000/api/cron/daily-brief` → autoryzacja OK, Supabase OK, Resend dotarly do API (blad 403: domena `bwmanager.pl` niezweryfikowana w Resend dashboard — to konfiguracja Resend, nie blad kodu).
 - ⚠️ **Do zrobienia przed pierwszym realnym wyslaniem**: zweryfikuj domene `bwmanager.pl` w https://resend.com/domains (dodaj rekordy DNS).
 - **Nastepny krok**: merge PR `feat/p15-daily-brief` → `main`.
 
