@@ -44,46 +44,54 @@ interface PhaseBlockProps {
 
 function PhaseBlock({ step, onClick }: PhaseBlockProps) {
   const isDone = step.status === 'done'
+  // Aktywna = ma zadania in_progress/for_quality TERAZ
+  // Rozpoczęta = w toku (has_work), ale żadne zadanie nie jest aktualnie in_progress
   const isActive = step.isActive
+  const isInProgress = step.status === 'in_progress' // obejmuje też isActive
 
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={`Faza ${step.phaseNumber}: ${step.phaseName}${isActive ? ' — aktywna faza' : ''}${isDone ? ' — ukończona' : ''}`}
+      aria-label={`Faza ${step.phaseNumber}: ${step.phaseName}${isActive ? ' — aktywna faza' : isInProgress ? ' — w toku' : ''}${isDone ? ' — ukończona' : ''}`}
       className={cn(
-        // Bazowy styl klocka — odwzorowanie .pblock
+        // Bazowy styl klocka
         'group relative flex flex-col justify-center min-w-[96px] rounded-[9px] border bg-card',
         'px-3 py-2.5 shadow-whisper text-left transition-all duration-200',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/60',
-        // Hover lift (nie na active — ma już wyróżnik)
-        !isActive && 'hover:shadow-whisper-md hover:-translate-y-px',
+        // Hover lift (nie na active)
+        !isInProgress && 'hover:shadow-whisper-md hover:-translate-y-px',
         // Ukończona faza — wyszarzona
         isDone && 'bg-muted/40 border-border/60',
-        // Aktywna faza — teal border + ring glow
+        // Aktywna faza (ma in_progress zadania) — teal border + ring glow
         isActive && [
           'border-2 border-teal ring-2 ring-teal/25',
           'hover:ring-teal/35',
         ],
-        // Nieukończona, nieaktywna — domyślny border
-        !isDone && !isActive && 'border-border'
+        // Rozpoczęta ale nie aktywnie (żadne in_progress zadanie) — subtelny amber border
+        isInProgress && !isActive && [
+          'border-2 border-status-at/60',
+        ],
+        // Nieukończona, nie w toku — domyślny border
+        !isDone && !isInProgress && 'border-border'
       )}
     >
-      {/* Pill „TU JESTEŚ" dla aktywnej fazy */}
-      {isActive && (
+      {/* Pill — „TU JESTEŚ" gdy aktywna (in_progress zadania), „W TOKU" gdy rozpoczęta */}
+      {isInProgress && (
         <span
           aria-hidden="true"
           className={cn(
-            'absolute -top-2.5 left-2 bg-teal text-white',
+            'absolute -top-2.5 left-2 text-white',
             'rounded-full px-2 py-0.5 text-[8px] font-semibold uppercase tracking-[0.04em]',
-            'font-heading leading-none'
+            'font-heading leading-none',
+            isActive ? 'bg-teal' : 'bg-status-at'
           )}
         >
-          TU JESTEŚ
+          {isActive ? 'TU JESTEŚ' : 'W TOKU'}
         </span>
       )}
 
-      {/* Numer fazy — F{n} (+ rozróżnik Sprint, gdy nazwa się powtarza) */}
+      {/* Numer fazy — F{n} */}
       <span
         className={cn(
           'font-mono text-[8.5px] leading-none mb-0.5',
@@ -98,7 +106,10 @@ function PhaseBlock({ step, onClick }: PhaseBlockProps) {
       <span
         className={cn(
           'font-heading font-semibold text-[11.5px] leading-tight line-clamp-2',
-          isDone ? 'text-muted-foreground' : isActive ? 'text-teal-strong' : 'text-foreground'
+          isDone ? 'text-muted-foreground'
+            : isActive ? 'text-teal-strong'
+            : isInProgress ? 'text-status-at'
+            : 'text-foreground'
         )}
       >
         {isDone && (
