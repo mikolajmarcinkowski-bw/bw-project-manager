@@ -198,7 +198,7 @@ function Step1Form({ clients, profiles, defaultClientId, onNext, initialData }: 
           </>
         ) : (
           <Select name="client_id" defaultValue={initialData?.client_id ?? undefined}>
-            <SelectTrigger id="project-client" className="w-full">
+            <SelectTrigger id="project-client" className="w-full" autoFocus={!defaultClientId}>
               <SelectValue placeholder="Wybierz klienta...">
                 {(value) =>
                   clients.find((c) => c.id === value)?.name ?? 'Wybierz klienta...'
@@ -226,8 +226,13 @@ function Step1Form({ clients, profiles, defaultClientId, onNext, initialData }: 
           name="name"
           placeholder="np. Wdrożenie CRM dla Klienta ABC"
           defaultValue={initialData?.name ?? ''}
-          autoFocus={!defaultClientId}
+          autoFocus={!!defaultClientId}
           maxLength={200}
+          onChange={(e) => {
+            if (e.target.value && validationError?.toLowerCase().includes('nazwa')) {
+              setValidationError(null)
+            }
+          }}
         />
       </div>
 
@@ -305,6 +310,11 @@ function Step1Form({ clients, profiles, defaultClientId, onNext, initialData }: 
             type="date"
             min="2000-01-01"
             defaultValue={initialData?.start_date ?? ''}
+            onChange={() => {
+              if (validationError?.toLowerCase().includes('data')) {
+                setValidationError(null)
+              }
+            }}
           />
         </div>
         <div className="flex flex-col gap-1.5">
@@ -316,6 +326,11 @@ function Step1Form({ clients, profiles, defaultClientId, onNext, initialData }: 
             min="2000-01-01"
             defaultValue={initialData?.end_date ?? ''}
             aria-label="Termin zakończenia projektu (opcjonalne)"
+            onChange={() => {
+              if (validationError?.toLowerCase().includes('deadline')) {
+                setValidationError(null)
+              }
+            }}
           />
         </div>
       </div>
@@ -441,7 +456,10 @@ function Step2Tasks({
       </div>
 
       {/* Lista faz + zadania */}
-      <div className="max-h-[420px] overflow-y-auto flex flex-col gap-4 pr-1">
+      <div className="max-h-[calc(100vh-300px)] min-h-[250px] overflow-y-auto flex flex-col gap-4 pr-1">
+        <p className="font-meta text-xs text-muted-foreground">
+          Zadania oznaczone jako N/A nie pojawią się w harmonogramie. Można je odkryć później przez przycisk „Pokaż N/A".
+        </p>
         {phases.length === 0 ? (
           <p className="font-meta text-sm text-muted-foreground py-4 text-center">
             Brak zadań pasujących do wybranych typów wdrożenia.
@@ -524,8 +542,11 @@ function PhaseSection({
     <div className="flex flex-col gap-1">
       {/* Nagłówek fazy */}
       <div className="flex items-center justify-between border-l-2 border-teal pl-3 py-1 mb-1">
-        <span className="font-heading text-xs font-bold uppercase tracking-wide text-teal-strong">
+        <span className="font-heading text-xs font-bold uppercase tracking-wide text-teal-strong flex items-center gap-2">
           Faza {phase.phaseNumber} — {phase.phaseName}
+          <span className="font-mono text-[0.65rem] text-muted-foreground font-normal">
+            ({allTaskIds.length - allTaskIds.filter((id) => naIds.has(id)).length} / {allTaskIds.length} aktywnych)
+          </span>
         </span>
         <button
           type="button"
@@ -642,10 +663,12 @@ export function AddProjectForm({
   const [naIds, setNaIds] = useState<Set<string>>(new Set())
   const [isPending, startTransition] = useTransition()
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
   function handleStep1Next(data: Step1Data) {
     setStep1Data(data)
     setStep(2)
+    setTimeout(() => { window.scrollTo({ top: 0, behavior: 'smooth' }) }, 50)
   }
 
   function handleBack() {
@@ -676,19 +699,28 @@ export function AddProjectForm({
       if ('error' in result) {
         setSubmitError(result.error)
       } else {
+        setSuccessMsg('Projekt gotowy — zadania wczytane z szablonu. Otwieranie...')
         // refresh() inwaliduje kliencki RSC cache → dane na docelowej stronie są świeże
         router.refresh()
-        if (step1Data.client_id === defaultClientId && defaultClientId) {
-          router.push(`/clients/${defaultClientId}`)
-        } else {
-          router.push('/dashboard')
-        }
+        setTimeout(() => {
+          setSuccessMsg(null)
+          if (step1Data.client_id === defaultClientId && defaultClientId) {
+            router.push(`/clients/${defaultClientId}`)
+          } else {
+            router.push('/dashboard')
+          }
+        }, 1500)
       }
     })
   }
 
   return (
     <div className="flex flex-col">
+      {successMsg && (
+        <div className="mb-4 rounded-lg bg-teal/10 border border-teal/30 px-4 py-3 text-sm text-teal font-medium" role="status">
+          {successMsg}
+        </div>
+      )}
       <StepIndicator current={step} />
 
       {step === 1 ? (

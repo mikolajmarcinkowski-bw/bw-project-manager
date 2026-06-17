@@ -17,6 +17,7 @@ const FUTURE_TABS: Array<'RACI' | 'RAID' | 'Budżet' | 'KPI'> = ['RACI', 'RAID',
 
 export function ProjectViews({ project, profiles = [] }: { project: ProjectDetail; profiles?: Profile[] }) {
   const [tab, setTab] = useState<Tab>('mapa')
+  const [targetStepId, setTargetStepId] = useState<string | null>(null)
 
   return (
     <section className="flex flex-col gap-4" aria-label="Widoki projektu">
@@ -56,13 +57,18 @@ export function ProjectViews({ project, profiles = [] }: { project: ProjectDetai
           <PhaseStrip
             steps={project.steps}
             decisions={project.decisions}
-            onSelectStep={() => setTab('harmonogram')}
+            onSelectStep={(stepId: string) => { setTargetStepId(stepId); setTab('harmonogram') }}
           />
           <ParallelView steps={project.steps} decisions={project.decisions} />
         </div>
       ) : tab === 'harmonogram' ? (
         <div role="tabpanel" id="panel-harmonogram" aria-labelledby="tab-harmonogram">
-          <GanttChart project={project} profiles={profiles} />
+          <GanttChart
+            project={project}
+            profiles={profiles}
+            targetStepId={targetStepId}
+            onTargetConsumed={() => setTargetStepId(null)}
+          />
         </div>
       ) : (
         /* Faza 3 — zakładka istnieje ale treść jeszcze nie */

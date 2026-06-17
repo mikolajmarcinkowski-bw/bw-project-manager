@@ -98,7 +98,7 @@ export function TaskAssigneeControl({ taskId, assigneeName, profiles }: TaskAssi
             'hover:border-teal/60 hover:bg-teal/5',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-1',
             'disabled:cursor-not-allowed',
-            isPending && 'opacity-50',
+            isPending && 'opacity-50 cursor-wait',
             error && 'border-destructive/60'
           )}
           style={{ width: 20, height: 20 }}

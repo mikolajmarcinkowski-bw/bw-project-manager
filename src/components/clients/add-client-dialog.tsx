@@ -36,6 +36,7 @@ async function createClientFormAction(
 export function AddClientDialog() {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [nipError, setNipError] = useState<string | null>(null)
   const [state, formAction, isPending] = useActionState<ActionState, FormData>(
     createClientFormAction,
     initialState
@@ -48,8 +49,22 @@ export function AddClientDialog() {
     }
   }, [state, router])
 
+  function handleNipChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value
+    if (!raw) {
+      setNipError(null)
+      return
+    }
+    const digits = raw.replace(/[\s-]/g, '')
+    if (!/^\d{10}$/.test(digits)) {
+      setNipError('NIP musi składać się z 10 cyfr.')
+    } else {
+      setNipError(null)
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => setOpen(nextOpen)}>
+    <Dialog open={open} onOpenChange={(nextOpen) => { setOpen(nextOpen); if (!nextOpen) setNipError(null) }}>
       <DialogTrigger
         render={
           <Button variant="default" size="sm" className="gap-1.5 rounded-full" />
@@ -89,7 +104,14 @@ export function AddClientDialog() {
               name="nip"
               placeholder="np. 1234567890"
               aria-label="NIP (opcjonalne)"
+              aria-describedby={nipError ? 'client-nip-error' : undefined}
+              onChange={handleNipChange}
             />
+            {nipError && (
+              <p id="client-nip-error" className="font-meta text-xs text-status-off" role="alert">
+                {nipError}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -130,7 +152,7 @@ export function AddClientDialog() {
               type="submit"
               size="sm"
               className="rounded-full gap-1.5"
-              disabled={isPending}
+              disabled={isPending || !!nipError}
             >
               {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
               Utwórz klienta

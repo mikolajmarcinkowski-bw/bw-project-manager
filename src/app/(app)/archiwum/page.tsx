@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Archive } from 'lucide-react'
 
 export const metadata = {
@@ -22,6 +23,12 @@ export default function ArchiwumPage() {
           pojawi się razem z archiwizacją projektów. Na razie aktywne projekty znajdziesz
           na dashboardzie i w widoku wszystkich projektów.
         </p>
+        <Link
+          href="/projekty"
+          className="mt-4 font-meta text-sm text-teal-strong hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal rounded"
+        >
+          → Przejdź do aktywnych projektów
+        </Link>
       </div>
     </div>
   )

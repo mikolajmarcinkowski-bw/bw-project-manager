@@ -1,4 +1,4 @@
-import { LayoutDashboard, FolderOpen, Archive } from 'lucide-react'
+import { LayoutDashboard, FolderOpen, Archive, User } from 'lucide-react'
 
 export const NAV_ITEMS = [
   {
@@ -10,6 +10,11 @@ export const NAV_ITEMS = [
     label: 'Wszystkie projekty',
     href: '/projekty',
     icon: FolderOpen,
+  },
+  {
+    label: 'Moje projekty',
+    href: '/projekty?pm=current',
+    icon: User,
   },
   {
     label: 'Archiwum',

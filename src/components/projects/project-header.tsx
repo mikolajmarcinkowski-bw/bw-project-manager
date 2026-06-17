@@ -36,16 +36,22 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
   return (
     <header className="mb-6">
       {/* Breadcrumb */}
-      <nav aria-label="Nawigacja" className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground">
+      <nav aria-label="Nawigacja okruszkowa" className="mb-2 flex items-center gap-1.5 font-meta text-xs text-muted-foreground">
+        <Link
+          href="/dashboard"
+          className="text-teal-strong hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal rounded"
+        >
+          Teczki klientów
+        </Link>
+        <span aria-hidden="true" className="text-muted-foreground mx-0.5">/</span>
         <Link
           href={`/clients/${client.id}`}
-          className="inline-flex items-center gap-1 rounded hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal rounded"
         >
-          <span aria-hidden="true" className="text-base leading-none">‹</span>
-          <span>{client.name}</span>
+          {client.name}
         </Link>
-        <span aria-hidden="true" className="text-border">/</span>
-        <span className="text-foreground font-medium truncate max-w-[40ch]">{name}</span>
+        <span aria-hidden="true" className="text-muted-foreground mx-0.5">/</span>
+        <span className="text-foreground font-medium truncate max-w-[40ch]" aria-current="page">{name}</span>
       </nav>
 
       {/* Nagłówek */}

@@ -20,10 +20,12 @@ export async function generateMetadata({
 
 interface ClientPageProps {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ show?: string }>
 }
 
-export default async function ClientPage({ params }: ClientPageProps) {
+export default async function ClientPage({ params, searchParams }: ClientPageProps) {
   const { id } = await params
+  const { show } = await searchParams
   const data = await getClientWithProjects(id)
 
   if (!data || !data.client) {
@@ -48,6 +50,9 @@ export default async function ClientPage({ params }: ClientPageProps) {
 
   const activeCount = projectRows.filter((p) => p.status === 'active').length
   const atRiskCount = projectRows.filter((p) => p.atRisk).length
+
+  const showAll = show === 'all'
+  const visibleRows = showAll ? projectRows : projectRows.filter((p) => p.status === 'active')
 
   return (
     <div className="flex flex-col gap-6">
@@ -136,12 +141,45 @@ export default async function ClientPage({ params }: ClientPageProps) {
 
       {/* Lista projektów */}
       <div>
-        <h2 className="text-sm font-semibold text-foreground mb-3">Projekty klienta</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-foreground">Projekty klienta</h2>
+          {/* Toggle Aktywne / Wszystkie */}
+          <div className="flex items-center gap-1 rounded-full border border-border bg-card p-0.5 shadow-whisper" role="group" aria-label="Filtruj projekty">
+            <Link
+              href={`/clients/${id}`}
+              className={[
+                'font-meta text-xs px-3 py-1 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal',
+                !showAll
+                  ? 'bg-teal text-white shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              ].join(' ')}
+              aria-current={!showAll ? 'true' : undefined}
+            >
+              Aktywne ({activeCount})
+            </Link>
+            <Link
+              href={`/clients/${id}?show=all`}
+              className={[
+                'font-meta text-xs px-3 py-1 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal',
+                showAll
+                  ? 'bg-teal text-white shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              ].join(' ')}
+              aria-current={showAll ? 'true' : undefined}
+            >
+              Wszystkie ({projectRows.length})
+            </Link>
+          </div>
+        </div>
         <div className="rounded-[10px] border border-border bg-card shadow-whisper overflow-hidden">
           <ProjectList
-            projects={projectRows}
+            projects={visibleRows}
             showClient={false}
-            emptyMessage="Ten klient nie ma jeszcze żadnych projektów. Dodaj pierwszy przez przycisk powyżej."
+            emptyMessage={
+              showAll
+                ? 'Ten klient nie ma jeszcze żadnych projektów. Dodaj pierwszy przez przycisk powyżej.'
+                : 'Brak aktywnych projektów. Przełącz na „Wszystkie" by zobaczyć archiwum.'
+            }
           />
         </div>
       </div>

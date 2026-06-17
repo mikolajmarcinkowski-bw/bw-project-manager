@@ -225,9 +225,11 @@ function formatDate(iso: string): string {
 interface GanttChartProps {
   project: ProjectDetail
   profiles?: Profile[]
+  targetStepId?: string | null
+  onTargetConsumed?: () => void
 }
 
-export function GanttChart({ project, profiles = [] }: GanttChartProps) {
+export function GanttChart({ project, profiles = [], targetStepId, onTargetConsumed }: GanttChartProps) {
   const { steps, milestones, weekCount, calendarStart } = project
 
   // Tydzień "dziś" (1-indexed, null gdy poza zakresem lub bez calendarStart)
@@ -266,6 +268,9 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
   // ── P9: toggle „Pokaż N ukrytych" ───────────────────────────────────────────
   const [showHidden, setShowHidden] = useState(false)
 
+  // ── Filtr „Po terminie" ──────────────────────────────────────────────────────
+  const [showOnlyOverdue, setShowOnlyOverdue] = useState(false)
+
   // ── Statystyki ───────────────────────────────────────────────────────────────
 
   const allTasks = steps.flatMap((s) => s.tasks)
@@ -277,8 +282,27 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
   useEffect(() => {
     if (hiddenTaskCount === 0) setShowHidden(false)
   }, [hiddenTaskCount])
+
+  // ── Klik klocka → rozwiń i scrolluj do fazy (Change 8) ──────────────────────
+  useEffect(() => {
+    if (!targetStepId) return
+    // 1. Rozwiń fazę
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      next.delete(targetStepId)
+      return next
+    })
+    // 2. Scroll po tick (żeby DOM był zaktualizowany)
+    const timer = setTimeout(() => {
+      document.getElementById(`gantt-phase-${targetStepId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 50)
+    // 3. Skonsumuj targetStepId
+    onTargetConsumed?.()
+    return () => clearTimeout(timer)
+  }, [targetStepId]) // eslint-disable-line react-hooks/exhaustive-deps
   const estSum = totalEst(regularTasks)
   const overdueCount = regularTasks.filter(isOverdue).length
+  const doneCount = regularTasks.filter((t) => t.status === 'done').length
 
   // ── Budowanie struktur: per-faza grouped ─────────────────────────────────────
   //
@@ -316,12 +340,16 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
     if (target) msAssignment.set(ms.id, target.id)
   }
 
-  const phaseGroups: PhaseGroup[] = steps.map((step) => ({
-    step,
-    regularTasks: step.tasks.filter((t) => !t.isMilestone && !t.hidden),
-    hiddenTasks: step.tasks.filter((t) => !t.isMilestone && t.hidden),
-    assignedMs: milestones.filter((ms) => msAssignment.get(ms.id) === step.id),
-  }))
+  const phaseGroups: PhaseGroup[] = steps.map((step) => {
+    const stepRegular = step.tasks.filter((t) => !t.isMilestone && !t.hidden)
+    const stepHidden = step.tasks.filter((t) => !t.isMilestone && t.hidden)
+    return {
+      step,
+      regularTasks: showOnlyOverdue ? stepRegular.filter(isOverdue) : stepRegular,
+      hiddenTasks: showOnlyOverdue ? stepHidden.filter(isOverdue) : stepHidden,
+      assignedMs: milestones.filter((ms) => msAssignment.get(ms.id) === step.id),
+    }
+  })
 
   // Kamienie bez przypisania (week null / poza zakresem / brak faz z datami) → tail
   const tailMs: typeof milestones = milestones.filter((ms) => !msAssignment.has(ms.id))
@@ -347,10 +375,10 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
         </div>
         <div className="border border-border rounded-[9px] px-4 py-3 bg-card border-t-[3px] border-t-foreground">
           <div className="text-[0.625rem] font-heading font-semibold uppercase tracking-[.05em] text-muted-foreground">
-            Zadania
+            Zadania gotowe
           </div>
           <div className="font-heading font-bold text-[1.5rem] mt-0.5 leading-tight">
-            {regularTasks.length}
+            {doneCount} / {regularTasks.length}
           </div>
         </div>
         <div className="border border-border rounded-[9px] px-4 py-3 bg-card border-t-[3px] border-t-status-at">
@@ -361,14 +389,26 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
             {milestones.length}
           </div>
         </div>
-        <div className="border border-border rounded-[9px] px-4 py-3 bg-card border-t-[3px] border-t-status-off">
+        <button
+          type="button"
+          onClick={() => setShowOnlyOverdue((v) => !v)}
+          className={cn(
+            'border rounded-[9px] px-4 py-3 bg-card border-t-[3px] border-t-status-off text-left transition-all',
+            'cursor-pointer hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal',
+            showOnlyOverdue
+              ? 'border-status-off/60 shadow-sm'
+              : 'border-border'
+          )}
+          aria-pressed={showOnlyOverdue}
+          title={showOnlyOverdue ? 'Kliknij, aby wyczyścić filtr' : 'Kliknij, aby filtrować zadania po terminie'}
+        >
           <div className="text-[0.625rem] font-heading font-semibold uppercase tracking-[.05em] text-muted-foreground">
             Po terminie
           </div>
           <div className="font-heading font-bold text-[1.5rem] mt-0.5 leading-tight">
             {overdueCount}
           </div>
-        </div>
+        </button>
       </div>
 
       {/* ── Tabela Gantta ─────────────────────────────────────────────────────── */}
@@ -414,6 +454,22 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
               </button>
             </>
           )}
+          {showOnlyOverdue && (
+            <>
+              <span className="text-muted-foreground/40 text-[0.6rem]">·</span>
+              <span className="inline-flex items-center gap-1 text-[0.6rem] font-heading font-semibold text-status-off bg-status-off/10 rounded px-1.5 py-0.5">
+                Filtr: Po terminie
+                <button
+                  type="button"
+                  onClick={() => setShowOnlyOverdue(false)}
+                  aria-label="Wyczyść filtr po terminie"
+                  className="ml-0.5 hover:text-status-off/70 transition-colors"
+                >
+                  ×
+                </button>
+              </span>
+            </>
+          )}
         </div>
 
         {/* Poziomy scroll na wąskich ekranach */}
@@ -426,7 +482,7 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
             <div
               role="row"
               aria-label="Nagłówek tabeli"
-              className="flex items-stretch dark:border-b dark:border-white/10"
+              className="flex items-stretch dark:border-b dark:border-white/10 sticky top-0 z-30"
               style={{ backgroundColor: '#222B28', color: '#EAF2F0' }}
             >
               {/* # */}
@@ -443,19 +499,19 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
               >
                 Zadanie / Faza
               </div>
-              {/* Kind */}
+              {/* Typ (Kind) */}
               <div
                 role="columnheader"
                 className={cn(COL.kind, 'px-1 py-2 text-[0.625rem] font-heading font-semibold')}
               >
-                Kind
+                Typ
               </div>
-              {/* Typ */}
+              {/* Impl */}
               <div
                 role="columnheader"
                 className={cn(COL.typ, 'px-1 py-2 text-[0.625rem] font-heading font-semibold')}
               >
-                Typ
+                Impl
               </div>
               {/* Est. */}
               <div
@@ -464,12 +520,12 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
               >
                 Est.
               </div>
-              {/* Own */}
+              {/* PM (Own) */}
               <div
                 role="columnheader"
                 className={cn(COL.own, 'px-1 py-2 text-[0.625rem] font-heading font-semibold')}
               >
-                Own
+                PM
               </div>
               {/* Tygodnie */}
               <div
@@ -574,12 +630,17 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
                 const isCollapsed = collapsed.has(step.id)
                 const phaseTaskCount = phaseTasks.length
                 const phaseEstSum = totalEst(phaseTasks)
+                // Dla nagłówka zwiniętego: liczba "done" spośród wszystkich zadań w fazie (visible)
+                const allPhaseRegular = step.tasks.filter((t) => !t.isMilestone && !t.hidden)
+                const phaseDoneCount = allPhaseRegular.filter((t) => t.status === 'done').length
+                const phaseTotalCount = allPhaseRegular.length
 
                 return (
                   <div key={`phase-group-${step.id}`}>
 
                     {/* ── Wiersz fazy — klikalny, zawsze widoczny ─────────────── */}
                     <div
+                      id={`gantt-phase-${step.id}`}
                       role="row"
                       aria-label={`Faza: ${step.stepTitle}`}
                       className="flex items-center min-h-[36px] border-t border-border/40 bg-muted/50"
@@ -618,9 +679,9 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
                         )}
                       >
                         <span>FAZA {step.phaseNumber} — {step.phaseName}</span>
-                        {isCollapsed && phaseTaskCount > 0 && (
+                        {isCollapsed && phaseTotalCount > 0 && (
                           <span className="text-[0.6rem] font-normal font-mono text-muted-foreground shrink-0">
-                            {phaseTaskCount} {phaseTaskCount === 1 ? 'zadanie' : (phaseTaskCount % 10 >= 2 && phaseTaskCount % 10 <= 4 && (phaseTaskCount % 100 < 10 || phaseTaskCount % 100 >= 20)) ? 'zadania' : 'zadań'}
+                            {phaseDoneCount}/{phaseTotalCount} gotowe
                             {phaseEstSum > 0 && ` · ${phaseEstSum}h`}
                           </span>
                         )}

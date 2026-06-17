@@ -10,15 +10,31 @@ export const metadata = {
 export default async function DashboardPage() {
   const clients = await getClientsWithStats()
 
+  const today = new Date().toLocaleDateString('pl-PL', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+
+  const totalActive = clients.reduce((sum, c) => sum + c.activeCount, 0)
+  const totalProjects = clients.reduce((sum, c) => sum + c.projectCount, 0)
+
   return (
     <div className="flex flex-col gap-6">
       {/* Nagłówek */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-foreground">Teczki klientów</h1>
-          <p className="font-meta text-xs text-muted-foreground mt-0.5">
-            Przeglądaj i zarządzaj projektami Delivery
-          </p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <p className="font-meta text-xs text-muted-foreground">
+              Przeglądaj i zarządzaj projektami Delivery
+            </p>
+            <span className="font-meta text-[0.65rem] text-muted-foreground/40" aria-hidden="true">·</span>
+            <time className="font-meta text-xs text-muted-foreground/70 capitalize" dateTime={new Date().toISOString().slice(0, 10)}>
+              {today}
+            </time>
+          </div>
         </div>
         {clients.length > 0 && <AddClientDialog />}
       </div>
@@ -94,9 +110,25 @@ export default async function DashboardPage() {
               {clients.length} {clients.length === 1 ? 'klient' : clients.length < 5 ? 'klienci' : 'klientów'}
             </span>
           </div>
+          {totalActive > 0 && (
+            <>
+              <span className="font-meta text-[0.65rem] text-muted-foreground/40" aria-hidden="true">·</span>
+              <span className="font-meta text-xs text-teal-strong">
+                {totalActive} aktywnych
+              </span>
+            </>
+          )}
+          {totalProjects > 0 && (
+            <>
+              <span className="font-meta text-[0.65rem] text-muted-foreground/40" aria-hidden="true">·</span>
+              <span className="font-meta text-xs text-muted-foreground">
+                {totalProjects} projektów łącznie
+              </span>
+            </>
+          )}
           {clients.some((c) => c.atRisk) && (
             <>
-              <span className="font-meta text-[0.65rem] text-muted-foreground/40">·</span>
+              <span className="font-meta text-[0.65rem] text-muted-foreground/40" aria-hidden="true">·</span>
               <span className="font-meta text-xs text-status-off">
                 {clients.filter((c) => c.atRisk).length} zagrożonych
               </span>
