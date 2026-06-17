@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { ExternalLink, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProjectList } from '@/components/projects/project-list'
+import { EditClientDialog } from '@/components/clients/edit-client-dialog'
 import { getClientWithProjects } from '@/lib/data/projects'
 import type { ProjectRowData } from '@/components/projects/project-row'
 
@@ -73,7 +74,17 @@ export default async function ClientPage({ params, searchParams }: ClientPagePro
             </span>
           </nav>
 
-          <h1 className="text-xl font-semibold text-foreground">{client.name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold text-foreground">{client.name}</h1>
+            <EditClientDialog
+              client={{
+                id: client.id,
+                name: client.name,
+                nip: client.nip ?? null,
+                hubspot_url: client.hubspot_url ?? null,
+              }}
+            />
+          </div>
 
           {/* Metadane klienta */}
           <div className="flex flex-wrap items-center gap-3">

@@ -268,3 +268,144 @@ export async function createProjectAction(input: {
 
   return { ok: true, id: projectId }
 }
+
+export async function updateProjectAction(
+  projectId: string,
+  input: {
+    name: string
+    description?: string
+    start_date: string
+    end_date?: string
+    types: ImplType[]
+    pm_ids: string[]
+  }
+): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient()
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { error: 'Nie jesteś zalogowany.' }
+  }
+
+  // Walidacja serwerowa
+  const name = (input.name ?? '').trim()
+  if (name.length === 0) return { error: 'Nazwa nie może być pusta.' }
+  if (name.length > 200) return { error: 'Nazwa jest za długa (max 200 znaków).' }
+
+  if (!Array.isArray(input.types) || input.types.length === 0) {
+    return { error: 'Wymagany co najmniej jeden typ projektu.' }
+  }
+  for (const t of input.types) {
+    if (!VALID_IMPL_TYPES.includes(t)) {
+      return { error: `Nieprawidłowy typ projektu: ${t}.` }
+    }
+  }
+
+  const start_date = (input.start_date ?? '').trim()
+  if (!start_date) return { error: 'Data rozpoczęcia jest wymagana.' }
+  if (isNaN(Date.parse(start_date))) {
+    return { error: 'Data rozpoczęcia ma nieprawidłowy format (wymagane ISO).' }
+  }
+  if (start_date < '2000-01-01') {
+    return { error: 'Data rozpoczęcia jest nierealistycznie wczesna.' }
+  }
+
+  const end_date = (input.end_date ?? '').trim() || null
+  if (end_date) {
+    if (isNaN(Date.parse(end_date))) {
+      return { error: 'Deadline ma nieprawidłowy format.' }
+    }
+    if (end_date < start_date) {
+      return { error: 'Deadline nie może być wcześniejszy niż data rozpoczęcia.' }
+    }
+  }
+
+  const description = (input.description ?? '').trim() || null
+  const pm_ids: string[] = Array.isArray(input.pm_ids) ? input.pm_ids.filter(Boolean) : []
+
+  // Pobierz client_id do revalidatePath
+  const { data: existing, error: fetchError } = await supabase
+    .from('projects')
+    .select('client_id')
+    .eq('id', projectId)
+    .single()
+
+  if (fetchError || !existing) {
+    return { error: 'Projekt nie istnieje.' }
+  }
+
+  const client_id = existing.client_id
+
+  // 1. Zaktualizuj projekt
+  const { error: updateError } = await supabase
+    .from('projects')
+    .update({ name, description, start_date, end_date })
+    .eq('id', projectId)
+
+  if (updateError) {
+    console.error('[updateProjectAction] projects update failed:', updateError)
+    return { error: 'Nie udało się zaktualizować projektu. Spróbuj ponownie.' }
+  }
+
+  // 2. Zaktualizuj typy (delete + re-insert)
+  const { error: typesDeleteError } = await supabase
+    .from('project_types')
+    .delete()
+    .eq('project_id', projectId)
+
+  if (typesDeleteError) {
+    console.error('[updateProjectAction] project_types delete failed:', typesDeleteError)
+    return { error: 'Nie udało się zaktualizować typów projektu. Spróbuj ponownie.' }
+  }
+
+  const { error: typesInsertError } = await supabase
+    .from('project_types')
+    .insert(input.types.map((type) => ({ project_id: projectId, type })))
+
+  if (typesInsertError) {
+    console.error('[updateProjectAction] project_types insert failed:', typesInsertError)
+    return { error: 'Nie udało się zaktualizować typów projektu. Spróbuj ponownie.' }
+  }
+
+  // 3. Zaktualizuj PM-ów (delete + re-insert)
+  const { error: pmsDeleteError } = await supabase
+    .from('project_pms')
+    .delete()
+    .eq('project_id', projectId)
+
+  if (pmsDeleteError) {
+    console.error('[updateProjectAction] project_pms delete failed:', pmsDeleteError)
+    return { error: 'Nie udało się zaktualizować kierowników projektu. Spróbuj ponownie.' }
+  }
+
+  if (pm_ids.length > 0) {
+    const { error: pmsInsertError } = await supabase
+      .from('project_pms')
+      .insert(pm_ids.map((profile_id) => ({ project_id: projectId, profile_id })))
+
+    if (pmsInsertError) {
+      console.error('[updateProjectAction] project_pms insert failed:', pmsInsertError)
+      return { error: 'Nie udało się zaktualizować kierowników projektu. Spróbuj ponownie.' }
+    }
+  }
+
+  // 4. Activity log (nieblokujące)
+  const { error: logError } = await supabase.from('activity_log').insert({
+    entity: 'project',
+    entity_id: projectId,
+    action: 'update_project',
+    actor_id: user.id,
+    before: null,
+    after: { name, types: input.types, start_date },
+  })
+  if (logError) {
+    console.error('[updateProjectAction] activity_log insert failed:', logError)
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/projekty')
+  revalidatePath(`/clients/${client_id}`)
+  revalidatePath(`/projects/${projectId}`)
+
+  return { ok: true }
+}
