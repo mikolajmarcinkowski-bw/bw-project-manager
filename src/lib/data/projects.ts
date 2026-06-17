@@ -267,6 +267,7 @@ export interface GanttStep {
 export interface ProjectDetail {
   id: string
   name: string
+  description: string | null
   status: string
   startDate: string | null
   endDate: string | null
@@ -289,7 +290,7 @@ export const getProjectDetail = cache(async (projectId: string): Promise<Project
 
   const { data: project, error: projErr } = await supabase
     .from('projects')
-    .select('id, name, status, start_date, end_date, client_id, clients(id, name)')
+    .select('id, name, description, status, start_date, end_date, client_id, clients(id, name)')
     .eq('id', projectId)
     .single()
 
@@ -428,6 +429,7 @@ export const getProjectDetail = cache(async (projectId: string): Promise<Project
   return {
     id: project.id,
     name: project.name,
+    description: project.description ?? null,
     status: project.status,
     startDate: project.start_date ?? null,
     endDate: project.end_date ?? null,

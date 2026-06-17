@@ -52,3 +52,53 @@ export async function createClientAction(
 
   return { ok: true, id: data.id }
 }
+
+export async function updateClientAction(
+  clientId: string,
+  input: { name: string; nip?: string; hubspot_url?: string }
+): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient()
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { error: 'Nie jesteś zalogowany.' }
+  }
+
+  // Walidacja serwerowa
+  const name = (input.name ?? '').trim()
+  if (name.length === 0) return { error: 'Nazwa nie może być pusta.' }
+  if (name.length > 200) return { error: 'Nazwa jest za długa (max 200 znaków).' }
+
+  const nip = (input.nip ?? '').trim() || null
+  if (nip && nip.length > 200) return { error: 'NIP jest za długi (max 200 znaków).' }
+
+  let hubspot_url = (input.hubspot_url ?? '').trim() || null
+  if (hubspot_url) {
+    if (hubspot_url.length > 200) {
+      return { error: 'URL HubSpot jest za długi (max 200 znaków).' }
+    }
+    if (/^https?:\/\//i.test(hubspot_url)) {
+      // ok
+    } else if (/^[a-z][a-z0-9+.-]*:/i.test(hubspot_url)) {
+      return { error: 'Link HubSpot musi zaczynać się od http:// lub https://.' }
+    } else {
+      hubspot_url = `https://${hubspot_url}`
+    }
+  }
+
+  const { error: updateError } = await supabase
+    .from('clients')
+    .update({ name, nip, hubspot_url })
+    .eq('id', clientId)
+
+  if (updateError) {
+    console.error('[updateClientAction] update failed:', updateError)
+    return { error: 'Nie udało się zaktualizować klienta. Spróbuj ponownie.' }
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath(`/clients/${clientId}`)
+  revalidatePath('/projekty')
+
+  return { ok: true }
+}

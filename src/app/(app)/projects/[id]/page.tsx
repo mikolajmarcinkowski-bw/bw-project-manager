@@ -37,7 +37,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         projectName={project.name}
         clientName={project.client.name}
       />
-      <ProjectHeader project={project} />
+      <ProjectHeader project={project} profiles={profiles} />
       <ProjectViews project={project} profiles={profiles} />
     </div>
   )

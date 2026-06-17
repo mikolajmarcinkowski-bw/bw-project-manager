@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { AlertTriangle } from 'lucide-react'
 import { ProjectStatusBadge } from './project-status-badge'
 import { ImplTypeBadge } from './impl-type-badge'
+import { EditProjectDialog } from './edit-project-dialog'
 import type { ProjectDetail } from '@/lib/data/projects'
 
 function formatDate(dateStr: string | null): string {
@@ -28,10 +29,11 @@ function isKnownStatus(s: string): s is KnownStatus {
 
 interface ProjectHeaderProps {
   project: ProjectDetail
+  profiles: { id: string; full_name: string | null }[]
 }
 
-export function ProjectHeader({ project }: ProjectHeaderProps) {
-  const { client, name, status, types, pms, startDate, endDate, atRisk } = project
+export function ProjectHeader({ project, profiles }: ProjectHeaderProps) {
+  const { client, name, description, status, types, pms, startDate, endDate, atRisk } = project
 
   return (
     <header className="mb-6">
@@ -59,16 +61,31 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
         <h1 className="flex-1 min-w-0 text-xl font-semibold leading-tight tracking-tight truncate">
           {name}
         </h1>
-        {atRisk && (
-          <span className="flex items-center gap-1 rounded-full bg-status-off/10 border border-status-off/20 px-2.5 py-1 text-[0.7rem] font-semibold text-status-off whitespace-nowrap select-none">
-            <AlertTriangle
-              size={12}
-              aria-hidden="true"
-              className="shrink-0"
-            />
-            Zagrożony
-          </span>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          <EditProjectDialog
+            project={{
+              id: project.id,
+              name,
+              description,
+              startDate,
+              endDate,
+              clientId: client.id,
+              types,
+              pms,
+            }}
+            profiles={profiles}
+          />
+          {atRisk && (
+            <span className="flex items-center gap-1 rounded-full bg-status-off/10 border border-status-off/20 px-2.5 py-1 text-[0.7rem] font-semibold text-status-off whitespace-nowrap select-none">
+              <AlertTriangle
+                size={12}
+                aria-hidden="true"
+                className="shrink-0"
+              />
+              Zagrożony
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Rząd metadanych */}
