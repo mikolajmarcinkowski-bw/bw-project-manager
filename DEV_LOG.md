@@ -582,3 +582,15 @@ Migracje + plumbing NIE są jeszcze commitowane (migracje czekają na weryfikacj
 **Co:** Next.js 16.2.9 + shadcn/ui + git init + push na GitHub + deploy Vercel.
 **URL produkcji:** https://bw-project-manager.vercel.app
 **Commit:** 82c5cfa
+
+## [2026-06-17] feat | MCP Server Faza 1 — 27 operacji P3 D-032 — merge `8aa8623`
+
+- Branch `feat/mcp-server`, 4 agenty równoległe + integracja.
+- **Fundament**: tabela `api_tokens` (migracja wdrożona), `verifyMcpToken()` (admin client Bearer), `createMcpHandler()`, endpoint `/api/mcp/tokens` (POST tworzy, GET listuje).
+- **7 READ**: get_clients, get_projects, get_project_detail (D-037 status), get_tasks, get_step_templates, get_team_members, get_activity_log.
+- **5 WRITE core**: create_project (R15 auto-insert identyczny z createProjectAction), update_task_status (hidden sync), set_task_owner, update_task, bulk_hide_tasks.
+- **14 WRITE domain**: add/update_risk, add/update_change_request, update_milestone, add/update_kpi, set_budget_settings, add/update_budget_line, add_stakeholder, add/update_question.
+- **MEGA-TOOL**: setup_project_full — projekt + budżet + ryzyka + milestony + stakeholders + KPI w jednym wywołaniu.
+- **Smoke test** (lokalnie): get_clients ✅ (3 klientów), get_projects ✅ (12 projektów), get_step_templates ✅ (10 szablonów), 401 bez tokenu ✅, create_project ✅ (10 faz + 49 zadań R15), add_risk ✅, setup_project_full ✅.
+- **Token MCP**: `ea127ca5-...` dla konta mikolaj.marcinkowski@businessweb.pl — wygenerowany przez admin REST API.
+- **Pozostałe Fazy MCP 2**: get_risks/milestones/kpis/budget/stakeholders/questions, add_task, add_steps_to_project, mark_project_completed, generate_document_content.
