@@ -566,5 +566,5 @@ export async function getTaskTemplatesForCreation(): Promise<TaskTemplateForCrea
         isMilestone: t.is_milestone,
       }
     })
-    .filter((t): t is TaskTemplateForCreation => t !== null)
+    .filter((t): t is TaskTemplateForCreation => t !== null && !t.isMilestone)
 }

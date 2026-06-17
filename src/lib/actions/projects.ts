@@ -177,7 +177,12 @@ export async function createProjectAction(input: {
   }
 
   const selectedTypesSet = new Set<string>(input.types)
-  const naSet = new Set<string>(input.na_template_ids ?? [])
+  // Sanitizacja na_template_ids: akceptujemy tylko niepuste stringi (spójna walidacja jak types/start_date)
+  const naSet = new Set<string>(
+    Array.isArray(input.na_template_ids)
+      ? input.na_template_ids.filter((x): x is string => typeof x === 'string' && x.length > 0)
+      : []
+  )
 
   // Pętla: insert krok → pobierz id → batch insert jego zadań
   for (const st of stepTemplates) {
