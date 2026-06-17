@@ -95,7 +95,12 @@ export function ProjectViews({ project, profiles = [] }: { project: ProjectDetai
           {(() => {
             const selectedStep = project.steps.find((s) => s.id === checklistStepId)
             return selectedStep ? (
-              <PhaseChecklist step={selectedStep} profiles={profiles} />
+              <PhaseChecklist
+                step={selectedStep}
+                profiles={profiles}
+                allSteps={project.steps}
+                onSelectStep={(stepId) => setChecklistStepId(stepId)}
+              />
             ) : (
               <p className="font-meta text-xs text-muted-foreground py-8 text-center">
                 Nie znaleziono fazy.
