@@ -4,7 +4,8 @@ import { AlertTriangle, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProjectList } from '@/components/projects/project-list'
 import { ProjectFilters } from '@/components/projects/project-filters'
-import { getAllProjects, getClientsWithStats } from '@/lib/data/projects'
+import { getAllProjects, getClientsWithStats, getProfiles } from '@/lib/data/projects'
+import { requireUser } from '@/lib/auth/dal'
 import type { ImplType } from '@/lib/data/projects'
 
 export const metadata = {
@@ -17,27 +18,68 @@ interface ProjektyPageProps {
     type?: string
     client?: string
     atRisk?: string
+    q?: string
+    sort?: string
+    pm?: string
   }>
 }
 
 export default async function ProjektyPage({ searchParams }: ProjektyPageProps) {
   const params = await searchParams
 
-  const [allProjects, clients] = await Promise.all([
-    getAllProjects(),
+  // Resolve PM filter: 'current' → logged-in user id
+  const currentUser = await requireUser()
+  const resolvedPmId = params.pm === 'current' ? currentUser.id : params.pm
+
+  const [allProjects, clients, profiles] = await Promise.all([
+    getAllProjects({ pmId: resolvedPmId || undefined }),
     getClientsWithStats(),
+    getProfiles(),
   ])
 
-  // Filtrowanie po stronie serwera
+  // Filtrowanie po stronie serwera (status / type / client / atRisk / search)
   const filtered = allProjects.filter((p) => {
     if (params.status && p.status !== params.status) return false
     if (params.type && !p.types.includes(params.type as ImplType)) return false
     if (params.client && p.clientId !== params.client) return false
     if (params.atRisk === '1' && !p.atRisk) return false
+    if (params.q) {
+      const q = params.q.toLowerCase()
+      if (!p.name.toLowerCase().includes(q) && !p.clientName.toLowerCase().includes(q)) return false
+    }
     return true
   })
 
-  const hasFilters = !!(params.status || params.type || params.client || params.atRisk)
+  // Sortowanie
+  const sort = params.sort ?? ''
+  if (sort) {
+    filtered.sort((a, b) => {
+      switch (sort) {
+        case 'date-asc': {
+          // null last
+          if (!a.endDate && !b.endDate) return 0
+          if (!a.endDate) return 1
+          if (!b.endDate) return -1
+          return a.endDate.localeCompare(b.endDate)
+        }
+        case 'date-desc': {
+          // null first
+          if (!a.endDate && !b.endDate) return 0
+          if (!a.endDate) return -1
+          if (!b.endDate) return 1
+          return b.endDate.localeCompare(a.endDate)
+        }
+        case 'name-asc':
+          return a.name.localeCompare(b.name, 'pl')
+        case 'name-desc':
+          return b.name.localeCompare(a.name, 'pl')
+        default:
+          return 0
+      }
+    })
+  }
+
+  const hasFilters = !!(params.status || params.type || params.client || params.atRisk || params.q || params.pm || sort)
   const atRiskCount = filtered.filter((p) => p.atRisk).length
 
   const clientsForFilter = clients.map((c) => ({ id: c.id, name: c.name }))
@@ -74,7 +116,11 @@ export default async function ProjektyPage({ searchParams }: ProjektyPageProps) 
 
       {/* Filtry */}
       <Suspense fallback={null}>
-        <ProjectFilters clients={clientsForFilter} />
+        <ProjectFilters
+          clients={clientsForFilter}
+          profiles={profiles}
+          currentUserId={currentUser.id}
+        />
       </Suspense>
 
       {/* Wyniki */}

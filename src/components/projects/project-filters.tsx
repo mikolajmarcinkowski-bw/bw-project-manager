@@ -1,8 +1,8 @@
 'use client'
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { useCallback } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { useCallback, useTransition } from 'react'
+import { AlertTriangle, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ImplType } from '@/lib/data/projects'
 
@@ -15,14 +15,25 @@ const STATUS_OPTIONS = [
 
 const IMPL_TYPES: ImplType[] = ['CRM', 'SPO', 'INT', 'MKT', 'ERP']
 
+const SORT_OPTIONS = [
+  { value: '', label: 'Sortuj…' },
+  { value: 'date-asc', label: 'Termin ↑' },
+  { value: 'date-desc', label: 'Termin ↓' },
+  { value: 'name-asc', label: 'Nazwa A–Z' },
+  { value: 'name-desc', label: 'Nazwa Z–A' },
+]
+
 interface ProjectFiltersProps {
   clients: { id: string; name: string }[]
+  profiles?: { id: string; full_name: string | null }[]
+  currentUserId?: string
 }
 
-export function ProjectFilters({ clients }: ProjectFiltersProps) {
+export function ProjectFilters({ clients, profiles = [], currentUserId }: ProjectFiltersProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const [, startTransition] = useTransition()
 
   const createQueryString = useCallback(
     (updates: Record<string, string>) => {
@@ -43,26 +54,48 @@ export function ProjectFilters({ clients }: ProjectFiltersProps) {
   const currentType = searchParams.get('type') ?? ''
   const currentClient = searchParams.get('client') ?? ''
   const currentAtRisk = searchParams.get('atRisk') === '1'
+  const currentSort = searchParams.get('sort') ?? ''
+  const currentQ = searchParams.get('q') ?? ''
+  const currentPm = searchParams.get('pm') ?? ''
 
   const setFilter = (key: string, value: string) => {
     const qs = createQueryString({ [key]: value })
-    router.push(`${pathname}?${qs}`)
+    startTransition(() => {
+      router.push(`${pathname}?${qs}`)
+    })
   }
 
   const toggleAtRisk = () => {
     const qs = createQueryString({ atRisk: currentAtRisk ? '' : '1' })
-    router.push(`${pathname}?${qs}`)
+    startTransition(() => {
+      router.push(`${pathname}?${qs}`)
+    })
   }
 
-  const hasFilters = currentStatus || currentType || currentClient || currentAtRisk
+  const hasFilters = currentStatus || currentType || currentClient || currentAtRisk || currentSort || currentQ || currentPm
+
+  const selectCls = 'h-7 rounded-full border border-border bg-background px-2.5 font-meta text-xs text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 hover:border-teal/40'
 
   return (
     <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtry projektów">
+      {/* Wyszukaj */}
+      <div className="relative flex items-center">
+        <Search className="pointer-events-none absolute left-2 h-3 w-3 text-muted-foreground" aria-hidden="true" />
+        <input
+          type="search"
+          value={currentQ}
+          onChange={(e) => setFilter('q', e.target.value)}
+          placeholder="Szukaj projektu…"
+          className="h-7 rounded-full border border-border bg-background pl-6 pr-2.5 font-meta text-xs text-foreground placeholder:text-muted-foreground/60 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 hover:border-teal/40 w-44"
+          aria-label="Szukaj projektu po nazwie lub kliencie"
+        />
+      </div>
+
       {/* Status */}
       <select
         value={currentStatus}
         onChange={(e) => setFilter('status', e.target.value)}
-        className="h-7 rounded-full border border-border bg-background px-2.5 font-meta text-xs text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 hover:border-teal/40"
+        className={selectCls}
         aria-label="Filtruj według statusu"
       >
         {STATUS_OPTIONS.map((opt) => (
@@ -76,7 +109,7 @@ export function ProjectFilters({ clients }: ProjectFiltersProps) {
       <select
         value={currentType}
         onChange={(e) => setFilter('type', e.target.value)}
-        className="h-7 rounded-full border border-border bg-background px-2.5 font-meta text-xs text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 hover:border-teal/40"
+        className={selectCls}
         aria-label="Filtruj według typu wdrożenia"
       >
         <option value="">Wszystkie typy</option>
@@ -92,7 +125,7 @@ export function ProjectFilters({ clients }: ProjectFiltersProps) {
         <select
           value={currentClient}
           onChange={(e) => setFilter('client', e.target.value)}
-          className="h-7 rounded-full border border-border bg-background px-2.5 font-meta text-xs text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 hover:border-teal/40"
+          className={selectCls}
           aria-label="Filtruj według klienta"
         >
           <option value="">Wszyscy klienci</option>
@@ -103,6 +136,40 @@ export function ProjectFilters({ clients }: ProjectFiltersProps) {
           ))}
         </select>
       )}
+
+      {/* PM */}
+      {profiles.length > 0 && (
+        <select
+          value={currentPm}
+          onChange={(e) => setFilter('pm', e.target.value)}
+          className={selectCls}
+          aria-label="Filtruj według PM"
+        >
+          <option value="">Wszyscy PM</option>
+          {currentUserId && (
+            <option value="current">Moje projekty</option>
+          )}
+          {profiles.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.full_name ?? p.id}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {/* Sortowanie */}
+      <select
+        value={currentSort}
+        onChange={(e) => setFilter('sort', e.target.value)}
+        className={selectCls}
+        aria-label="Sortuj projekty"
+      >
+        {SORT_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
 
       {/* Tylko zagrożone */}
       <button
@@ -125,7 +192,11 @@ export function ProjectFilters({ clients }: ProjectFiltersProps) {
       {hasFilters && (
         <button
           type="button"
-          onClick={() => router.push(pathname)}
+          onClick={() => {
+            startTransition(() => {
+              router.push(pathname)
+            })
+          }}
           className="h-7 rounded-full px-2.5 font-meta text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
           aria-label="Wyczyść wszystkie filtry"
         >
