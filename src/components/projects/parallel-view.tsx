@@ -125,6 +125,14 @@ function ParallelColumn({ step, stepDecisions }: ParallelColumnProps) {
       <div className="px-3 py-2.5 text-xs text-muted-foreground space-y-1">
         {total > 0 ? (
           <>
+            {/* Progress bar: done / total */}
+            <div className="w-full bg-muted rounded-full overflow-hidden" style={{ height: 3 }}>
+              <div
+                className="h-full rounded-full bg-teal transition-all duration-300"
+                style={{ width: `${Math.round((done / total) * 100)}%` }}
+                aria-hidden="true"
+              />
+            </div>
             <p>
               <span className="text-foreground/70">{total}</span> zadań
               {' · '}

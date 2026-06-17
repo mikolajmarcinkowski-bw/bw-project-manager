@@ -92,7 +92,7 @@ export function TaskStatusControl({ taskId, status }: TaskStatusControlProps) {
             // Kolor wg aktualnego statusu
             TASK_STATUS_CLASSES[status],
             // Podczas oczekiwania
-            isPending && 'opacity-70'
+            isPending && 'opacity-70 cursor-wait'
           )}
         >
           {TASK_STATUS_LABEL[status]}
