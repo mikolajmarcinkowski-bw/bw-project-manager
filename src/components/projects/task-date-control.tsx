@@ -55,10 +55,10 @@ export function TaskDateControl({ taskId, dueDate, alertLevel }: TaskDateControl
     setOpen(true)
     // Pobierz historię przy otwarciu
     setHistoryLoading(true)
-    getTaskDateHistory(taskId).then((rows) => {
-      setHistory(rows)
-      setHistoryLoading(false)
-    })
+    getTaskDateHistory(taskId)
+      .then((rows) => setHistory(rows))
+      .catch(() => setHistory([]))
+      .finally(() => setHistoryLoading(false))
   }
 
   function handleSubmit() {

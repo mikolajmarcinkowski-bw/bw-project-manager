@@ -137,6 +137,14 @@ function isOverdue(task: GanttTask): boolean {
   )
 }
 
+/** Liczba dni do terminu (lokalna strefa; ujemna = po terminie). */
+function daysUntilDue(dueDateISO: string): number {
+  const d = parseLocalDate(dueDateISO)
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  return Math.floor((d.getTime() - now.getTime()) / 86400000)
+}
+
 /**
  * Styl CSS paska .gbar jako dziecko gridu tygodni.
  * Wzór: gridColumn `${wStart} / ${wEnd + 1}` (koniec wykluczający).
@@ -786,13 +794,10 @@ export function GanttChart({ project, profiles = [] }: GanttChartProps) {
                                     dueDate={task.dueDate}
                                     alertLevel={
                                       taskIsOverdue ? 'overdue'
-                                      : task.dueDate && (() => {
-                                          const d = new Date(task.dueDate)
-                                          const now = new Date()
-                                          now.setHours(0,0,0,0)
-                                          const diff = Math.floor((d.getTime() - now.getTime()) / 86400000)
-                                          return diff >= 0 && diff <= 2
-                                        })() ? 'soon'
+                                      : task.dueDate && !taskIsOverdue
+                                        && daysUntilDue(task.dueDate) >= 0
+                                        && daysUntilDue(task.dueDate) <= 2
+                                        ? 'soon'
                                       : undefined
                                     }
                                   />
