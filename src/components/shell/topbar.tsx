@@ -30,11 +30,12 @@ export function Topbar({ user }: TopbarProps) {
           <form action={logout}>
             <button
               type="submit"
-              className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex items-center justify-center gap-1 h-8 rounded-md px-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Wyloguj się"
               title="Wyloguj się"
             >
-              <LogOut className="h-4 w-4" aria-hidden="true" />
+              <LogOut className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="hidden xl:inline-block text-xs font-medium ml-0.5">Wyloguj</span>
             </button>
           </form>
         </div>

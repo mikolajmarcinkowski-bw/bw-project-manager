@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { ProjectHeader } from '@/components/projects/project-header'
 import { ProjectViews } from '@/components/projects/project-views'
+import { ProjectVisitTracker } from '@/components/projects/project-visit-tracker'
 import { getProjectDetail, getProfiles } from '@/lib/data/projects'
 
 export async function generateMetadata({
@@ -31,6 +32,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   return (
     <div className="flex flex-col gap-6">
+      <ProjectVisitTracker
+        projectId={project.id}
+        projectName={project.name}
+        clientName={project.client.name}
+      />
       <ProjectHeader project={project} />
       <ProjectViews project={project} profiles={profiles} />
     </div>

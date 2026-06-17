@@ -2,9 +2,63 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { NAV_ITEMS } from './nav-items'
 import { Logo } from '@/components/brand/logo'
+import { Clock } from 'lucide-react'
+
+export interface RecentProject {
+  id: string
+  name: string
+  clientName: string
+}
+
+const RECENT_PROJECTS_KEY = 'bw-recent-projects'
+const MAX_RECENT = 3
+
+function RecentProjects() {
+  const [recent, setRecent] = useState<RecentProject[]>([])
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RECENT_PROJECTS_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw) as RecentProject[]
+        setRecent(parsed.slice(0, MAX_RECENT))
+      }
+    } catch {
+      // localStorage unavailable or invalid JSON — ignore
+    }
+  }, [])
+
+  if (recent.length === 0) return null
+
+  return (
+    <div className="px-2 pb-2">
+      <div className="flex items-center gap-1.5 px-2.5 py-1.5 mb-0.5">
+        <Clock className="h-3 w-3 text-muted-foreground shrink-0" aria-hidden="true" />
+        <span className="font-meta text-[0.68rem] uppercase tracking-wide text-muted-foreground font-semibold">
+          Ostatnie
+        </span>
+      </div>
+      {recent.map((project) => (
+        <Link
+          key={project.id}
+          href={`/projects/${project.id}`}
+          className="group flex flex-col gap-0 rounded-md px-2.5 py-1.5 transition-colors duration-150 text-sidebar-foreground hover:bg-muted/60 hover:text-foreground"
+        >
+          <span className="text-xs font-medium truncate leading-tight">
+            {project.name}
+          </span>
+          <span className="font-meta text-[0.68rem] text-muted-foreground truncate">
+            {project.clientName}
+          </span>
+        </Link>
+      ))}
+    </div>
+  )
+}
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -51,6 +105,11 @@ export function Sidebar() {
             </Link>
           )
         })}
+
+        {/* Separator przed "Ostatnie" */}
+        <div className="my-1.5 border-t border-sidebar-border" role="separator" />
+
+        <RecentProjects />
       </nav>
 
       {/* Dolna stopka sidebara */}
