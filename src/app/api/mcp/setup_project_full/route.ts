@@ -239,27 +239,70 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // 3. milestones — UPSERT na (project_id, ms_code)
-  // Uwaga: milestones nie są seedowane przez create_project — upsert tworzy lub aktualizuje.
+  // 3. milestones — manual upsert (no unique constraint on project_id,ms_code in schema)
+  // milestones table has no unique (project_id, ms_code) so DB-level upsert would throw 42P10.
+  // Strategy: fetch existing rows for this project+ms_codes, update them, insert the rest.
   if (Array.isArray(milestones) && milestones.length > 0) {
-    const msRows = (milestones as MilestoneInput[]).map((m) => ({
-      project_id,
-      ms_code: m.ms_code.trim(),
-      name: m.ms_code.trim(), // name wymagane — używamy ms_code jako fallback
-      target_date: m.target_date ?? null,
-      status: (m.status as string) ?? 'on',
-    }))
+    const msList = milestones as MilestoneInput[]
+    const msCodes = msList.map((m) => m.ms_code.trim())
 
-    const { data: upserted, error } = await supabase
+    const { data: existing, error: fetchErr } = await supabase
       .from('milestones')
-      .upsert(msRows, { onConflict: 'project_id,ms_code', ignoreDuplicates: false })
-      .select('id')
+      .select('id, ms_code')
+      .eq('project_id', project_id)
+      .in('ms_code', msCodes)
 
-    if (error) {
-      console.error('[mcp/setup_project_full] milestones failed:', error)
-      errors.push(`milestones: ${error.message}`)
+    if (fetchErr) {
+      console.error('[mcp/setup_project_full] milestones fetch failed:', fetchErr)
+      errors.push(`milestones: ${fetchErr.message}`)
     } else {
-      summary.milestones = { upserted: (upserted as { id: string }[]).length }
+      const existingMap = new Map(
+        (existing as { id: string; ms_code: string }[]).map((r) => [r.ms_code, r.id])
+      )
+
+      const toUpdate = msList.filter((m) => existingMap.has(m.ms_code.trim()))
+      const toInsert = msList.filter((m) => !existingMap.has(m.ms_code.trim()))
+
+      let updatedCount = 0
+      let insertedCount = 0
+      const msErrors: string[] = []
+
+      // Update existing
+      for (const m of toUpdate) {
+        const id = existingMap.get(m.ms_code.trim())!
+        const upd: Record<string, unknown> = {}
+        if (m.target_date) upd.target_date = m.target_date
+        if (m.status) upd.status = m.status
+        if (Object.keys(upd).length > 0) {
+          const { error } = await supabase.from('milestones').update(upd).eq('id', id)
+          if (error) msErrors.push(`update ${m.ms_code}: ${error.message}`)
+          else updatedCount++
+        } else {
+          updatedCount++ // no change — still counts as processed
+        }
+      }
+
+      // Insert new
+      if (toInsert.length > 0) {
+        const insertRows = toInsert.map((m) => ({
+          project_id,
+          ms_code: m.ms_code.trim(),
+          name: m.ms_code.trim(), // required field — use ms_code as label
+          target_date: m.target_date ?? null,
+          status: (m.status as string) ?? 'on',
+        }))
+        const { data: inserted, error: insertErr } = await supabase
+          .from('milestones')
+          .insert(insertRows)
+          .select('id')
+        if (insertErr) msErrors.push(`insert batch: ${insertErr.message}`)
+        else insertedCount = (inserted as { id: string }[]).length
+      }
+
+      if (msErrors.length > 0) {
+        errors.push(`milestones: ${msErrors.join('; ')}`)
+      }
+      summary.milestones = { updated: updatedCount, inserted: insertedCount }
     }
   }
 
