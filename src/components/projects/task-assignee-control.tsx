@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, useState } from 'react'
+import { useTransition, useState, useOptimistic } from 'react'
 import { useRouter } from 'next/navigation'
 import { Select as SelectPrimitive } from '@base-ui/react/select'
 import { ChevronDownIcon, CheckIcon } from 'lucide-react'
@@ -37,15 +37,20 @@ export function TaskAssigneeControl({ taskId, assigneeName, profiles }: TaskAssi
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [optimisticAssignee, setOptimisticAssignee] = useOptimistic(
+    assigneeName,
+    (_: string | null, next: string | null) => next
+  )
 
-  const ini = initials(assigneeName)
-  const currentValue = assigneeName ?? NO_ASSIGNEE
+  const ini = initials(optimisticAssignee)
+  const currentValue = optimisticAssignee ?? NO_ASSIGNEE
 
   function handleValueChange(value: string | null) {
     const newName = value === NO_ASSIGNEE || !value ? null : value
     if (newName === assigneeName) return
     setError(null)
     startTransition(async () => {
+      setOptimisticAssignee(newName)
       const result = await updateTaskAssignee(taskId, newName)
       if ('error' in result) {
         setError(result.error)

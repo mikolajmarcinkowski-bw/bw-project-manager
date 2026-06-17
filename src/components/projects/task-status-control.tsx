@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, useState } from 'react'
+import { useTransition, useState, useOptimistic } from 'react'
 import { useRouter } from 'next/navigation'
 import { Select as SelectPrimitive } from '@base-ui/react/select'
 import { ChevronDownIcon, CheckIcon } from 'lucide-react'
@@ -48,11 +48,17 @@ export function TaskStatusControl({ taskId, status }: TaskStatusControlProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  // Optimistic update — UI zmienia się natychmiast, sync z serwerem w tle
+  const [optimisticStatus, setOptimisticStatus] = useOptimistic(
+    status,
+    (_: TaskStatus, next: TaskStatus) => next
+  )
 
   function handleValueChange(newStatus: TaskStatus | null) {
     if (!newStatus || newStatus === status) return
     setError(null)
     startTransition(async () => {
+      setOptimisticStatus(newStatus)
       const result = await updateTaskStatus(taskId, newStatus)
       if ('error' in result) {
         setError(result.error)
@@ -70,7 +76,7 @@ export function TaskStatusControl({ taskId, status }: TaskStatusControlProps) {
       </span>
 
       <SelectPrimitive.Root
-        value={status}
+        value={optimisticStatus}
         onValueChange={handleValueChange}
         disabled={isPending}
       >
@@ -86,16 +92,16 @@ export function TaskStatusControl({ taskId, status }: TaskStatusControlProps) {
             'text-[0.6rem] font-semibold font-heading leading-none',
             // Interaktywność
             'cursor-pointer select-none',
-            'transition-opacity motion-reduce:transition-none',
+            'transition-colors motion-reduce:transition-none',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-1',
             'disabled:cursor-not-allowed',
-            // Kolor wg aktualnego statusu
-            TASK_STATUS_CLASSES[status],
+            // Kolor wg optimistic statusu
+            TASK_STATUS_CLASSES[optimisticStatus],
             // Podczas oczekiwania
-            isPending && 'opacity-70 cursor-wait'
+            isPending && 'cursor-wait'
           )}
         >
-          {TASK_STATUS_LABEL[status]}
+          {TASK_STATUS_LABEL[optimisticStatus]}
           <ChevronDownIcon
             aria-hidden="true"
             className="size-2.5 shrink-0 opacity-60"

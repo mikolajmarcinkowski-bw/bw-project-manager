@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties, useState, useEffect } from 'react'
+import { type CSSProperties, useState, useEffect, useMemo } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type {
@@ -271,92 +271,89 @@ export function GanttChart({ project, profiles = [], targetStepId, onTargetConsu
   // ── Filtr „Po terminie" ──────────────────────────────────────────────────────
   const [showOnlyOverdue, setShowOnlyOverdue] = useState(false)
 
-  // ── Statystyki ───────────────────────────────────────────────────────────────
+  // ── Statystyki (memoized — nie przeliczaj przy każdym render stanu UI) ────────
 
-  const allTasks = steps.flatMap((s) => s.tasks)
-  // Statystyki tylko na widocznych zadaniach (hidden=false)
-  const regularTasks = allTasks.filter((t) => !t.isMilestone && !t.hidden)
-  const hiddenTaskCount = allTasks.filter((t) => !t.isMilestone && t.hidden).length
+  const { allTasks, regularTasks, hiddenTaskCount, estSum, overdueCount, doneCount } = useMemo(() => {
+    const allTasks = steps.flatMap((s) => s.tasks)
+    const regularTasks = allTasks.filter((t) => !t.isMilestone && !t.hidden)
+    const hiddenTaskCount = allTasks.filter((t) => !t.isMilestone && t.hidden).length
+    return {
+      allTasks,
+      regularTasks,
+      hiddenTaskCount,
+      estSum: totalEst(regularTasks),
+      overdueCount: regularTasks.filter(isOverdue).length,
+      doneCount: regularTasks.filter((t) => t.status === 'done').length,
+    }
+  }, [steps])
 
-  // Auto-zamknij toggle gdy nie ma już żadnych ukrytych zadań (wszystkie odblokowane)
+  // Auto-zamknij toggle gdy nie ma już żadnych ukrytych zadań
   useEffect(() => {
     if (hiddenTaskCount === 0) setShowHidden(false)
   }, [hiddenTaskCount])
 
-  // ── Klik klocka → rozwiń i scrolluj do fazy (Change 8) ──────────────────────
+  // ── Klik klocka → rozwiń i scrolluj do fazy ───────────────────────────────────
   useEffect(() => {
     if (!targetStepId) return
-    // 1. Rozwiń fazę
     setCollapsed((prev) => {
       const next = new Set(prev)
       next.delete(targetStepId)
       return next
     })
-    // 2. Scroll po tick (żeby DOM był zaktualizowany)
     const timer = setTimeout(() => {
       document.getElementById(`gantt-phase-${targetStepId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 50)
-    // 3. Skonsumuj targetStepId
     onTargetConsumed?.()
     return () => clearTimeout(timer)
   }, [targetStepId]) // eslint-disable-line react-hooks/exhaustive-deps
-  const estSum = totalEst(regularTasks)
-  const overdueCount = regularTasks.filter(isOverdue).length
-  const doneCount = regularTasks.filter((t) => t.status === 'done').length
 
-  // ── Budowanie struktur: per-faza grouped ─────────────────────────────────────
-  //
-  // Przypisanie milestonów do faz liczymy ZAWSZE (niezależnie od collapsed),
-  // żeby lista tailMs była poprawna. Wynik: phaseGroups + tailMs.
-  //
-  // Milestony bez week (null) i poza zakresem → do puli "tail" (koniec listy).
+  // ── Budowanie struktur (memoized — zależy tylko od danych, nie od UI state) ────
 
   type PhaseGroup = {
     step: GanttStep
-    regularTasks: GanttTask[]      // visible (hidden=false)
-    hiddenTasks: GanttTask[]       // hidden (hidden=true) — tylko gdy showHidden=true
+    regularTasks: GanttTask[]
+    hiddenTasks: GanttTask[]
     assignedMs: typeof milestones
   }
 
-  // Przypisanie kamienia do fazy:
-  //  1) faza ZAWIERAJĄCA tydzień kamienia (wStart ≤ week ≤ wEnd),
-  //  2) w przeciwnym razie OSTATNIA faza która już się zaczęła (wStart ≤ week),
-  //  3) inaczej → tail (koniec listy).
-  // Naprawia bug: kamień w tygodniu 1 (np. „Kick-off zakończony") nie ucieka na koniec,
-  // bo żadna faza nie kończy się przed tygodniem 1 — teraz trafia do fazy zawierającej.
-  const msAssignment = new Map<string, string>() // msId → stepId
-  for (const ms of milestones) {
-    if (ms.week === null || ms.week < 1 || ms.week > weekCount) continue
-    const w = ms.week
-    let containing: GanttStep | null = null
-    let lastStarted: GanttStep | null = null
-    for (const s of steps) {
-      if (s.wStart === null) continue
-      if (s.wStart <= w) lastStarted = s
-      // pierwsza faza zawierająca tydzień (fazy bywają nakładające się — bierzemy najwcześniejszą)
-      if (containing === null && s.wEnd !== null && s.wStart <= w && w <= s.wEnd) containing = s
+  const { phaseGroups, tailMs } = useMemo(() => {
+    // Przypisanie kamienia do fazy (1. zawierająca, 2. ostatnia zaczęta, 3. tail)
+    const msAssignment = new Map<string, string>()
+    for (const ms of milestones) {
+      if (ms.week === null || ms.week < 1 || ms.week > weekCount) continue
+      const w = ms.week
+      let containing: GanttStep | null = null
+      let lastStarted: GanttStep | null = null
+      for (const s of steps) {
+        if (s.wStart === null) continue
+        if (s.wStart <= w) lastStarted = s
+        if (containing === null && s.wEnd !== null && s.wStart <= w && w <= s.wEnd) containing = s
+      }
+      const target = containing ?? lastStarted
+      if (target) msAssignment.set(ms.id, target.id)
     }
-    const target = containing ?? lastStarted
-    if (target) msAssignment.set(ms.id, target.id)
-  }
 
-  const phaseGroups: PhaseGroup[] = steps.map((step) => {
-    const stepRegular = step.tasks.filter((t) => !t.isMilestone && !t.hidden)
-    const stepHidden = step.tasks.filter((t) => !t.isMilestone && t.hidden)
-    return {
-      step,
-      regularTasks: showOnlyOverdue ? stepRegular.filter(isOverdue) : stepRegular,
-      hiddenTasks: showOnlyOverdue ? stepHidden.filter(isOverdue) : stepHidden,
-      assignedMs: milestones.filter((ms) => msAssignment.get(ms.id) === step.id),
-    }
-  })
+    const phaseGroups: PhaseGroup[] = steps.map((step) => {
+      const stepRegular = step.tasks.filter((t) => !t.isMilestone && !t.hidden)
+      const stepHidden = step.tasks.filter((t) => !t.isMilestone && t.hidden)
+      return {
+        step,
+        regularTasks: showOnlyOverdue ? stepRegular.filter(isOverdue) : stepRegular,
+        hiddenTasks: showOnlyOverdue ? stepHidden.filter(isOverdue) : stepHidden,
+        assignedMs: milestones.filter((ms) => msAssignment.get(ms.id) === step.id),
+      }
+    })
 
-  // Kamienie bez przypisania (week null / poza zakresem / brak faz z datami) → tail
-  const tailMs: typeof milestones = milestones.filter((ms) => !msAssignment.has(ms.id))
+    const tailMs = milestones.filter((ms) => !msAssignment.has(ms.id))
+    return { phaseGroups, tailMs }
+  }, [steps, milestones, weekCount, showOnlyOverdue])
 
-  // ── Tygodnie 1..N ────────────────────────────────────────────────────────────
+  // ── Tygodnie 1..N (memoized) ─────────────────────────────────────────────────
 
-  const weeks = Array.from({ length: weekCount }, (_, i) => i + 1)
+  const weeks = useMemo(
+    () => Array.from({ length: weekCount }, (_, i) => i + 1),
+    [weekCount]
+  )
 
   // ── Render ───────────────────────────────────────────────────────────────────
 

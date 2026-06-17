@@ -4,7 +4,7 @@ import { AlertTriangle, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProjectList } from '@/components/projects/project-list'
 import { ProjectFilters } from '@/components/projects/project-filters'
-import { getAllProjects, getClientsWithStats, getProfiles } from '@/lib/data/projects'
+import { getAllProjects, getClientsBasic, getProfiles } from '@/lib/data/projects'
 import { requireUser } from '@/lib/auth/dal'
 import type { ImplType } from '@/lib/data/projects'
 
@@ -33,7 +33,7 @@ export default async function ProjektyPage({ searchParams }: ProjektyPageProps) 
 
   const [allProjects, clients, profiles] = await Promise.all([
     getAllProjects({ pmId: resolvedPmId || undefined }),
-    getClientsWithStats(),
+    getClientsBasic(),   // 1 query zamiast 4 (bez duplikatu getAllProjects)
     getProfiles(),
   ])
 
@@ -82,7 +82,7 @@ export default async function ProjektyPage({ searchParams }: ProjektyPageProps) 
   const hasFilters = !!(params.status || params.type || params.client || params.atRisk || params.q || params.pm || sort)
   const atRiskCount = filtered.filter((p) => p.atRisk).length
 
-  const clientsForFilter = clients.map((c) => ({ id: c.id, name: c.name }))
+  const clientsForFilter = clients
 
   return (
     <div className="flex flex-col gap-5">
