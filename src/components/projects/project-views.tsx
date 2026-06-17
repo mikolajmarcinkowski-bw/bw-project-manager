@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ProjectDetail } from '@/lib/data/projects'
 import { PhaseStrip } from './phase-strip'
@@ -9,10 +10,10 @@ import { GanttChart } from './gantt-chart'
 import type { Profile } from './task-assignee-control'
 
 // Widok projektu z zakładkami (ekran „Mapa klocków + phase strip" wg 06-wireframes.html).
-// Domyślnie „Mapa klocków"; „Harmonogram" = istniejący Gantt. Pozostałe zakładki = Faza 3 (wyłączone).
-type Tab = 'mapa' | 'harmonogram'
+// Domyślnie „Mapa klocków"; „Harmonogram" = Gantt. Pozostałe zakładki = Faza 3 (empty state).
+type Tab = 'mapa' | 'harmonogram' | 'RACI' | 'RAID' | 'Budżet' | 'KPI'
 
-const FUTURE_TABS = ['RACI', 'RAID', 'Budżet', 'KPI'] as const
+const FUTURE_TABS: Array<'RACI' | 'RAID' | 'Budżet' | 'KPI'> = ['RACI', 'RAID', 'Budżet', 'KPI']
 
 export function ProjectViews({ project, profiles = [] }: { project: ProjectDetail; profiles?: Profile[] }) {
   const [tab, setTab] = useState<Tab>('mapa')
@@ -24,14 +25,23 @@ export function ProjectViews({ project, profiles = [] }: { project: ProjectDetai
         <TabPill id="tab-mapa" controls="panel-mapa" active={tab === 'mapa'} onClick={() => setTab('mapa')}>Mapa klocków</TabPill>
         <TabPill id="tab-harmonogram" controls="panel-harmonogram" active={tab === 'harmonogram'} onClick={() => setTab('harmonogram')}>Harmonogram</TabPill>
         {FUTURE_TABS.map((t) => (
-          <span
+          <button
             key={t}
-            title="Wkrótce (Faza 3)"
-            aria-disabled="true"
-            className="rounded-full px-3 py-1.5 font-meta text-xs font-medium text-muted-foreground/40 cursor-not-allowed select-none"
+            type="button"
+            role="tab"
+            id={`tab-${t.toLowerCase()}`}
+            aria-controls={`panel-${t.toLowerCase()}`}
+            aria-selected={tab === t}
+            onClick={() => setTab(t)}
+            className={cn(
+              'rounded-full px-3.5 py-1.5 font-meta text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal',
+              tab === t
+                ? 'bg-muted/60 text-muted-foreground border border-border/60'
+                : 'text-muted-foreground/50 hover:text-muted-foreground border border-transparent'
+            )}
           >
             {t}
-          </span>
+          </button>
         ))}
       </div>
 
@@ -46,14 +56,29 @@ export function ProjectViews({ project, profiles = [] }: { project: ProjectDetai
           <PhaseStrip
             steps={project.steps}
             decisions={project.decisions}
-            // Klik klocka → szczegóły harmonogramu (checklist zadań = Faza 2c)
             onSelectStep={() => setTab('harmonogram')}
           />
           <ParallelView steps={project.steps} decisions={project.decisions} />
         </div>
-      ) : (
+      ) : tab === 'harmonogram' ? (
         <div role="tabpanel" id="panel-harmonogram" aria-labelledby="tab-harmonogram">
           <GanttChart project={project} profiles={profiles} />
+        </div>
+      ) : (
+        /* Faza 3 — zakładka istnieje ale treść jeszcze nie */
+        <div
+          role="tabpanel"
+          id={`panel-${tab.toLowerCase()}`}
+          aria-labelledby={`tab-${tab.toLowerCase()}`}
+          className="flex flex-col items-center justify-center py-16 gap-3 text-center"
+        >
+          <Clock className="h-8 w-8 text-muted-foreground/30" aria-hidden="true" />
+          <p className="font-heading font-semibold text-sm text-foreground">
+            {tab} — dostępne wkrótce
+          </p>
+          <p className="font-meta text-xs text-muted-foreground max-w-[28ch]">
+            Ta sekcja będzie dostępna w kolejnej wersji aplikacji.
+          </p>
         </div>
       )}
     </section>

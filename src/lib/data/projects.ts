@@ -428,18 +428,9 @@ export const getProjectDetail = cache(async (projectId: string): Promise<Project
 
 // ─── getClientWithProjects ────────────────────────────────────────────────────
 
-export async function getClientWithProjects(clientId: string): Promise<{
-  client: { id: string; name: string; nip: string | null; hubspot_url: string | null } | null
-  projects: Array<{
-    id: string
-    name: string
-    status: string
-    types: ImplType[]
-    startDate: string | null
-    endDate: string | null
-    atRisk: boolean
-  }>
-}> {
+// cache(): generateMetadata i ClientPage wołają getClientWithProjects dla tego samego ID —
+// deduplikuje dwa identyczne zapytania w jednym request.
+export const getClientWithProjects = cache(async (clientId: string) => {
   const supabase = await createClient()
 
   const { data: client, error: clientError } = await supabase
@@ -500,7 +491,7 @@ export async function getClientWithProjects(clientId: string): Promise<{
       atRisk: riskProjectIds.has(p.id),
     })),
   }
-}
+})
 
 // ─── getTaskTemplatesForCreation (krok 2 kreatora projektu — D-056) ──────────
 
