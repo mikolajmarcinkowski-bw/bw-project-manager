@@ -23,23 +23,14 @@ export function ProjectLifecycleActions({ project }: ProjectLifecycleActionsProp
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
+  // Dla archived: ProjectStatusBadge w project-header już pokazuje status — tu nic nie renderujemy
   if (project.status === 'archived') {
-    return (
-      <span className="inline-flex items-center rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[0.7rem] font-medium text-muted-foreground select-none">
-        Zarchiwizowany
-      </span>
-    )
+    return null
   }
 
+  // Dla completed: ProjectStatusBadge już jest widoczny — pokazujemy tylko przycisk Archiwizuj
   if (project.status === 'completed') {
-    return (
-      <div className="flex items-center gap-2">
-        <span className="inline-flex items-center rounded-full border border-teal/30 bg-teal/5 px-2.5 py-1 text-[0.7rem] font-semibold text-teal select-none whitespace-nowrap">
-          Zakończony
-        </span>
-        <ArchiveDialog project={{ id: project.id, name: project.name }} />
-      </div>
-    )
+    return <ArchiveDialog project={{ id: project.id, name: project.name }} />
   }
 
   // status === 'active'
