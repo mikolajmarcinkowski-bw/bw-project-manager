@@ -65,7 +65,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className="hidden md:flex flex-col w-60 shrink-0 min-h-screen bg-sidebar border-r border-sidebar-border"
+      className="hidden md:flex flex-col w-60 shrink-0 h-screen sticky top-0 overflow-y-auto bg-sidebar border-r border-sidebar-border"
       aria-label="Nawigacja główna"
     >
       {/* Logotyp */}

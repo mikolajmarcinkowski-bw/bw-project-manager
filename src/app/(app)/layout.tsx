@@ -11,7 +11,7 @@ export default async function AppLayout({
   const user = await requireUser()
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* Lewy sidebar */}
       <Sidebar />
 
