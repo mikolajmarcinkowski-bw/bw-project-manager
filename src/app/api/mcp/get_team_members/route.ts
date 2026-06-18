@@ -14,8 +14,8 @@ export async function POST(request: NextRequest) {
     const supabase = createAdminClient()
 
     const { data, error } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, role')
+      .from('team_members')
+      .select('id, full_name, is_active')
       .eq('is_active', true)
       .order('full_name', { ascending: true })
 
@@ -24,11 +24,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Database error' }, { status: 500 })
     }
 
-    const members = (data ?? []).map((p) => ({
-      id: p.id,
-      fullName: p.full_name,
-      email: p.email,
-      role: p.role,
+    const members = (data ?? []).map((m) => ({
+      id: m.id,
+      fullName: m.full_name,
     }))
 
     return NextResponse.json({ ok: true, data: members })

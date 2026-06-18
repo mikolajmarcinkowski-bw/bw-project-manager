@@ -5,6 +5,26 @@
 
 ---
 
+## [2026-06-18] feat | Dwa pola przypisania zadania — Konsultant + PM — `c29eb4f`
+
+- **Problem:** Gantt miał jedną kolumnę „PM" która po naszej zmianie pokazywała konsultantów z `team_members` — etykieta kłamała, nie dało się zaznaczyć PM-a nadzorującego.
+- **Rozwiązanie (D-057):** `tasks.pm_assignee_id uuid FK→profiles` + nowy `TaskPmControl` (avatar pomarańczowy, selektor po ID). `assignee_name` = kto wykonuje (konsultant), `pm_assignee_id` = kto nadzoruje (PM z kontem).
+- Kolumna w Gantcie: `w-[52px]` z dwoma miniaturami obok siebie (teal = konsultant, orange = PM). Nagłówek: „Kons/PM".
+- Migracja DB: `20260618100000_task_pm_assignee.sql` — **wymaga deployu na Supabase przed merge**.
+- TSC czyste, build OK.
+
+---
+
+## [2026-06-18] feat | Pula konsultantów — rozdzielenie PM-ów od specjalistów — branch `feat/specialist-pool`, commit `4a8f7fa`
+
+- **Przebudowa `/admin/team`**: zmiana źródła z `profiles` (konta auth) → `team_members` (tabela bez kont); pełny CRUD konsultantów (dodaj/edytuj/dezaktywuj); alokacja (aktywne zadania + projekty per konsultant).
+- **Nowe pliki**: `src/lib/data/specialists.ts` (`getSpecialists`, `getAllSpecialistsWithAllocation`), `src/lib/actions/specialists.ts` (`createSpecialist`, `updateSpecialistName`, `toggleSpecialistActive`), `src/components/admin/specialist-actions.tsx` (3 Client Components).
+- **Fix MCP `get_team_members`**: zwraca teraz `team_members` (nie `profiles`) — poprawna semantyka.
+- **Fix task assignee dropdown**: `TaskAssigneeControl` przyjmuje `specialists` (z `team_members`), nie `profiles`. Strona projektu fetchuje `getSpecialists()` równolegle z `getProfiles()` (PM-owie zostają w headerze projektu).
+- **TSC czyste, build OK**. PR gotowy na GitHub.
+
+---
+
 ## [2026-06-18] feat+fix | Faza A/B + security hardening — `bf82334`
 
 - **Faza A (A1+A3):** Panel admina `/admin/users` + `/admin/team`. Server actions: createUserAccount (Auth Admin API + email_confirm), changeUserRole, toggleUserActive, updateUserFullName, resetUserPassword. Sekcja Admin w sidebarze tylko dla admin/dev_admin.

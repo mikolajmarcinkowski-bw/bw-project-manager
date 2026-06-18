@@ -1281,6 +1281,7 @@ export type Database = {
           muted_at: string | null
           muted_by: string | null
           note: string | null
+          pm_assignee_id: string | null
           project_id: string
           status: Database["public"]["Enums"]["task_status"]
           step_id: string
@@ -1305,6 +1306,7 @@ export type Database = {
           muted_at?: string | null
           muted_by?: string | null
           note?: string | null
+          pm_assignee_id?: string | null
           project_id: string
           status?: Database["public"]["Enums"]["task_status"]
           step_id: string
@@ -1329,6 +1331,7 @@ export type Database = {
           muted_at?: string | null
           muted_by?: string | null
           note?: string | null
+          pm_assignee_id?: string | null
           project_id?: string
           status?: Database["public"]["Enums"]["task_status"]
           step_id?: string
@@ -1344,6 +1347,13 @@ export type Database = {
           {
             foreignKeyName: "tasks_muted_by_fkey"
             columns: ["muted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_pm_assignee_id_fkey"
+            columns: ["pm_assignee_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

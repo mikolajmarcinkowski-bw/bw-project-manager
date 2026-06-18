@@ -12,6 +12,7 @@ import {
   getProjectRaci,
   getProjectHealthMetrics,
 } from '@/lib/data/projects'
+import { getSpecialists } from '@/lib/data/specialists'
 
 export async function generateMetadata({
   params,
@@ -30,9 +31,10 @@ interface ProjectPageProps {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { id } = await params
-  const [project, profiles, risks, kpis, budget, changeRequests, raci, health] = await Promise.all([
+  const [project, profiles, specialists, risks, kpis, budget, changeRequests, raci, health] = await Promise.all([
     getProjectDetail(id),
     getProfiles(),
+    getSpecialists(),
     getProjectRisks(id),
     getProjectKpis(id),
     getProjectBudget(id),
@@ -56,7 +58,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       <ProjectViews
         key={project.id}
         project={project}
-        profiles={profiles}
+        specialists={specialists}
+        pmProfiles={profiles}
         risks={risks}
         kpis={kpis}
         budget={budget}

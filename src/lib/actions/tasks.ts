@@ -126,6 +126,54 @@ export async function updateTaskAssignee(
   return { ok: true }
 }
 
+// ---------------------------------------------------------------------------
+// updateTaskPmAssignee — PM nadzorujący zadanie (FK do profiles, D-057)
+// ---------------------------------------------------------------------------
+export async function updateTaskPmAssignee(
+  taskId: string,
+  profileId: string | null
+): Promise<{ ok: true } | { error: string }> {
+  const user = await requireUser()
+  const supabase = await createClient()
+
+  const { data: before, error: fetchErr } = await supabase
+    .from('tasks')
+    .select('id, pm_assignee_id, project_id')
+    .eq('id', taskId)
+    .single()
+
+  if (fetchErr || !before) {
+    return { error: 'Nie znaleziono zadania.' }
+  }
+
+  if (before.pm_assignee_id === profileId) {
+    return { ok: true }
+  }
+
+  const { error: updErr } = await supabase
+    .from('tasks')
+    .update({ pm_assignee_id: profileId })
+    .eq('id', taskId)
+
+  if (updErr) {
+    console.error('[updateTaskPmAssignee] update failed:', updErr)
+    return { error: 'Nie udało się zapisać PM-a.' }
+  }
+
+  const { error: logErr } = await supabase.from('activity_log').insert({
+    entity: 'task',
+    entity_id: taskId,
+    action: 'update_task_pm',
+    actor_id: user.id,
+    before: { pm_assignee_id: before.pm_assignee_id },
+    after: { pm_assignee_id: profileId },
+  })
+  if (logErr) console.error('[updateTaskPmAssignee] activity_log failed:', logErr)
+
+  revalidatePath(`/projects/${before.project_id}`)
+  return { ok: true }
+}
+
 // Faza 2c · P18 — Edycja terminu zadania z potwierdzeniem (R6/D-022).
 // Wymaga wpisania słowa „change" w UI przed wywołaniem (walidacja client-side).
 // Automatycznie zeruje warning_muted gdy data się zmienia (R5c).

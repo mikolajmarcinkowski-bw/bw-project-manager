@@ -3,21 +3,20 @@
 import { useTransition, useState, useOptimistic } from 'react'
 import { useRouter } from 'next/navigation'
 import { Select as SelectPrimitive } from '@base-ui/react/select'
-import { ChevronDownIcon, CheckIcon } from 'lucide-react'
+import { CheckIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { updateTaskAssignee } from '@/lib/actions/tasks'
+import { updateTaskPmAssignee } from '@/lib/actions/tasks'
 
-export interface Specialist {
+// ─── Typy ────────────────────────────────────────────────────────────────────
+
+export interface Profile {
   id: string
   full_name: string | null
 }
 
-// Alias dla kompatybilności wstecznej z komponentami jeszcze niezmigrowanymi
-export type Profile = Specialist
-
 // ─── Pomocnicze ──────────────────────────────────────────────────────────────
 
-const NO_ASSIGNEE = '__none__'
+const NO_PM = '__none__'
 
 function initials(name: string | null): string {
   if (!name) return '—'
@@ -30,32 +29,33 @@ function initials(name: string | null): string {
 
 // ─── Komponent ───────────────────────────────────────────────────────────────
 
-interface TaskAssigneeControlProps {
+interface TaskPmControlProps {
   taskId: string
-  assigneeName: string | null
-  specialists: Specialist[]
+  pmAssigneeId: string | null
+  profiles: Profile[]
 }
 
-export function TaskAssigneeControl({ taskId, assigneeName, specialists }: TaskAssigneeControlProps) {
-  const profiles = specialists
+export function TaskPmControl({ taskId, pmAssigneeId, profiles }: TaskPmControlProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [optimisticAssignee, setOptimisticAssignee] = useOptimistic(
-    assigneeName,
+  const [optimisticPmId, setOptimisticPmId] = useOptimistic(
+    pmAssigneeId,
     (_: string | null, next: string | null) => next
   )
 
-  const ini = initials(optimisticAssignee)
-  const currentValue = optimisticAssignee ?? NO_ASSIGNEE
+  const currentProfile = profiles.find((p) => p.id === optimisticPmId) ?? null
+  const ini = initials(currentProfile?.full_name ?? null)
+  const displayName = currentProfile?.full_name ?? null
+  const currentValue = optimisticPmId ?? NO_PM
 
   function handleValueChange(value: string | null) {
-    const newName = value === NO_ASSIGNEE || !value ? null : value
-    if (newName === assigneeName) return
+    const newId = value === NO_PM || !value ? null : value
+    if (newId === pmAssigneeId) return
     setError(null)
     startTransition(async () => {
-      setOptimisticAssignee(newName)
-      const result = await updateTaskAssignee(taskId, newName)
+      setOptimisticPmId(newId)
+      const result = await updateTaskPmAssignee(taskId, newId)
       if ('error' in result) {
         setError(result.error)
       } else {
@@ -65,7 +65,7 @@ export function TaskAssigneeControl({ taskId, assigneeName, specialists }: TaskA
   }
 
   if (profiles.length === 0) {
-    // Brak profili → statyczny avatar
+    // Brak profili → statyczny avatar bez dropdown
     return (
       <span
         className={cn(
@@ -73,8 +73,8 @@ export function TaskAssigneeControl({ taskId, assigneeName, specialists }: TaskA
           ini === '—' && 'text-[0.65rem]'
         )}
         style={{ width: 20, height: 20 }}
-        title={assigneeName ?? 'Brak osoby'}
-        aria-label={assigneeName ?? 'Brak osoby'}
+        title={displayName ?? 'Brak PM'}
+        aria-label={displayName ?? 'Brak PM'}
       >
         {ini}
       </span>
@@ -92,20 +92,23 @@ export function TaskAssigneeControl({ taskId, assigneeName, specialists }: TaskA
         onValueChange={handleValueChange}
         disabled={isPending}
       >
-        {/* Trigger: avatar inicjałów — klikalny */}
+        {/* Trigger: avatar inicjałów PM — pomarańczowy */}
         <SelectPrimitive.Trigger
-          aria-label={assigneeName ? `Zmień osobę: ${assigneeName}` : 'Przypisz osobę'}
+          aria-label={displayName ? `Zmień PM: ${displayName}` : 'Przypisz PM'}
           aria-busy={isPending}
-          title={error ?? assigneeName ?? 'Brak osoby'}
+          title={error ?? displayName ?? 'Brak PM'}
           className={cn(
             'inline-grid place-items-center rounded-full',
-            'bg-muted border border-border',
-            'font-heading font-semibold text-muted-foreground',
+            optimisticPmId
+              ? 'bg-primary/15 border border-primary/30'
+              : 'bg-muted border border-border',
+            'font-heading font-semibold',
+            optimisticPmId ? 'text-primary' : 'text-muted-foreground',
             ini === '—' ? 'text-[0.65rem]' : 'text-[0.55rem]',
             'cursor-pointer select-none',
             'transition-opacity motion-reduce:transition-none',
-            'hover:border-teal/60 hover:bg-teal/5',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-1',
+            'hover:border-primary/60 hover:bg-primary/10',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
             'disabled:cursor-not-allowed',
             isPending && 'opacity-50 cursor-wait',
             error && 'border-destructive/60'
@@ -137,9 +140,9 @@ export function TaskAssigneeControl({ taskId, assigneeName, specialists }: TaskA
               )}
             >
               <SelectPrimitive.List className="p-1">
-                {/* Opcja „Brak osoby" */}
+                {/* Opcja „Brak PM" */}
                 <SelectPrimitive.Item
-                  value={NO_ASSIGNEE}
+                  value={NO_PM}
                   className={cn(
                     'relative flex w-full cursor-default items-center gap-2',
                     'rounded-md py-1.5 pr-8 pl-2',
@@ -154,7 +157,7 @@ export function TaskAssigneeControl({ taskId, assigneeName, specialists }: TaskA
                     style={{ width: 6, height: 6 }}
                   />
                   <SelectPrimitive.ItemText className="flex-1 text-[0.7rem] font-heading font-medium text-muted-foreground whitespace-nowrap">
-                    — Brak osoby
+                    — Brak PM
                   </SelectPrimitive.ItemText>
                   <SelectPrimitive.ItemIndicator
                     render={
@@ -165,13 +168,13 @@ export function TaskAssigneeControl({ taskId, assigneeName, specialists }: TaskA
                   </SelectPrimitive.ItemIndicator>
                 </SelectPrimitive.Item>
 
-                {/* Profile — tylko z wypełnionym full_name (brak full_name → UUID nie trafia do DB) */}
+                {/* Profile PM — filtrujemy tylko tych z full_name (UUID bez imienia nie byłby czytelny) */}
                 {profiles.filter((p) => p.full_name).map((p) => {
                   const name = p.full_name!
                   return (
                     <SelectPrimitive.Item
                       key={p.id}
-                      value={name}
+                      value={p.id}
                       className={cn(
                         'relative flex w-full cursor-default items-center gap-2',
                         'rounded-md py-1.5 pr-8 pl-2',
@@ -180,10 +183,10 @@ export function TaskAssigneeControl({ taskId, assigneeName, specialists }: TaskA
                         'data-disabled:pointer-events-none data-disabled:opacity-50'
                       )}
                     >
-                      {/* Mini-avatar inicjałów w menu */}
+                      {/* Mini-avatar inicjałów PM — pomarańczowy */}
                       <span
                         aria-hidden="true"
-                        className="inline-grid shrink-0 place-items-center rounded-full bg-teal/15 text-teal text-[0.45rem] font-heading font-bold"
+                        className="inline-grid shrink-0 place-items-center rounded-full bg-primary/10 text-primary text-[0.45rem] font-heading font-bold"
                         style={{ width: 14, height: 14 }}
                       >
                         {initials(p.full_name)}
