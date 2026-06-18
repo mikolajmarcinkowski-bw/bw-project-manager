@@ -411,6 +411,95 @@ export async function updateProjectAction(
   return { ok: true }
 }
 
+// ─── markProjectCompleted (P21 — oznacz jako zakończony) ─────────────────────
+
+export async function markProjectCompleted(projectId: string): Promise<{ ok: true } | { error: string }> {
+  const user = await requireUser()
+  const supabase = await createClient()
+
+  const { data: project } = await supabase
+    .from('projects')
+    .select('id, client_id, status')
+    .eq('id', projectId)
+    .single()
+
+  if (!project) return { error: 'Nie znaleziono projektu.' }
+  if (project.status !== 'active') return { error: 'Tylko aktywne projekty można oznaczać jako zakończone.' }
+
+  const { error } = await supabase
+    .from('projects')
+    .update({ status: 'completed', completed_at: new Date().toISOString() })
+    .eq('id', projectId)
+
+  if (error) return { error: 'Nie udało się zmienić statusu.' }
+
+  const { error: logErr } = await supabase.from('activity_log').insert({
+    entity: 'project',
+    entity_id: projectId,
+    action: 'mark_completed',
+    actor_id: user.id,
+    before: { status: 'active' },
+    after: { status: 'completed' },
+  })
+  if (logErr) console.error('[markProjectCompleted] activity_log failed:', logErr)
+
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath('/dashboard')
+  revalidatePath('/projekty')
+  revalidatePath(`/clients/${project.client_id}`)
+
+  return { ok: true }
+}
+
+// ─── archiveProject (P16 — archiwizacja z detonatorem) ───────────────────────
+
+export async function archiveProject(projectId: string, confirmName: string): Promise<{ ok: true } | { error: string }> {
+  const user = await requireUser()
+  const supabase = await createClient()
+
+  const { data: project } = await supabase
+    .from('projects')
+    .select('id, name, client_id, status')
+    .eq('id', projectId)
+    .single()
+
+  if (!project) return { error: 'Nie znaleziono projektu.' }
+  if (project.status === 'archived') return { error: 'Projekt jest już zarchiwizowany.' }
+
+  // Potwierdzenie nazwy projektu (detonator — R9)
+  if (confirmName.trim().toLowerCase() !== project.name.trim().toLowerCase()) {
+    return { error: 'Podana nazwa projektu nie zgadza się.' }
+  }
+
+  const { error } = await supabase
+    .from('projects')
+    .update({
+      status: 'archived',
+      archived_by: user.id,
+      archived_at: new Date().toISOString(),
+    })
+    .eq('id', projectId)
+
+  if (error) return { error: 'Nie udało się zarchiwizować projektu.' }
+
+  const { error: logErr } = await supabase.from('activity_log').insert({
+    entity: 'project',
+    entity_id: projectId,
+    action: 'archive_project',
+    actor_id: user.id,
+    before: { status: project.status },
+    after: { status: 'archived' },
+  })
+  if (logErr) console.error('[archiveProject] activity_log failed:', logErr)
+
+  revalidatePath('/dashboard')
+  revalidatePath('/projekty')
+  revalidatePath('/archiwum')
+  revalidatePath(`/clients/${project.client_id}`)
+
+  return { ok: true }
+}
+
 // ─── updateDecisionPoint (P11 — diamenciki) ───────────────────────────────────
 
 export async function updateDecisionPoint(
