@@ -54,6 +54,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       />
       <ProjectHeader project={project} profiles={profiles} health={health} />
       <ProjectViews
+        key={project.id}
         project={project}
         profiles={profiles}
         risks={risks}
