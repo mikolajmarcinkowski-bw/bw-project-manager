@@ -4,6 +4,37 @@
 
 ---
 
+## [1.3.0] — 2026-06-18 — 🚀 PRODUKCJA: MCP kompletny (41/46) + auth consolidation + skill przebudowany
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `651fdaf`). Sesja 16 (wieczór).
+
+### Naprawiono — MCP Server
+- **Auth consolidation**: 20 routów zastąpiło inline `verifyToken` importem `verifyMcpToken` z `src/lib/mcp/auth.ts` — jedna zmiana logiki auth = zmiana w 1 miejscu
+- **Formaty odpowiedzi**: `create_project` teraz zwraca `{ ok: true, data: { project_id, project_url } }` jak wszystkie inne tools
+- **Error shapes**: 5 routów (create_project, bulk_hide_tasks, update_task_status, update_task, set_task_owner) ujednolicone do `{ ok: false, error }`
+- **`update_milestone`**: obsługuje pole `name`, `.maybeSingle()` zamiast `.single()` (brak 500 przy UPDATE)
+- **`setup_project_full`**: przyjmuje `name` w milestoneach — koniec z „MS0 MS1 MS2"
+- **`add_budget_line`**: walidacja że `task_id` należy do projektu
+- **`set_project_pms`**: zapisuje do `activity_log`
+
+### Dodano — nowe MCP tools (41/46 spec)
+- `create_client` — tworzy klienta w BW PM (sprawdza duplikaty, `already_existed` flag)
+- `get_project_steps` — fazy projektu z opcjonalnym filtrem po fazie
+- `get_daily_brief` — zaległe + zbliżające się zadania ze wszystkich aktywnych projektów
+
+### Przebudowano — Skill `/bw-project-manager`
+- Prowadzi PM-a krok po kroku (nie mechanicznie)
+- Pyta o konkretne nazwy milestoneów (nie „MS0 MS1"), budżet, team
+- Standardowe wzorcowe nazwy MS0–MS7 wbudowane w prompt
+- RACI jako osobna sesja z wyjaśnieniem
+
+### Naprawiono — Layout
+- Sidebar `h-screen sticky top-0` — stały pasek, scroll tylko w prawej części
+
+### MCP tools: **41/46** (89% specyfikacji)
+
+---
+
 ## [1.2.0] — 2026-06-18 — 🚀 PRODUKCJA: Premium end-to-end — synergies, health metrics, MCP Faza 2
 
 > Status: **ZMERGOWANE → produkcja** (`main`, `ff5f9c1`). Sesja 16 (popołudnie).

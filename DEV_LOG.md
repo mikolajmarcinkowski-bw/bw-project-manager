@@ -5,6 +5,20 @@
 
 ---
 
+## [2026-06-18] fix | MCP kompleksowe naprawy + skill przebudowany — `651fdaf`
+
+- **Auth consolidation**: 20 MCP routów → `verifyMcpToken` z `src/lib/mcp/auth.ts` (nie inline)
+- **Response formats**: `create_project` i 5 routów → spójne `{ ok, data }` / `{ ok: false, error }`
+- **`update_milestone`**: `.maybeSingle()`, obsługuje `name` pole
+- **`setup_project_full`**: milestony z prawdziwymi nazwami (nie „MS0 MS1")
+- **Nowe narzędzia**: `create_client`, `get_project_steps`, `get_daily_brief`
+- **Naprawione luki**: `add_budget_line` walidacja task_id, `set_project_pms` activity_log
+- **Skill**: przebudowany — prowadzi PM-a przez decyzje, wzorcowe nazwy MS0–MS7
+- **Layout**: sidebar sticky h-screen (scroll tylko w main)
+- MCP: **41/46** tools (89% spec)
+
+---
+
 ## [2026-06-18] feat | Premium end-to-end — synergies + health metrics + MCP Faza 2 — `ff5f9c1`
 
 - **Wave 1 — 3 agenty równolegle** (haiku + 2× sonnet, worktree isolation):
