@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { requireUser } from '@/lib/auth/dal'
 import type { Database } from '@/types/supabase'
 
 // Type-only export — erased at runtime, safe in 'use server' module.
@@ -406,6 +407,60 @@ export async function updateProjectAction(
   revalidatePath('/projekty')
   revalidatePath(`/clients/${client_id}`)
   revalidatePath(`/projects/${projectId}`)
+
+  return { ok: true }
+}
+
+// ─── updateDecisionPoint (P11 — diamenciki) ───────────────────────────────────
+
+export async function updateDecisionPoint(
+  decisionId: string,
+  status: 'yes' | 'no' | 'pending',
+  notes?: string
+): Promise<{ ok: true } | { error: string }> {
+  const user = await requireUser()
+  const supabase = await createClient()
+
+  // Pobierz decision (potrzebujemy project_id do revalidatePath i status do loga)
+  const { data: before, error: fetchErr } = await supabase
+    .from('decision_points')
+    .select('id, project_id, status')
+    .eq('id', decisionId)
+    .single()
+
+  if (fetchErr || !before) {
+    return { error: 'Nie znaleziono decyzji.' }
+  }
+
+  const { error: updateErr } = await supabase
+    .from('decision_points')
+    .update({
+      status,
+      decided_by: user.id,
+      decided_at: new Date().toISOString(),
+      notes: notes ?? null,
+    })
+    .eq('id', decisionId)
+
+  if (updateErr) {
+    console.error('[updateDecisionPoint] update failed:', updateErr)
+    return { error: 'Nie udało się zaktualizować decyzji. Spróbuj ponownie.' }
+  }
+
+  // Activity log (nieblokujące)
+  const { error: logErr } = await supabase.from('activity_log').insert({
+    entity: 'decision',
+    entity_id: decisionId,
+    action: 'update_decision',
+    actor_id: user.id,
+    before: { status: before.status },
+    after: { status, notes: notes ?? null },
+  })
+  if (logErr) {
+    console.error('[updateDecisionPoint] activity_log failed:', logErr)
+  }
+
+  revalidatePath(`/projects/${before.project_id}`)
 
   return { ok: true }
 }
