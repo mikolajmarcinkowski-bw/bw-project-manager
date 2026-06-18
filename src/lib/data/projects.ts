@@ -774,7 +774,7 @@ export interface Kpi {
 
 // ─── getProjectRisks ──────────────────────────────────────────────────────────
 
-export async function getProjectRisks(projectId: string): Promise<Risk[]> {
+export const getProjectRisks = cache(async (projectId: string): Promise<Risk[]> => {
   const supabase = await createClient()
 
   // risks not in generated types yet — cast to any
@@ -804,11 +804,11 @@ export async function getProjectRisks(projectId: string): Promise<Risk[]> {
     status: (r.status as RiskStatus) ?? 'open',
     createdAt: r.created_at as string,
   }))
-}
+})
 
 // ─── getProjectKpis ───────────────────────────────────────────────────────────
 
-export async function getProjectKpis(projectId: string): Promise<Kpi[]> {
+export const getProjectKpis = cache(async (projectId: string): Promise<Kpi[]> => {
   const supabase = await createClient()
 
   // kpis not in generated types yet — cast to any
@@ -832,7 +832,7 @@ export async function getProjectKpis(projectId: string): Promise<Kpi[]> {
     status: (k.status as KpiStatus) ?? 'on',
     notes: (k.notes as string | null) ?? null,
   }))
-}
+})
 export interface BudgetSettings {
   projectId: string
   rateK: number | null
@@ -859,58 +859,58 @@ export interface BudgetLine {
 
 // ─── getProjectBudget ─────────────────────────────────────────────────────────
 
-export async function getProjectBudget(
-  projectId: string
-): Promise<{ settings: BudgetSettings | null; lines: BudgetLine[] }> {
-  const supabase = await createClient()
+export const getProjectBudget = cache(
+  async (projectId: string): Promise<{ settings: BudgetSettings | null; lines: BudgetLine[] }> => {
+    const supabase = await createClient()
 
-  const [{ data: settingsRaw, error: settingsErr }, { data: linesRaw, error: linesErr }] =
-    await Promise.all([
-      supabase
-        .from('budget_settings')
-        .select('project_id, rate_k, rate_w, rate_d, buffer_pct, pm_overhead_pct, budget_max')
-        .eq('project_id', projectId)
-        .single(),
-      supabase
-        .from('budget_lines')
-        .select('id, project_id, task_id, phase, rate_type, est_h, actual_h, description, created_at')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: true }),
-    ])
+    const [{ data: settingsRaw, error: settingsErr }, { data: linesRaw, error: linesErr }] =
+      await Promise.all([
+        supabase
+          .from('budget_settings')
+          .select('project_id, rate_k, rate_w, rate_d, buffer_pct, pm_overhead_pct, budget_max')
+          .eq('project_id', projectId)
+          .single(),
+        supabase
+          .from('budget_lines')
+          .select('id, project_id, task_id, phase, rate_type, est_h, actual_h, description, created_at')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: true }),
+      ])
 
-  if (settingsErr && settingsErr.code !== 'PGRST116') {
-    console.error('[getProjectBudget] settings:', settingsErr)
+    if (settingsErr && settingsErr.code !== 'PGRST116') {
+      console.error('[getProjectBudget] settings:', settingsErr)
+    }
+    if (linesErr) {
+      console.error('[getProjectBudget] lines:', linesErr)
+    }
+
+    const settings: BudgetSettings | null = settingsRaw
+      ? {
+          projectId: settingsRaw.project_id,
+          rateK: settingsRaw.rate_k,
+          rateW: settingsRaw.rate_w,
+          rateD: settingsRaw.rate_d,
+          bufferPct: settingsRaw.buffer_pct,
+          pmOverheadPct: settingsRaw.pm_overhead_pct,
+          budgetMax: settingsRaw.budget_max,
+        }
+      : null
+
+    const lines: BudgetLine[] = (linesRaw ?? []).map((l) => ({
+      id: l.id,
+      projectId: l.project_id,
+      taskId: l.task_id ?? null,
+      phase: l.phase ?? null,
+      rateType: l.rate_type as RateType,
+      estH: l.est_h ?? null,
+      actualH: l.actual_h ?? null,
+      description: l.description ?? null,
+      createdAt: l.created_at,
+    }))
+
+    return { settings, lines }
   }
-  if (linesErr) {
-    console.error('[getProjectBudget] lines:', linesErr)
-  }
-
-  const settings: BudgetSettings | null = settingsRaw
-    ? {
-        projectId: settingsRaw.project_id,
-        rateK: settingsRaw.rate_k,
-        rateW: settingsRaw.rate_w,
-        rateD: settingsRaw.rate_d,
-        bufferPct: settingsRaw.buffer_pct,
-        pmOverheadPct: settingsRaw.pm_overhead_pct,
-        budgetMax: settingsRaw.budget_max,
-      }
-    : null
-
-  const lines: BudgetLine[] = (linesRaw ?? []).map((l) => ({
-    id: l.id,
-    projectId: l.project_id,
-    taskId: l.task_id ?? null,
-    phase: l.phase ?? null,
-    rateType: l.rate_type as RateType,
-    estH: l.est_h ?? null,
-    actualH: l.actual_h ?? null,
-    description: l.description ?? null,
-    createdAt: l.created_at,
-  }))
-
-  return { settings, lines }
-}
+)
 
 // ─── Change Request types ──────────────────────────────────────────────────────
 
@@ -947,50 +947,50 @@ export interface ChangeRequest {
 
 // ─── getProjectChangeRequests ────────────────────────────────────────────────
 
-export async function getProjectChangeRequests(
-  projectId: string
-): Promise<ChangeRequest[]> {
-  const supabase = await createClient()
+export const getProjectChangeRequests = cache(
+  async (projectId: string): Promise<ChangeRequest[]> => {
+    const supabase = await createClient()
 
-  const { data, error } = await supabase
-    .from('change_requests')
-    .select(
-      'id, project_id, cr_number, title, description, current_state, desired_state, business_rationale, cr_type, impact_level, impact_hours, impact_cost, schedule_impact, submitted_date, status, bw_approval, bw_approval_date, client_approval, client_approval_date, client_approver, implementation_plan, notes, created_at'
-    )
-    .eq('project_id', projectId)
-    .order('created_at', { ascending: false })
+    const { data, error } = await supabase
+      .from('change_requests')
+      .select(
+        'id, project_id, cr_number, title, description, current_state, desired_state, business_rationale, cr_type, impact_level, impact_hours, impact_cost, schedule_impact, submitted_date, status, bw_approval, bw_approval_date, client_approval, client_approval_date, client_approver, implementation_plan, notes, created_at'
+      )
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false })
 
-  if (error) {
-    console.error('[getProjectChangeRequests]:', error)
-    return []
+    if (error) {
+      console.error('[getProjectChangeRequests]:', error)
+      return []
+    }
+
+    return (data ?? []).map((r) => ({
+      id: r.id,
+      projectId: r.project_id,
+      crNumber: r.cr_number ?? null,
+      title: r.title,
+      description: r.description ?? null,
+      currentState: r.current_state ?? null,
+      desiredState: r.desired_state ?? null,
+      businessRationale: r.business_rationale ?? null,
+      crType: r.cr_type as CrType,
+      impactLevel: (r.impact_level ?? null) as CrImpact | null,
+      impactHours: r.impact_hours ?? null,
+      impactCost: r.impact_cost ?? null,
+      scheduleImpact: r.schedule_impact ?? null,
+      submittedDate: r.submitted_date ?? null,
+      status: r.status as CrStatus,
+      bwApproval: (r.bw_approval ?? null) as ApprovalStatus | null,
+      bwApprovalDate: r.bw_approval_date ?? null,
+      clientApproval: (r.client_approval ?? null) as ApprovalStatus | null,
+      clientApprovalDate: r.client_approval_date ?? null,
+      clientApprover: r.client_approver ?? null,
+      implementationPlan: r.implementation_plan ?? null,
+      notes: r.notes ?? null,
+      createdAt: r.created_at,
+    }))
   }
-
-  return (data ?? []).map((r) => ({
-    id: r.id,
-    projectId: r.project_id,
-    crNumber: r.cr_number ?? null,
-    title: r.title,
-    description: r.description ?? null,
-    currentState: r.current_state ?? null,
-    desiredState: r.desired_state ?? null,
-    businessRationale: r.business_rationale ?? null,
-    crType: r.cr_type as CrType,
-    impactLevel: (r.impact_level ?? null) as CrImpact | null,
-    impactHours: r.impact_hours ?? null,
-    impactCost: r.impact_cost ?? null,
-    scheduleImpact: r.schedule_impact ?? null,
-    submittedDate: r.submitted_date ?? null,
-    status: r.status as CrStatus,
-    bwApproval: (r.bw_approval ?? null) as ApprovalStatus | null,
-    bwApprovalDate: r.bw_approval_date ?? null,
-    clientApproval: (r.client_approval ?? null) as ApprovalStatus | null,
-    clientApprovalDate: r.client_approval_date ?? null,
-    clientApprover: r.client_approver ?? null,
-    implementationPlan: r.implementation_plan ?? null,
-    notes: r.notes ?? null,
-    createdAt: r.created_at,
-  }))
-}
+)
 
 // ─── RACI types ───────────────────────────────────────────────────────────────
 
@@ -1015,7 +1015,7 @@ export interface RaciTask {
 
 // ─── getProjectRaci ───────────────────────────────────────────────────────────
 
-export async function getProjectRaci(projectId: string): Promise<RaciTask[]> {
+export const getProjectRaci = cache(async (projectId: string): Promise<RaciTask[]> => {
   const supabase = await createClient()
 
   const { data: taskRows, error: tasksErr } = await supabase
@@ -1064,5 +1064,5 @@ export async function getProjectRaci(projectId: string): Promise<RaciTask[]> {
       assignments: assignmentsByTask.get(t.id) ?? [],
     }
   })
-}
+})
 
