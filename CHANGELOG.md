@@ -4,10 +4,9 @@
 
 ---
 
-## [1.5.0-dev] — 2026-06-18 — 🔀 BRANCH `feat/specialist-pool` (czeka na merge)
+## [1.5.0] — 2026-06-18 — 🚀 PRODUKCJA: Pula konsultantów + dwa pola przypisania zadań
 
-> Status: **gotowy do merge** (`feat/specialist-pool`, `4a8f7fa`). Sesja 18.
-> ⚠️ Otwarte: luka w modelu PM-task (patrz sekcja „Znane problemy").
+> Status: **ZMERGOWANE → produkcja** (`main`, `675dec0`). Sesja 18.
 
 ### Naprawiono — Rozdzielenie PM-ów od puli konsultantów (A3)
 
@@ -19,9 +18,6 @@
 - **Fix `TaskAssigneeControl`**: prop `specialists` z `team_members` zamiast `profiles` (PM-owie z kontami)
 - **`/admin/page.tsx`**: opisy kart wyjaśniają rozdzielenie (PM-owie vs konsultanci)
 
-### Znane problemy w tym branchu
-
-- ⚠️ Kolumna „PM" w Gantcie: etykieta myląca — po tej zmianie dropdown pokazuje konsultantów (wykonawców), ale nagłówek kolumny nadal mówi „PM". Wymagana decyzja: model PM-task.
 
 ---
 
