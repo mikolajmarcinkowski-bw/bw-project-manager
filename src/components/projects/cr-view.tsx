@@ -222,7 +222,7 @@ function CrFormDialog({
 
             {form.risk_id && (
               <div className="mt-3 text-[0.7rem] font-meta text-muted-foreground bg-[#FAEEDA]/50 border border-[#EF9F27]/30 rounded-md px-3 py-2">
-                Powiazane ryzyko: {form.current_state?.slice(0, 80) || form.risk_id}
+                Powiązane ryzyko: {form.current_state?.slice(0, 80) || form.risk_id}
               </div>
             )}
 

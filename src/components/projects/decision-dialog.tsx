@@ -197,7 +197,7 @@ export function DecisionDialog({ decision, open, onOpenChange, onRequestNewCr }:
                   onClick={() => { onRequestNewCr(); onOpenChange(false); setShowCrLink(false) }}
                   className="w-full text-left text-[0.75rem] font-meta text-teal underline hover:no-underline"
                 >
-                  Otworz formularz Change Request dla tej decyzji
+                  Otwórz formularz Change Request dla tej decyzji
                 </button>
               )}
               <div className="flex justify-end">
