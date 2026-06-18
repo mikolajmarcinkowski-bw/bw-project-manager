@@ -1,23 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-
-async function verifyToken(authHeader: string | null): Promise<string | null> {
-  if (!authHeader?.startsWith('Bearer ')) return null
-  const token = authHeader.slice(7).trim()
-  if (!token) return null
-  const supabase = createAdminClient()
-  const { data } = await supabase
-    .from('api_tokens' as any)
-    .select('user_id')
-    .eq('token', token)
-    .is('revoked_at', null)
-    .single()
-  return data?.user_id ?? null
-}
+import { verifyMcpToken } from '@/lib/mcp/auth'
 
 export async function POST(request: NextRequest) {
-  const userId = await verifyToken(request.headers.get('authorization'))
-  if (!userId) return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+  const user = await verifyMcpToken(request.headers.get('authorization'))
+  if (!user) return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+  const userId = user.userId
   const body = await request.json().catch(() => ({}))
   if (!body.step_id || !body.title || !body.kind) {
     return NextResponse.json({ ok: false, error: 'step_id, title, kind required' }, { status: 400 })
