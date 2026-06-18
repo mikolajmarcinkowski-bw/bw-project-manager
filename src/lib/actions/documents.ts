@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { requireUser } from '@/lib/auth/dal'
-import type { RagValue, RiskStatus, KpiStatus } from '@/lib/data/projects'
+import type { RagValue, RiskStatus, KpiStatus, RateType, CrType, CrImpact, CrStatus } from '@/lib/data/projects'
 
 // ─── RAG auto-kalkulator ──────────────────────────────────────────────────────
 // score = probability × impact; ≥15=R, ≥6=A, else G
