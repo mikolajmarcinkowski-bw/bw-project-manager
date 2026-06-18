@@ -4,9 +4,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { NAV_ITEMS } from './nav-items'
+import { NAV_ITEMS, ADMIN_NAV_ITEMS } from './nav-items'
 import { Logo } from '@/components/brand/logo'
-import { Clock } from 'lucide-react'
+import { Clock, Shield } from 'lucide-react'
+import type { UserRole } from '@/lib/auth/dal'
 
 export interface RecentProject {
   id: string
@@ -60,8 +61,13 @@ function RecentProjects() {
   )
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  userRole?: UserRole
+}
+
+export function Sidebar({ userRole }: SidebarProps) {
   const pathname = usePathname()
+  const isAdmin = userRole === 'admin' || userRole === 'dev_admin'
 
   return (
     <aside
@@ -110,6 +116,47 @@ export function Sidebar() {
         <div className="my-1.5 border-t border-sidebar-border" role="separator" />
 
         <RecentProjects />
+
+        {/* Sekcja Admin — widoczna tylko dla admin/dev_admin */}
+        {isAdmin && (
+          <>
+            <div className="my-1.5 border-t border-sidebar-border" role="separator" />
+            <div className="px-2 pb-1">
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 mb-0.5">
+                <Shield className="h-3 w-3 text-muted-foreground shrink-0" aria-hidden="true" />
+                <span className="font-meta text-[0.68rem] uppercase tracking-wide text-muted-foreground font-semibold">
+                  Admin
+                </span>
+              </div>
+              {ADMIN_NAV_ITEMS.map((item) => {
+                const isActive = pathname.startsWith(item.href)
+                const Icon = item.icon
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors duration-150',
+                      isActive
+                        ? 'bg-muted text-teal-strong'
+                        : 'text-sidebar-foreground hover:bg-muted/60 hover:text-foreground'
+                    )}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    <Icon
+                      className={cn(
+                        'h-4 w-4 shrink-0 transition-colors duration-150',
+                        isActive ? 'text-teal' : 'text-muted-foreground group-hover:text-foreground'
+                      )}
+                      aria-hidden="true"
+                    />
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </div>
+          </>
+        )}
       </nav>
 
       {/* Dolna stopka sidebara */}

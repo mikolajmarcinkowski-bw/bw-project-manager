@@ -13,7 +13,7 @@ export default async function AppLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Lewy sidebar */}
-      <Sidebar />
+      <Sidebar userRole={user.role} />
 
       {/* Obszar roboczy: topbar + tresc */}
       <div className="flex flex-col flex-1 min-w-0">
