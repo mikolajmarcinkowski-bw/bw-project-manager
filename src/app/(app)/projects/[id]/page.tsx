@@ -59,6 +59,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         key={project.id}
         project={project}
         specialists={specialists}
+        pmProfiles={profiles}
         risks={risks}
         kpis={kpis}
         budget={budget}

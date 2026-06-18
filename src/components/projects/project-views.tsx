@@ -21,6 +21,7 @@ import { BudgetView } from './budget-view'
 import { CrView } from './cr-view'
 import { RaciView } from './raci-view'
 import type { Specialist } from './task-assignee-control'
+import type { Profile as PmProfile } from './task-pm-control'
 
 // Wszystkie zakładki dokumentów projektowych aktywne.
 type Tab = 'mapa' | 'harmonogram' | 'checklist' | 'RAID' | 'KPI' | 'Budżet' | 'CR' | 'RACI'
@@ -28,6 +29,7 @@ type Tab = 'mapa' | 'harmonogram' | 'checklist' | 'RAID' | 'KPI' | 'Budżet' | '
 export function ProjectViews({
   project,
   specialists = [],
+  pmProfiles = [],
   risks = [],
   kpis = [],
   budget = { settings: null, lines: [] },
@@ -36,6 +38,7 @@ export function ProjectViews({
 }: {
   project: ProjectDetail
   specialists?: Specialist[]
+  pmProfiles?: PmProfile[]
   risks?: Risk[]
   kpis?: Kpi[]
   budget?: { settings: BudgetSettings | null; lines: BudgetLine[] }
@@ -107,6 +110,7 @@ export function ProjectViews({
           <GanttChart
             project={project}
             profiles={specialists}
+            pmProfiles={pmProfiles}
             targetStepId={targetStepId}
             onTargetConsumed={() => setTargetStepId(null)}
           />
@@ -119,6 +123,7 @@ export function ProjectViews({
               <PhaseChecklist
                 step={selectedStep}
                 profiles={specialists}
+                pmProfiles={pmProfiles}
                 allSteps={project.steps}
                 onSelectStep={(stepId) => setChecklistStepId(stepId)}
               />

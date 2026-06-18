@@ -14,6 +14,7 @@ import type {
 } from '@/lib/data/projects'
 import { TaskStatusControl } from '@/components/projects/task-status-control'
 import { TaskAssigneeControl, type Profile } from '@/components/projects/task-assignee-control'
+import { TaskPmControl, type Profile as PmProfile } from '@/components/projects/task-pm-control'
 import { TaskDateControl } from '@/components/projects/task-date-control'
 import { muteTaskWarning } from '@/lib/actions/tasks'
 
@@ -25,7 +26,7 @@ const COL = {
   kind: 'w-[72px] shrink-0 text-center',
   typ: 'w-[44px] shrink-0 text-center',
   est: 'w-[40px] shrink-0 text-right',
-  own: 'w-[38px] shrink-0 text-center',
+  own: 'w-[52px] shrink-0 text-center',
   wk: 'flex-1 min-w-[220px] shrink-0',   // obszar tygodni (osobny sub-grid)
   st: 'w-[76px] shrink-0 text-center',
 } as const
@@ -237,11 +238,12 @@ function formatDate(iso: string): string {
 interface GanttChartProps {
   project: ProjectDetail
   profiles?: Profile[]
+  pmProfiles?: PmProfile[]
   targetStepId?: string | null
   onTargetConsumed?: () => void
 }
 
-export function GanttChart({ project, profiles = [], targetStepId, onTargetConsumed }: GanttChartProps) {
+export function GanttChart({ project, profiles = [], pmProfiles = [], targetStepId, onTargetConsumed }: GanttChartProps) {
   const { steps, milestones, weekCount, calendarStart } = project
   const router = useRouter()
   const [, startTransition] = useTransition()
@@ -539,12 +541,12 @@ export function GanttChart({ project, profiles = [], targetStepId, onTargetConsu
               >
                 Est.
               </div>
-              {/* PM (Own) */}
+              {/* Kons. / PM */}
               <div
                 role="columnheader"
                 className={cn(COL.own, 'px-1 py-2 text-[0.625rem] font-heading font-semibold')}
               >
-                PM
+                Kons/PM
               </div>
               {/* Tygodnie */}
               <div
@@ -826,15 +828,20 @@ export function GanttChart({ project, profiles = [], targetStepId, onTargetConsu
                               >
                                 {task.est != null ? `${task.est}h` : '—'}
                               </div>
-                              {/* Own — klikalny avatar (P8) */}
+                              {/* Own — konsultant + PM nadzorujący */}
                               <div
                                 role="cell"
-                                className={cn(COL.own, 'px-1 py-1.5 flex items-center justify-center')}
+                                className={cn(COL.own, 'px-0.5 py-1 flex items-center justify-center gap-1')}
                               >
                                 <TaskAssigneeControl
                                   taskId={task.id}
                                   assigneeName={task.assigneeName}
                                   specialists={profiles}
+                                />
+                                <TaskPmControl
+                                  taskId={task.id}
+                                  pmAssigneeId={task.pmAssigneeId}
+                                  profiles={pmProfiles}
                                 />
                               </div>
                               {/* Obszar tygodni + pasek */}
@@ -934,8 +941,9 @@ export function GanttChart({ project, profiles = [], targetStepId, onTargetConsu
                               <div role="cell" className={cn(COL.est, 'px-1 py-1 font-mono text-[0.65rem] text-muted-foreground/60')}>
                                 {task.est != null ? `${task.est}h` : '—'}
                               </div>
-                              <div role="cell" className={cn(COL.own, 'px-1 py-1 flex items-center justify-center')}>
+                              <div role="cell" className={cn(COL.own, 'px-0.5 py-1 flex items-center justify-center gap-1')}>
                                 <TaskAssigneeControl taskId={task.id} assigneeName={task.assigneeName} specialists={profiles} />
+                                <TaskPmControl taskId={task.id} pmAssigneeId={task.pmAssigneeId} profiles={pmProfiles} />
                               </div>
                               <div role="cell" className={cn(COL.wk, 'h-[34px]')} style={{ display: 'grid', gridTemplateColumns: `repeat(${weekCount}, minmax(28px, 1fr))`, gridTemplateRows: '1fr' }}>
                                 {weeks.map((k) => (

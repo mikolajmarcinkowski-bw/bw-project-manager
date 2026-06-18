@@ -7,6 +7,7 @@ import type { GanttStep, GanttTask, TaskKind } from '@/lib/data/projects'
 import { TaskStatusControl } from './task-status-control'
 import { TaskAssigneeControl } from './task-assignee-control'
 import type { Profile } from './task-assignee-control'
+import { TaskPmControl, type Profile as PmProfile } from './task-pm-control'
 import { TaskDateControl } from './task-date-control'
 
 // ─── Kolory KIND (zsync z gantt-chart.tsx) ────────────────────────────────────
@@ -89,9 +90,10 @@ function MilestoneDiamond() {
 interface TaskRowProps {
   task: GanttTask
   profiles: Profile[]
+  pmProfiles: PmProfile[]
 }
 
-function TaskRow({ task, profiles }: TaskRowProps) {
+function TaskRow({ task, profiles, pmProfiles }: TaskRowProps) {
   const alertLevel = getAlertLevel(task)
   const isDone = task.status === 'done'
   const isNA = task.status === 'na'
@@ -132,12 +134,17 @@ function TaskRow({ task, profiles }: TaskRowProps) {
         <KindChip kind={task.kind} />
       )}
 
-      {/* Owner — avatar inicjałów klikalny */}
-      <div className="shrink-0">
+      {/* Owner konsultant + PM nadzorujący */}
+      <div className="shrink-0 flex items-center gap-1">
         <TaskAssigneeControl
           taskId={task.id}
           assigneeName={task.assigneeName}
           specialists={profiles}
+        />
+        <TaskPmControl
+          taskId={task.id}
+          pmAssigneeId={task.pmAssigneeId}
+          profiles={pmProfiles}
         />
       </div>
 
@@ -158,13 +165,14 @@ function TaskRow({ task, profiles }: TaskRowProps) {
 export interface PhaseChecklistProps {
   step: GanttStep
   profiles: Profile[]
+  pmProfiles?: PmProfile[]
   /** Wszystkie fazy projektu — do nawigacji między fazami */
   allSteps?: GanttStep[]
   /** Callback gdy PM wybiera inną fazę */
   onSelectStep?: (stepId: string) => void
 }
 
-export function PhaseChecklist({ step, profiles, allSteps, onSelectStep }: PhaseChecklistProps) {
+export function PhaseChecklist({ step, profiles, pmProfiles = [], allSteps, onSelectStep }: PhaseChecklistProps) {
   const [showHidden, setShowHidden] = useState(false)
 
   const visibleTasks = step.tasks.filter((t) => !t.hidden)
@@ -295,7 +303,7 @@ export function PhaseChecklist({ step, profiles, allSteps, onSelectStep }: Phase
 
         {/* Zadania widoczne */}
         {visibleTasks.map((task) => (
-          <TaskRow key={task.id} task={task} profiles={profiles} />
+          <TaskRow key={task.id} task={task} profiles={profiles} pmProfiles={pmProfiles} />
         ))}
 
         {/* Toggle ukrytych zadań N/A */}
@@ -329,7 +337,7 @@ export function PhaseChecklist({ step, profiles, allSteps, onSelectStep }: Phase
 
             {showHidden &&
               hiddenTasks.map((task) => (
-                <TaskRow key={task.id} task={task} profiles={profiles} />
+                <TaskRow key={task.id} task={task} profiles={profiles} pmProfiles={pmProfiles} />
               ))}
           </>
         )}
