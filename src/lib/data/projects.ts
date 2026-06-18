@@ -295,7 +295,17 @@ export interface ProjectDetail {
   atRisk: boolean
   steps: GanttStep[]
   milestones: { id: string; msCode: string | null; name: string; week: number | null; status: MilestoneStatus }[]
-  decisions: { id: string; type: DecisionType; status: DecisionStatus; title: string; stepId: string | null }[]
+  decisions: {
+    id: string
+    type: DecisionType
+    status: DecisionStatus
+    title: string
+    stepId: string | null
+    decidedBy: string | null
+    decidedAt: string | null
+    notes: string | null
+    decidedByName: string | null
+  }[]
 }
 
 // cache(): trasa woła getProjectDetail dwa razy (generateMetadata + page) —
@@ -335,7 +345,7 @@ export const getProjectDetail = cache(async (projectId: string): Promise<Project
       .eq('project_id', projectId)
       .order('task_order', { ascending: true }),
     supabase.from('milestones').select('id, ms_code, name, week, status').eq('project_id', projectId),
-    supabase.from('decision_points').select('id, type, status, title, step_id').eq('project_id', projectId),
+    supabase.from('decision_points').select('id, type, status, title, step_id, decided_by, decided_at, notes, profiles(full_name)').eq('project_id', projectId),
     supabase.from('project_pms').select('profiles(id, full_name)').eq('project_id', projectId),
   ])
 
@@ -457,13 +467,23 @@ export const getProjectDetail = cache(async (projectId: string): Promise<Project
     atRisk: riskIds.has(projectId),
     steps,
     milestones,
-    decisions: (decRows ?? []).map((d) => ({
-      id: d.id,
-      type: d.type as DecisionType,
-      status: d.status as DecisionStatus,
-      title: d.title,
-      stepId: d.step_id,
-    })),
+    decisions: (decRows ?? []).map((d) => {
+      const profField = (d as unknown as { profiles: { full_name: string | null } | { full_name: string | null }[] | null }).profiles
+      const profRow = Array.isArray(profField)
+        ? (profField[0] as { full_name: string | null } | undefined) ?? null
+        : (profField as { full_name: string | null } | null)
+      return {
+        id: d.id,
+        type: d.type as DecisionType,
+        status: d.status as DecisionStatus,
+        title: d.title,
+        stepId: d.step_id,
+        decidedBy: (d as unknown as { decided_by: string | null }).decided_by ?? null,
+        decidedAt: (d as unknown as { decided_at: string | null }).decided_at ?? null,
+        notes: (d as unknown as { notes: string | null }).notes ?? null,
+        decidedByName: profRow?.full_name ?? null,
+      }
+    }),
   }
 })
 

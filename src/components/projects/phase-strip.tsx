@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import type { GanttStep, ProjectDetail } from '@/lib/data/projects'
+import { DecisionDialog } from '@/components/projects/decision-dialog'
 
 // ─── Typy ─────────────────────────────────────────────────────────────────────
 
@@ -131,37 +132,78 @@ interface DecisionDiamondProps {
 }
 
 function DecisionDiamond({ decision, onSelectStep }: DecisionDiamondProps) {
+  const [dialogOpen, setDialogOpen] = useState(false)
+
   const label = DECISION_LABELS[decision.type]
   const statusLabel = DECISION_STATUS_LABELS[decision.status]
   const ariaLabel = `${decision.title} — ${statusLabel}`
 
+  const isYes = decision.status === 'yes'
+  const isNo = decision.status === 'no'
+
+  function handleClick() {
+    // Zawsze otwiera dialog
+    if (decision.stepId) {
+      onSelectStep(decision.stepId)
+    }
+    setDialogOpen(true)
+  }
+
   return (
-    <button
-      type="button"
-      onClick={() => decision.stepId && onSelectStep(decision.stepId)}
-      title={ariaLabel}
-      aria-label={ariaLabel}
-      className={cn(
-        'group flex flex-col items-center justify-center gap-1.5',
-        'min-w-[40px] focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/60 rounded',
-        'transition-opacity duration-200 hover:opacity-80'
-      )}
-    >
-      {/* Romb obrysowany fioletem SPO — NIE wypełniony */}
-      <span
-        aria-hidden="true"
-        className="block size-7 rotate-45 rounded-[4px] border-2 border-spo bg-transparent"
-      />
-      {/* Etykieta pod rombem */}
-      <span
+    <>
+      <button
+        type="button"
+        onClick={handleClick}
+        title={ariaLabel}
+        aria-label={ariaLabel}
         className={cn(
-          'font-heading font-semibold text-[9px] leading-none whitespace-nowrap',
-          'text-spo'
+          'group flex flex-col items-center justify-center gap-1.5',
+          'min-w-[40px] focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/60 rounded',
+          'transition-opacity duration-200 hover:opacity-80',
+          // Wyszarzenie gdy pomijamy
+          isNo && 'opacity-50'
         )}
       >
-        ◇ {label}
-      </span>
-    </button>
+        {/* Romb — wygląd wg statusu */}
+        <span
+          aria-hidden="true"
+          className={cn(
+            'block size-7 rotate-45 rounded-[4px] border-2 transition-colors',
+            // pending — obrysowany fioletem SPO
+            !isYes && !isNo && 'border-spo bg-transparent',
+            // yes — wypełniony tealem
+            isYes && 'border-teal bg-teal',
+            // no — czerwony border
+            isNo && 'border-status-off bg-transparent'
+          )}
+        />
+        {/* Etykieta pod rombem */}
+        <span
+          className={cn(
+            'font-heading font-semibold text-[9px] leading-none whitespace-nowrap',
+            !isYes && !isNo && 'text-spo',
+            isYes && 'text-teal',
+            isNo && 'text-status-off'
+          )}
+        >
+          {isYes ? '◆' : isNo ? '✕' : '◇'} {label}
+        </span>
+      </button>
+
+      <DecisionDialog
+        decision={{
+          id: decision.id,
+          title: decision.title,
+          type: decision.type,
+          status: decision.status,
+          decidedByName: decision.decidedByName,
+          decidedAt: decision.decidedAt,
+          notes: decision.notes,
+        }}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
+    </>
   )
 }
 
