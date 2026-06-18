@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react'
 import { ProjectStatusBadge } from './project-status-badge'
 import { ImplTypeBadge } from './impl-type-badge'
 import { EditProjectDialog } from './edit-project-dialog'
+import { ProjectLifecycleActions } from './project-lifecycle-actions'
 import type { ProjectDetail, ProjectHealthMetrics } from '@/lib/data/projects'
 
 function formatDate(dateStr: string | null): string {
@@ -75,6 +76,9 @@ export function ProjectHeader({ project, profiles, health }: ProjectHeaderProps)
               pms,
             }}
             profiles={profiles}
+          />
+          <ProjectLifecycleActions
+            project={{ id: project.id, name, status }}
           />
           {atRisk && (
             <span className="flex items-center gap-1 rounded-full bg-status-off/10 border border-status-off/20 px-2.5 py-1 text-[0.7rem] font-semibold text-status-off whitespace-nowrap select-none">

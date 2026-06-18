@@ -12,23 +12,46 @@ export type { ImplType }
 type Db = Awaited<ReturnType<typeof createClient>>
 
 // Zbiór id projektów „zagrożonych" (P13/R5). Sygnał odpala gdy:
-//  - zadanie po terminie: due_date < dziś i status ≠ done/na, LUB
+//  - zadanie po terminie: due_date < dziś i status ≠ done/na (tylko aktywne projekty), LUB
 //  - aktywny projekt po deadline: status 'active' i end_date < dziś.
+// Zakończone i zarchiwizowane projekty są wykluczone — nie powinny generować alertów.
 // (Daty PMI per-zadanie ustawiane są w realizacji; do tego czasu deadline projektu daje sygnał.)
 async function getAtRiskProjectIds(supabase: Db, projectIds?: string[]): Promise<Set<string>> {
   const today = new Date().toISOString().slice(0, 10)
   const ids = new Set<string>()
 
-  let tasksQuery = supabase
-    .from('tasks')
-    .select('project_id')
-    .lt('due_date', today)
-    .not('status', 'in', '(done,na)')
-  if (projectIds) tasksQuery = tasksQuery.in('project_id', projectIds)
-  const { data: riskTasks, error: tasksErr } = await tasksQuery
-  if (tasksErr) console.error('[getAtRiskProjectIds] tasks:', tasksErr)
-  for (const t of riskTasks ?? []) ids.add(t.project_id)
+  // Wyznacz zakres ID aktywnych projektów do filtrowania zadań
+  let activeIds: string[] | null = null
+  if (projectIds) {
+    // Mamy już zawężony zestaw — z niego wybieramy tylko aktywne
+    const { data: activeRows } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('status', 'active')
+      .in('id', projectIds)
+    activeIds = (activeRows ?? []).map((r) => r.id)
+  } else {
+    // Brak filtru — pobierz ID wszystkich aktywnych projektów
+    const { data: activeRows } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('status', 'active')
+    activeIds = (activeRows ?? []).map((r) => r.id)
+  }
 
+  // Zadania po terminie — tylko w aktywnych projektach
+  if (activeIds.length > 0) {
+    const { data: riskTasks, error: tasksErr } = await supabase
+      .from('tasks')
+      .select('project_id')
+      .lt('due_date', today)
+      .not('status', 'in', '(done,na)')
+      .in('project_id', activeIds)
+    if (tasksErr) console.error('[getAtRiskProjectIds] tasks:', tasksErr)
+    for (const t of riskTasks ?? []) ids.add(t.project_id)
+  }
+
+  // Aktywne projekty po deadline
   let projQuery = supabase
     .from('projects')
     .select('id')
@@ -647,16 +670,25 @@ export async function getProjectsForBrief(): Promise<BriefData> {
   const supabase = createAdminClient()
   const today = new Date().toISOString().slice(0, 10)
 
-  // Zagrożone projekty: zadanie po terminie lub aktywny projekt po end_date
+  // Zagrożone projekty: zadanie po terminie (tylko aktywne projekty) lub aktywny projekt po end_date
+  const { data: activeProjectRows } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('status', 'active')
+  const activeProjectIds = (activeProjectRows ?? []).map((p) => p.id)
+
   const [
     { data: riskTaskRows },
     { data: riskProjectRows },
   ] = await Promise.all([
-    supabase
-      .from('tasks')
-      .select('project_id')
-      .lt('due_date', today)
-      .not('status', 'in', '(done,na)'),
+    activeProjectIds.length > 0
+      ? supabase
+          .from('tasks')
+          .select('project_id')
+          .lt('due_date', today)
+          .not('status', 'in', '(done,na)')
+          .in('project_id', activeProjectIds)
+      : Promise.resolve({ data: [] }),
     supabase
       .from('projects')
       .select('id')
@@ -1107,5 +1139,81 @@ export async function getProjectHealthMetrics(projectId: string): Promise<Projec
   if (totalEst > 0) burnRate = Math.round((totalActual / totalEst) * 100)
 
   return { risksRed, crPending, burnRate }
+}
+
+// ─── getArchivedProjects (P20 — widok archiwum) ───────────────────────────────
+
+export interface ArchivedProject {
+  id: string
+  name: string
+  clientId: string
+  clientName: string
+  status: string
+  types: ImplType[]
+  startDate: string | null
+  endDate: string | null
+  archivedAt: string | null
+  archivedByName: string | null
+}
+
+export async function getArchivedProjects(): Promise<ArchivedProject[]> {
+  const supabase = await createClient()
+
+  const { data: projectsRaw, error: projectsError } = await supabase
+    .from('projects')
+    .select('id, name, client_id, status, start_date, end_date, archived_at, archived_by, clients(name), profiles(full_name)')
+    .eq('status', 'archived')
+    .order('archived_at', { ascending: false })
+
+  if (projectsError || !projectsRaw) {
+    console.error('[getArchivedProjects] fetch failed:', projectsError)
+    return []
+  }
+
+  const projectIds = projectsRaw.map((p) => p.id)
+
+  const { data: allTypes, error: typesError } =
+    projectIds.length > 0
+      ? await supabase
+          .from('project_types')
+          .select('project_id, type')
+          .in('project_id', projectIds)
+      : { data: [] as Array<{ project_id: string; type: ImplType }>, error: null }
+
+  if (typesError) {
+    console.error('[getArchivedProjects] types fetch failed:', typesError)
+  }
+
+  const typesByProject = new Map<string, ImplType[]>()
+  for (const row of allTypes ?? []) {
+    const arr = typesByProject.get(row.project_id) ?? []
+    arr.push(row.type as ImplType)
+    typesByProject.set(row.project_id, arr)
+  }
+
+  return projectsRaw.map((p) => {
+    const clientsField = p.clients
+    const clientRow = Array.isArray(clientsField)
+      ? (clientsField[0] as { name: string } | undefined) ?? null
+      : (clientsField as { name: string } | null)
+
+    const profilesField = (p as unknown as { profiles: { full_name: string | null } | { full_name: string | null }[] | null }).profiles
+    const profileRow = Array.isArray(profilesField)
+      ? (profilesField[0] as { full_name: string | null } | undefined) ?? null
+      : (profilesField as { full_name: string | null } | null)
+
+    return {
+      id: p.id,
+      name: p.name,
+      clientId: p.client_id,
+      clientName: clientRow?.name ?? '',
+      status: p.status,
+      types: typesByProject.get(p.id) ?? [],
+      startDate: p.start_date ?? null,
+      endDate: p.end_date ?? null,
+      archivedAt: (p as unknown as { archived_at: string | null }).archived_at ?? null,
+      archivedByName: profileRow?.full_name ?? null,
+    }
+  })
 }
 
