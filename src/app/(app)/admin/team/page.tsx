@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getSessionUser } from '@/lib/auth/dal'
-import { ToggleActiveButton } from '@/components/admin/user-actions'
+import { ToggleActiveButton, EditFullNameControl } from '@/components/admin/user-actions'
 import { UserCog, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 
@@ -116,15 +116,18 @@ export default async function AdminTeamPage() {
                   const isSelf = member.id === sessionUser?.id
                   return (
                     <tr key={member.id} className="hover:bg-muted/20 transition-colors">
-                      {/* Specjalista */}
+                      {/* Specjalista — inline edycja imienia */}
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-0.5">
-                          <span className="font-medium text-foreground text-sm">
-                            {member.full_name ?? '—'}
+                          <div className="flex items-center gap-1">
+                            <EditFullNameControl
+                              userId={member.id}
+                              currentName={member.full_name}
+                            />
                             {isSelf && (
-                              <span className="ml-1.5 font-meta text-[0.65rem] text-teal-strong">(Ty)</span>
+                              <span className="font-meta text-[0.65rem] text-teal-strong">(Ty)</span>
                             )}
-                          </span>
+                          </div>
                           {member.email && (
                             <span className="font-meta text-xs text-muted-foreground">{member.email}</span>
                           )}
