@@ -1077,7 +1077,7 @@ export interface ProjectHealthMetrics {
 export async function getProjectHealthMetrics(projectId: string): Promise<ProjectHealthMetrics> {
   const supabase = await createClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const [risksResult, crResult, budgetResult] = await Promise.all([
     (supabase as any)
       .from('risks')
@@ -1095,6 +1095,7 @@ export async function getProjectHealthMetrics(projectId: string): Promise<Projec
       .select('est_h, actual_h')
       .eq('project_id', projectId),
   ])
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   const risksRed = (risksResult.count as number) ?? 0
   const crPending = (crResult.count as number) ?? 0
