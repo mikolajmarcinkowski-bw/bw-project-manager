@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getSessionUser } from '@/lib/auth/dal'
+import { requireAdmin } from '@/lib/auth/dal'
 import { AddUserDialog } from '@/components/admin/user-form'
 import { UserRoleSelect, ToggleActiveButton, ResetPasswordButton } from '@/components/admin/user-actions'
 import { Users, ChevronLeft } from 'lucide-react'
@@ -38,8 +38,8 @@ function StatusBadge({ active }: { active: boolean }) {
 }
 
 export default async function AdminUsersPage() {
+  const sessionUser = await requireAdmin()  // P1-2: guard per-page
   const adminClient = createAdminClient()
-  const sessionUser = await getSessionUser()
 
   // Pobierz listę użytkowników z Auth
   const { data: authData, error: authError } = await adminClient.auth.admin.listUsers({

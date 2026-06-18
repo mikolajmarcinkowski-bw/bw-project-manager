@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getSessionUser } from '@/lib/auth/dal'
+import { requireAdmin } from "@/lib/auth/dal"
 import { ToggleActiveButton, EditFullNameControl } from '@/components/admin/user-actions'
 import { UserCog, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -24,7 +24,7 @@ function RoleBadge({ role }: { role: string }) {
 
 export default async function AdminTeamPage() {
   const adminClient = createAdminClient()
-  const sessionUser = await getSessionUser()
+  const sessionUser = await requireAdmin()  // P1-2: guard per-page
 
   // Pobierz aktywne profile (pula specjalistów)
   const { data: profiles, error } = await adminClient

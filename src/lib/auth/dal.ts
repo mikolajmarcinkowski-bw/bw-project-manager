@@ -27,9 +27,15 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, role, is_tester')
+    .select('full_name, role, is_tester, is_active')
     .eq('id', user.id)
     .single()
+
+  // H-1: konto dezaktywowane przez admina — wymuś wylogowanie
+  if (profile && profile.is_active === false) {
+    await supabase.auth.signOut()
+    return null
+  }
 
   return {
     id: user.id,

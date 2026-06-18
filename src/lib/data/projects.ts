@@ -1161,7 +1161,7 @@ export async function getArchivedProjects(): Promise<ArchivedProject[]> {
 
   const { data: projectsRaw, error: projectsError } = await supabase
     .from('projects')
-    .select('id, name, client_id, status, start_date, end_date, archived_at, archived_by, clients(name), profiles(full_name)')
+    .select('id, name, client_id, status, start_date, end_date, archived_at, archived_by, clients(name), profiles!projects_archived_by_fkey(full_name)')
     .eq('status', 'archived')
     .order('archived_at', { ascending: false })
 
