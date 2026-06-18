@@ -131,7 +131,7 @@ export function ProjectViews({
         </div>
       ) : tab === 'Budżet' ? (
         <div role="tabpanel" id="panel-budzet" aria-labelledby="tab-budzet">
-          <BudgetView projectId={project.id} initialBudget={budget} />
+          <BudgetView projectId={project.id} initialBudget={budget} steps={project.steps} />
         </div>
       ) : tab === 'CR' ? (
         <div role="tabpanel" id="panel-cr" aria-labelledby="tab-cr">
