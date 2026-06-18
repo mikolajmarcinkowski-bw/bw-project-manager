@@ -2,7 +2,7 @@
 
 import { useState, useTransition, Fragment } from 'react'
 import { cn } from '@/lib/utils'
-import type { BudgetSettings, BudgetLine, RateType } from '@/lib/data/projects'
+import type { BudgetSettings, BudgetLine, RateType, GanttStep } from '@/lib/data/projects'
 import {
   setBudgetSettings,
   addBudgetLine,
@@ -13,6 +13,7 @@ import {
 interface BudgetViewProps {
   projectId: string
   initialBudget: { settings: BudgetSettings | null; lines: BudgetLine[] }
+  steps?: GanttStep[]
 }
 
 type RateFilter = 'all' | 'K' | 'W' | 'D'
@@ -70,7 +71,7 @@ function groupByPhase(lines: BudgetLine[]): Map<string, BudgetLine[]> {
   return map
 }
 
-export function BudgetView({ projectId, initialBudget }: BudgetViewProps) {
+export function BudgetView({ projectId, initialBudget, steps }: BudgetViewProps) {
   const [settings, setSettings] = useState<BudgetSettings | null>(initialBudget.settings)
   const [lines, setLines] = useState<BudgetLine[]>(initialBudget.lines)
   const [filter, setFilter] = useState<RateFilter>('all')
@@ -93,6 +94,7 @@ export function BudgetView({ projectId, initialBudget }: BudgetViewProps) {
   const [newRateType, setNewRateType] = useState<RateType>('K')
   const [newEstH, setNewEstH] = useState('')
   const [newDesc, setNewDesc] = useState('')
+  const [newTaskId, setNewTaskId] = useState<string | null>(null)
   const [addError, setAddError] = useState('')
 
   const bufPct = parseFloat(bufferPct) || 0
@@ -184,6 +186,7 @@ export function BudgetView({ projectId, initialBudget }: BudgetViewProps) {
         rate_type: newRateType,
         est_h: h,
         description: newDesc.trim() || undefined,
+        task_id: newTaskId ?? undefined,
       })
       if ('error' in res) {
         setAddError(res.error)
@@ -191,7 +194,7 @@ export function BudgetView({ projectId, initialBudget }: BudgetViewProps) {
         setLines((prev) => [...prev, {
           id: res.id,
           projectId,
-          taskId: null,
+          taskId: newTaskId,
           phase: newPhase.trim(),
           rateType: newRateType,
           estH: h,
@@ -202,6 +205,7 @@ export function BudgetView({ projectId, initialBudget }: BudgetViewProps) {
         setNewPhase('')
         setNewEstH('')
         setNewDesc('')
+        setNewTaskId(null)
         setShowAddModal(false)
       }
     })
@@ -507,6 +511,46 @@ export function BudgetView({ projectId, initialBudget }: BudgetViewProps) {
           <div className="bg-background border border-border rounded-lg p-6 w-full max-w-sm shadow-xl">
             <h3 className="font-heading font-semibold text-sm mb-4">Nowa linia budżetowa</h3>
             <div className="flex flex-col gap-3">
+              {steps && steps.length > 0 && (
+                <div>
+                  <label className="font-meta text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                    Zadanie (opcjonalne)
+                  </label>
+                  <select
+                    value={newTaskId ?? ''}
+                    onChange={(e) => {
+                      const taskId = e.target.value || null
+                      setNewTaskId(taskId)
+                      if (taskId) {
+                        const task = steps.flatMap((s) => s.tasks).find((t) => t.id === taskId)
+                        if (task) {
+                          const step = steps.find((s) => s.tasks.some((t) => t.id === taskId))
+                          if (step) {
+                            setNewPhase((prev) => prev || `F${step.phaseNumber} — ${step.phaseName}`)
+                          }
+                          setNewDesc((prev) => prev || task.title)
+                          setNewEstH((prev) => prev || (task.est ? String(task.est) : ''))
+                        }
+                      }
+                    }}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:border-teal"
+                  >
+                    <option value="">— Brak (linia ogólna) —</option>
+                    {steps.map((step) => (
+                      <optgroup key={step.id} label={`F${step.phaseNumber} — ${step.phaseName}`}>
+                        {step.tasks.filter((t) => !t.isMilestone && !t.hidden).map((task) => (
+                          <option key={task.id} value={task.id}>
+                            {task.title}{task.est ? ` (${task.est}h)` : ''}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <p className="font-meta text-[0.65rem] text-muted-foreground mt-1">
+                    Wybierz zadanie, aby auto-wypełnić etap, opis i estymację
+                  </p>
+                </div>
+              )}
               <div>
                 <label className="font-meta text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                   Etap / faza

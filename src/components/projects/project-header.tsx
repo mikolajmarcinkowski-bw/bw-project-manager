@@ -3,7 +3,7 @@ import { AlertTriangle } from 'lucide-react'
 import { ProjectStatusBadge } from './project-status-badge'
 import { ImplTypeBadge } from './impl-type-badge'
 import { EditProjectDialog } from './edit-project-dialog'
-import type { ProjectDetail } from '@/lib/data/projects'
+import type { ProjectDetail, ProjectHealthMetrics } from '@/lib/data/projects'
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return 'b.d.'
@@ -30,9 +30,10 @@ function isKnownStatus(s: string): s is KnownStatus {
 interface ProjectHeaderProps {
   project: ProjectDetail
   profiles: { id: string; full_name: string | null }[]
+  health?: ProjectHealthMetrics
 }
 
-export function ProjectHeader({ project, profiles }: ProjectHeaderProps) {
+export function ProjectHeader({ project, profiles, health }: ProjectHeaderProps) {
   const { client, name, description, status, types, pms, startDate, endDate, atRisk } = project
 
   return (
@@ -131,6 +132,43 @@ export function ProjectHeader({ project, profiles }: ProjectHeaderProps) {
             {formatDate(endDate)}
           </span>
         </div>
+
+        {/* Health badges */}
+        {health && (health.risksRed > 0 || health.crPending > 0 || (health.burnRate !== null && health.burnRate > 75)) && (
+          <div className="flex items-center gap-1.5 flex-wrap" aria-label="Status dokumentów projektu">
+            {health.risksRed > 0 && (
+              <span
+                className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[0.6rem] font-heading font-semibold"
+                style={{ background: '#FCEBEB', color: '#A32D2D', border: '1px solid #E24B4A' }}
+                title={`${health.risksRed} aktywnych ryzyk R`}
+              >
+                ▲ {health.risksRed}R
+              </span>
+            )}
+            {health.crPending > 0 && (
+              <span
+                className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[0.6rem] font-heading font-semibold"
+                style={{ background: '#FAEEDA', color: '#854F0B', border: '1px solid #EF9F27' }}
+                title={`${health.crPending} CR oczekujących na zatwierdzenie`}
+              >
+                CR: {health.crPending}
+              </span>
+            )}
+            {health.burnRate !== null && health.burnRate > 75 && (
+              <span
+                className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[0.6rem] font-heading font-semibold"
+                style={{
+                  background: health.burnRate > 90 ? '#FCEBEB' : '#FAEEDA',
+                  color: health.burnRate > 90 ? '#A32D2D' : '#854F0B',
+                  border: `1px solid ${health.burnRate > 90 ? '#E24B4A' : '#EF9F27'}`,
+                }}
+                title={`Burn rate: ${health.burnRate}%`}
+              >
+                Burn: {health.burnRate}%
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </header>
   )

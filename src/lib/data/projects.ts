@@ -1066,3 +1066,46 @@ export const getProjectRaci = cache(async (projectId: string): Promise<RaciTask[
   })
 })
 
+// ─── ProjectHealthMetrics ─────────────────────────────────────────────────────
+
+export interface ProjectHealthMetrics {
+  risksRed: number       // ryzyka RAG='R' z status != 'closed'
+  crPending: number      // CR z status='pending'
+  burnRate: number | null // (sum actual_h / sum est_h) * 100, null gdy brak danych
+}
+
+export async function getProjectHealthMetrics(projectId: string): Promise<ProjectHealthMetrics> {
+  const supabase = await createClient()
+
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const [risksResult, crResult, budgetResult] = await Promise.all([
+    (supabase as any)
+      .from('risks')
+      .select('id', { count: 'exact', head: true })
+      .eq('project_id', projectId)
+      .eq('rag', 'R')
+      .neq('status', 'closed'),
+    (supabase as any)
+      .from('change_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('project_id', projectId)
+      .eq('status', 'pending'),
+    (supabase as any)
+      .from('budget_lines')
+      .select('est_h, actual_h')
+      .eq('project_id', projectId),
+  ])
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+
+  const risksRed = (risksResult.count as number) ?? 0
+  const crPending = (crResult.count as number) ?? 0
+
+  let burnRate: number | null = null
+  const lines = (budgetResult.data as Array<{ est_h: number; actual_h: number }> | null) ?? []
+  const totalEst = lines.reduce((s, l) => s + (l.est_h ?? 0), 0)
+  const totalActual = lines.reduce((s, l) => s + (l.actual_h ?? 0), 0)
+  if (totalEst > 0) burnRate = Math.round((totalActual / totalEst) * 100)
+
+  return { risksRed, crPending, burnRate }
+}
+
