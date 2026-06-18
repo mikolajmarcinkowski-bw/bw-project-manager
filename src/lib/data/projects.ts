@@ -741,3 +741,95 @@ export async function getProjectsForBrief(): Promise<BriefData> {
 
   return { atRiskProjects, tasksDueToday, tasksDueSoon }
 }
+
+// ─── RAID / KPI types ─────────────────────────────────────────────────────────
+
+export type RagValue = 'R' | 'A' | 'G'
+export type RiskStatus = 'open' | 'monitor' | 'closed'
+export type KpiStatus = 'on' | 'at' | 'off' | 'done'
+
+export interface Risk {
+  id: string
+  description: string
+  category: string | null
+  phase: string | null
+  probability: number | null
+  impact: number | null
+  score: number | null
+  rag: RagValue | null
+  owner: string | null
+  mitigation: string | null
+  status: RiskStatus
+  createdAt: string
+}
+
+export interface Kpi {
+  id: string
+  name: string
+  target: string | null
+  actualValue: string | null
+  status: KpiStatus
+  notes: string | null
+}
+
+// ─── getProjectRisks ──────────────────────────────────────────────────────────
+
+export async function getProjectRisks(projectId: string): Promise<Risk[]> {
+  const supabase = await createClient()
+
+  // risks not in generated types yet — cast to any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('risks')
+    .select('id, description, category, phase, probability, impact, score, rag, owner, mitigation, status, created_at')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    console.error('[getProjectRisks] fetch failed:', error)
+    return []
+  }
+
+  return (data ?? []).map((r: Record<string, unknown>) => ({
+    id: r.id as string,
+    description: r.description as string,
+    category: (r.category as string | null) ?? null,
+    phase: (r.phase as string | null) ?? null,
+    probability: (r.probability as number | null) ?? null,
+    impact: (r.impact as number | null) ?? null,
+    score: (r.score as number | null) ?? null,
+    rag: (r.rag as RagValue | null) ?? null,
+    owner: (r.owner as string | null) ?? null,
+    mitigation: (r.mitigation as string | null) ?? null,
+    status: (r.status as RiskStatus) ?? 'open',
+    createdAt: r.created_at as string,
+  }))
+}
+
+// ─── getProjectKpis ───────────────────────────────────────────────────────────
+
+export async function getProjectKpis(projectId: string): Promise<Kpi[]> {
+  const supabase = await createClient()
+
+  // kpis not in generated types yet — cast to any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('kpis')
+    .select('id, name, target, actual_value, status, notes')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    console.error('[getProjectKpis] fetch failed:', error)
+    return []
+  }
+
+  return (data ?? []).map((k: Record<string, unknown>) => ({
+    id: k.id as string,
+    name: k.name as string,
+    target: (k.target as string | null) ?? null,
+    actualValue: (k.actual_value as string | null) ?? null,
+    status: (k.status as KpiStatus) ?? 'on',
+    notes: (k.notes as string | null) ?? null,
+  }))
+}

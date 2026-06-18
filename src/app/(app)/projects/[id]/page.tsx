@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { ProjectHeader } from '@/components/projects/project-header'
 import { ProjectViews } from '@/components/projects/project-views'
 import { ProjectVisitTracker } from '@/components/projects/project-visit-tracker'
-import { getProjectDetail, getProfiles } from '@/lib/data/projects'
+import { getProjectDetail, getProfiles, getProjectRisks, getProjectKpis } from '@/lib/data/projects'
 
 export async function generateMetadata({
   params,
@@ -21,9 +21,11 @@ interface ProjectPageProps {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { id } = await params
-  const [project, profiles] = await Promise.all([
+  const [project, profiles, risks, kpis] = await Promise.all([
     getProjectDetail(id),
     getProfiles(),
+    getProjectRisks(id),
+    getProjectKpis(id),
   ])
 
   if (!project) {
@@ -38,7 +40,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         clientName={project.client.name}
       />
       <ProjectHeader project={project} profiles={profiles} />
-      <ProjectViews project={project} profiles={profiles} />
+      <ProjectViews project={project} profiles={profiles} risks={risks} kpis={kpis} />
     </div>
   )
 }
