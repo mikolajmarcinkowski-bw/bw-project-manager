@@ -156,7 +156,7 @@ function CrFormDialog({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-background z-10">
           <h2 className="font-heading font-bold text-base">
-            {initial ? `Edytuj CR ${form.cr_number}` : 'Nowy Change Request'}
+            {initial ? `Edytuj CR ${form.cr_number}` : 'Nowy CR'}
           </h2>
           <button
             type="button"
@@ -511,6 +511,12 @@ export function CrView({ projectId, initialCrs }: CrViewProps) {
 
     startTransition(async () => {
       if (editCr) {
+        // Nie wysyłamy 'approved'/'rejected' przez updateChangeRequest — te statusy
+        // wymagają approveCr (dual-approval). Pozostałe pola zapisujemy normalnie.
+        const statusToSend: CrStatus | undefined =
+          form.status === 'approved' || form.status === 'rejected'
+            ? undefined
+            : form.status
         const res = await updateChangeRequest(editCr.id, {
           title: form.title,
           cr_number: form.cr_number,
@@ -524,7 +530,7 @@ export function CrView({ projectId, initialCrs }: CrViewProps) {
           implementation_plan: form.implementation_plan || undefined,
           notes: form.notes || undefined,
           submitted_date: form.submitted_date || undefined,
-          status: form.status,
+          status: statusToSend,
         })
         if ('error' in res) { setFormError(res.error); return }
         setCrs((prev) =>
@@ -676,7 +682,12 @@ export function CrView({ projectId, initialCrs }: CrViewProps) {
         business_rationale: editCr.businessRationale ?? '',
         impact_level: editCr.impactLevel ?? '',
         impact_hours: String(editCr.impactHours ?? ''),
-        impact_cost: String(editCr.impactCost ?? ''),
+        // impact_cost trzyma STAWKĘ (zł/h), nie total; odwróć: total ÷ godziny
+        impact_cost: String(
+          editCr.impactHours && editCr.impactHours > 0
+            ? Math.round((editCr.impactCost ?? 0) / editCr.impactHours)
+            : ''
+        ),
         implementation_plan: editCr.implementationPlan ?? '',
         notes: editCr.notes ?? '',
         status: editCr.status,

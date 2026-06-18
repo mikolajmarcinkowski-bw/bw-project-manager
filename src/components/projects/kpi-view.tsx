@@ -201,11 +201,13 @@ function KpiModal({
   onClose,
   projectId,
   editKpi,
+  onKpiSaved,
 }: {
   open: boolean
   onClose: () => void
   projectId: string
   editKpi: Kpi | null
+  onKpiSaved?: (kpi: Kpi) => void
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -240,6 +242,18 @@ function KpiModal({
       if ('error' in result) {
         setFormError(result.error)
       } else {
+        if (!editKpi && 'id' in result && onKpiSaved) {
+          // Optimistic: przekaż nowy KPI do rodzica od razu
+          const newId = (result as { ok: true; id: string }).id
+          onKpiSaved({
+            id: newId,
+            name: form.name,
+            target: form.target || null,
+            status: form.status as KpiStatus,
+            notes: form.notes || null,
+            actualValue: null,
+          })
+        }
         router.refresh()
         onClose()
       }
@@ -383,6 +397,10 @@ export function KpiView({ projectId, initialKpis, initialMilestones }: KpiViewPr
     setKpiModalOpen(false)
     setEditKpi(null)
     router.refresh()
+  }
+
+  function handleKpiSaved(kpi: Kpi) {
+    setKpis((prev) => [kpi, ...prev])
   }
 
   const handleKpiStatusToggle = useCallback((id: string, next: KpiStatus) => {
@@ -557,6 +575,7 @@ export function KpiView({ projectId, initialKpis, initialMilestones }: KpiViewPr
           onClose={closeKpiModal}
           projectId={projectId}
           editKpi={editKpi}
+          onKpiSaved={editKpi ? undefined : handleKpiSaved}
         />
       )}
 
