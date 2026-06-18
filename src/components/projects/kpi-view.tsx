@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useOptimistic, useCallback } from 'react'
+import { useState, useEffect, useTransition, useOptimistic, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { BarChart3, Milestone, Plus, Pencil, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -356,6 +356,10 @@ export function KpiView({ projectId, initialKpis, initialMilestones }: KpiViewPr
   const [kpis, setKpis] = useState<Kpi[]>(initialKpis)
   const [milestones, setMilestones] = useState<MilestoneItem[]>(initialMilestones)
   const [isPending, startTransition] = useTransition()
+
+  // Sync state when server refreshes props (after add/edit via router.refresh())
+  useEffect(() => { setKpis(initialKpis) }, [initialKpis])
+  useEffect(() => { setMilestones(initialMilestones) }, [initialMilestones])
 
   // KPI modal
   const [kpiModalOpen, setKpiModalOpen] = useState(false)

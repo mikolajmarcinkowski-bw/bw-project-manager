@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useTransition, useOptimistic, useCallback } from 'react'
+import { useState, useEffect, useTransition, useOptimistic, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Select as SelectPrimitive } from '@base-ui/react/select'
-import { ShieldAlert, ChevronDownIcon, CheckIcon, Pencil, Trash2, Plus, Search } from 'lucide-react'
+import { ShieldAlert, Pencil, Trash2, Plus, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   Dialog,
@@ -37,11 +36,6 @@ const RAG_CLASSES: Record<RagValue, string> = {
   G: 'bg-[#E1F5EE] text-[#0F6E56] border border-[#1D9E75]',
 }
 
-const RAG_DOT: Record<RagValue, string> = {
-  R: 'bg-[#E24B4A]',
-  A: 'bg-[#EF9F27]',
-  G: 'bg-[#1D9E75]',
-}
 
 const RAG_LABEL: Record<RagValue, string> = {
   R: 'Czerwony',
@@ -185,256 +179,6 @@ function riskToForm(risk: Risk): RiskFormState {
   }
 }
 
-function RiskModal({
-  open,
-  onClose,
-  projectId,
-  editRisk,
-}: {
-  open: boolean
-  onClose: () => void
-  projectId: string
-  editRisk: Risk | null
-}) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [formError, setFormError] = useState<string | null>(null)
-  const [form, setForm] = useState<RiskFormState>(
-    editRisk ? riskToForm(editRisk) : DEFAULT_FORM
-  )
-
-  // Sync form when editRisk changes
-  useState(() => {
-    setForm(editRisk ? riskToForm(editRisk) : DEFAULT_FORM)
-    setFormError(null)
-  })
-
-  const previewRag = calcRag(form.probability, form.impact)
-
-  function handleChange(field: keyof RiskFormState, value: string | number) {
-    setForm((prev) => ({ ...prev, [field]: value }))
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setFormError(null)
-
-    const data: RiskData = {
-      description: form.description,
-      category: form.category || null,
-      phase: form.phase || null,
-      probability: form.probability,
-      impact: form.impact,
-      owner: form.owner,
-      mitigation: form.mitigation || null,
-      status: form.status,
-    }
-
-    startTransition(async () => {
-      let result
-      if (editRisk) {
-        result = await updateRisk(editRisk.id, data)
-      } else {
-        result = await addRisk(projectId, data)
-      }
-
-      if ('error' in result) {
-        setFormError(result.error)
-      } else {
-        router.refresh()
-        onClose()
-      }
-    })
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-lg" showCloseButton>
-        <DialogHeader>
-          <DialogTitle>{editRisk ? 'Edytuj ryzyko' : 'Dodaj ryzyko'}</DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3 mt-1">
-          {/* Opis */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-foreground">
-              Opis <span className="text-destructive">*</span>
-            </label>
-            <textarea
-              value={form.description}
-              onChange={(e) => handleChange('description', e.target.value)}
-              required
-              rows={3}
-              placeholder="Opisz ryzyko..."
-              className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-ring resize-none placeholder:text-muted-foreground"
-            />
-          </div>
-
-          {/* Kategoria + Faza */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-foreground">Kategoria</label>
-              <Select
-                value={form.category || ''}
-                onValueChange={(v) => handleChange('category', v ?? '')}
-              >
-                <SelectTrigger size="sm" className="w-full">
-                  <SelectValue placeholder="Wybierz..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORY_OPTIONS.slice(1).map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-foreground">Faza</label>
-              <input
-                type="text"
-                value={form.phase}
-                onChange={(e) => handleChange('phase', e.target.value)}
-                placeholder="np. Wdrożenie"
-                className="h-7 rounded-[min(var(--radius-md),10px)] border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-ring placeholder:text-muted-foreground"
-              />
-            </div>
-          </div>
-
-          {/* Prawdopodobieństwo + Wpływ */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-foreground">
-                Prawdopodobieństwo (P) <span className="text-destructive">*</span>
-              </label>
-              <Select
-                value={String(form.probability)}
-                onValueChange={(v) => handleChange('probability', v ? parseInt(v) : 3)}
-              >
-                <SelectTrigger size="sm" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <SelectItem key={n} value={String(n)}>
-                      {PROB_LABELS[n]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-foreground">
-                Wpływ (W) <span className="text-destructive">*</span>
-              </label>
-              <Select
-                value={String(form.impact)}
-                onValueChange={(v) => handleChange('impact', v ? parseInt(v) : 3)}
-              >
-                <SelectTrigger size="sm" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <SelectItem key={n} value={String(n)}>
-                      {IMPACT_LABELS[n]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Preview RAG */}
-          <div className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-2">
-            <span className="text-xs text-muted-foreground">P×W = {form.probability * form.impact}</span>
-            <span className="mx-1 text-muted-foreground/50">·</span>
-            <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-[0.65rem] font-semibold font-heading', RAG_CLASSES[previewRag])}>
-              {previewRag}
-            </span>
-            <span className="text-xs text-muted-foreground">— {RAG_LABEL[previewRag]}</span>
-          </div>
-
-          {/* Właściciel */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-foreground">
-              Właściciel <span className="text-destructive">*</span>
-            </label>
-            <input
-              type="text"
-              value={form.owner}
-              onChange={(e) => handleChange('owner', e.target.value)}
-              required
-              placeholder="Imię i nazwisko"
-              className="h-8 rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-ring placeholder:text-muted-foreground"
-            />
-          </div>
-
-          {/* Mitigacja */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-foreground">Plan mitigacji</label>
-            <textarea
-              value={form.mitigation}
-              onChange={(e) => handleChange('mitigation', e.target.value)}
-              rows={2}
-              placeholder="Jak zminimalizować ryzyko?"
-              className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-ring resize-none placeholder:text-muted-foreground"
-            />
-          </div>
-
-          {/* Status */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-foreground">Status</label>
-            <Select
-              value={form.status}
-              onValueChange={(v) => handleChange('status', (v ?? 'open') as RiskStatus)}
-            >
-              <SelectTrigger size="sm" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="open">Otwarte</SelectItem>
-                <SelectItem value="monitor">Monitorowane</SelectItem>
-                <SelectItem value="closed">Zamknięte</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {formError && (
-            <p className="text-xs text-destructive">{formError}</p>
-          )}
-        </form>
-
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={onClose}
-            disabled={isPending}
-          >
-            Anuluj
-          </Button>
-          <Button
-            type="submit"
-            size="sm"
-            disabled={isPending}
-            onClick={(e) => {
-              e.preventDefault()
-              const form_el = (e.target as HTMLElement).closest('dialog')?.querySelector('form')
-              form_el?.requestSubmit()
-            }}
-            form="risk-form"
-          >
-            {isPending ? 'Zapisywanie…' : editRisk ? 'Zapisz zmiany' : 'Dodaj ryzyko'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
 // ─── RAG badge ────────────────────────────────────────────────────────────────
 
 function RagBadge({ rag }: { rag: RagValue | null }) {
@@ -457,6 +201,9 @@ export function RaidView({ projectId, initialRisks }: RaidViewProps) {
   const router = useRouter()
   const [risks, setRisks] = useState<Risk[]>(initialRisks)
   const [isPending, startTransition] = useTransition()
+
+  // Sync state when server refreshes initialRisks (after add/edit via router.refresh())
+  useEffect(() => { setRisks(initialRisks) }, [initialRisks])
 
   // Filtry
   const [filterCategory, setFilterCategory] = useState<string>('all')
