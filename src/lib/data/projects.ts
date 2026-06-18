@@ -1109,3 +1109,79 @@ export async function getProjectHealthMetrics(projectId: string): Promise<Projec
   return { risksRed, crPending, burnRate }
 }
 
+// ─── getArchivedProjects (P20 — widok archiwum) ───────────────────────────────
+
+export interface ArchivedProject {
+  id: string
+  name: string
+  clientId: string
+  clientName: string
+  status: string
+  types: ImplType[]
+  startDate: string | null
+  endDate: string | null
+  archivedAt: string | null
+  archivedByName: string | null
+}
+
+export async function getArchivedProjects(): Promise<ArchivedProject[]> {
+  const supabase = await createClient()
+
+  const { data: projectsRaw, error: projectsError } = await supabase
+    .from('projects')
+    .select('id, name, client_id, status, start_date, end_date, archived_at, archived_by, clients(name), profiles(full_name)')
+    .eq('status', 'archived')
+    .order('archived_at', { ascending: false })
+
+  if (projectsError || !projectsRaw) {
+    console.error('[getArchivedProjects] fetch failed:', projectsError)
+    return []
+  }
+
+  const projectIds = projectsRaw.map((p) => p.id)
+
+  const { data: allTypes, error: typesError } =
+    projectIds.length > 0
+      ? await supabase
+          .from('project_types')
+          .select('project_id, type')
+          .in('project_id', projectIds)
+      : { data: [] as Array<{ project_id: string; type: ImplType }>, error: null }
+
+  if (typesError) {
+    console.error('[getArchivedProjects] types fetch failed:', typesError)
+  }
+
+  const typesByProject = new Map<string, ImplType[]>()
+  for (const row of allTypes ?? []) {
+    const arr = typesByProject.get(row.project_id) ?? []
+    arr.push(row.type as ImplType)
+    typesByProject.set(row.project_id, arr)
+  }
+
+  return projectsRaw.map((p) => {
+    const clientsField = p.clients
+    const clientRow = Array.isArray(clientsField)
+      ? (clientsField[0] as { name: string } | undefined) ?? null
+      : (clientsField as { name: string } | null)
+
+    const profilesField = (p as unknown as { profiles: { full_name: string | null } | { full_name: string | null }[] | null }).profiles
+    const profileRow = Array.isArray(profilesField)
+      ? (profilesField[0] as { full_name: string | null } | undefined) ?? null
+      : (profilesField as { full_name: string | null } | null)
+
+    return {
+      id: p.id,
+      name: p.name,
+      clientId: p.client_id,
+      clientName: clientRow?.name ?? '',
+      status: p.status,
+      types: typesByProject.get(p.id) ?? [],
+      startDate: p.start_date ?? null,
+      endDate: p.end_date ?? null,
+      archivedAt: (p as unknown as { archived_at: string | null }).archived_at ?? null,
+      archivedByName: profileRow?.full_name ?? null,
+    }
+  })
+}
+
