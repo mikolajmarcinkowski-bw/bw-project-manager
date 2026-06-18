@@ -721,3 +721,238 @@ export async function getProjectsForBrief(): Promise<BriefData> {
 
   return { atRiskProjects, tasksDueToday, tasksDueSoon }
 }
+
+// ─── Budget types ────────────────────────────────────────────────────────────
+
+export interface BudgetSettings {
+  projectId: string
+  rateK: number | null
+  rateW: number | null
+  rateD: number | null
+  bufferPct: number | null
+  pmOverheadPct: number | null
+  budgetMax: number | null
+}
+
+export type RateType = 'K' | 'W' | 'D'
+
+export interface BudgetLine {
+  id: string
+  projectId: string
+  taskId: string | null
+  phase: string | null
+  rateType: RateType
+  estH: number | null
+  actualH: number | null
+  description: string | null
+  createdAt: string
+}
+
+// ─── getProjectBudget ─────────────────────────────────────────────────────────
+
+export async function getProjectBudget(
+  projectId: string
+): Promise<{ settings: BudgetSettings | null; lines: BudgetLine[] }> {
+  const supabase = await createClient()
+
+  const [{ data: settingsRaw, error: settingsErr }, { data: linesRaw, error: linesErr }] =
+    await Promise.all([
+      supabase
+        .from('budget_settings')
+        .select('project_id, rate_k, rate_w, rate_d, buffer_pct, pm_overhead_pct, budget_max')
+        .eq('project_id', projectId)
+        .single(),
+      supabase
+        .from('budget_lines')
+        .select('id, project_id, task_id, phase, rate_type, est_h, actual_h, description, created_at')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: true }),
+    ])
+
+  if (settingsErr && settingsErr.code !== 'PGRST116') {
+    console.error('[getProjectBudget] settings:', settingsErr)
+  }
+  if (linesErr) {
+    console.error('[getProjectBudget] lines:', linesErr)
+  }
+
+  const settings: BudgetSettings | null = settingsRaw
+    ? {
+        projectId: settingsRaw.project_id,
+        rateK: settingsRaw.rate_k,
+        rateW: settingsRaw.rate_w,
+        rateD: settingsRaw.rate_d,
+        bufferPct: settingsRaw.buffer_pct,
+        pmOverheadPct: settingsRaw.pm_overhead_pct,
+        budgetMax: settingsRaw.budget_max,
+      }
+    : null
+
+  const lines: BudgetLine[] = (linesRaw ?? []).map((l) => ({
+    id: l.id,
+    projectId: l.project_id,
+    taskId: l.task_id ?? null,
+    phase: l.phase ?? null,
+    rateType: l.rate_type as RateType,
+    estH: l.est_h ?? null,
+    actualH: l.actual_h ?? null,
+    description: l.description ?? null,
+    createdAt: l.created_at,
+  }))
+
+  return { settings, lines }
+}
+
+// ─── Change Request types ──────────────────────────────────────────────────────
+
+export type CrType = 'scope' | 'timeline' | 'budget' | 'arch' | 'resource' | 'other'
+export type CrImpact = 'low' | 'medium' | 'high'
+export type CrStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'implemented'
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected'
+
+export interface ChangeRequest {
+  id: string
+  projectId: string
+  crNumber: string | null
+  title: string
+  description: string | null
+  currentState: string | null
+  desiredState: string | null
+  businessRationale: string | null
+  crType: CrType
+  impactLevel: CrImpact | null
+  impactHours: number | null
+  impactCost: number | null
+  scheduleImpact: string | null
+  submittedDate: string | null
+  status: CrStatus
+  bwApproval: ApprovalStatus | null
+  bwApprovalDate: string | null
+  clientApproval: ApprovalStatus | null
+  clientApprovalDate: string | null
+  clientApprover: string | null
+  implementationPlan: string | null
+  notes: string | null
+  createdAt: string
+}
+
+// ─── getProjectChangeRequests ────────────────────────────────────────────────
+
+export async function getProjectChangeRequests(
+  projectId: string
+): Promise<ChangeRequest[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('change_requests')
+    .select(
+      'id, project_id, cr_number, title, description, current_state, desired_state, business_rationale, cr_type, impact_level, impact_hours, impact_cost, schedule_impact, submitted_date, status, bw_approval, bw_approval_date, client_approval, client_approval_date, client_approver, implementation_plan, notes, created_at'
+    )
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('[getProjectChangeRequests]:', error)
+    return []
+  }
+
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    projectId: r.project_id,
+    crNumber: r.cr_number ?? null,
+    title: r.title,
+    description: r.description ?? null,
+    currentState: r.current_state ?? null,
+    desiredState: r.desired_state ?? null,
+    businessRationale: r.business_rationale ?? null,
+    crType: r.cr_type as CrType,
+    impactLevel: (r.impact_level ?? null) as CrImpact | null,
+    impactHours: r.impact_hours ?? null,
+    impactCost: r.impact_cost ?? null,
+    scheduleImpact: r.schedule_impact ?? null,
+    submittedDate: r.submitted_date ?? null,
+    status: r.status as CrStatus,
+    bwApproval: (r.bw_approval ?? null) as ApprovalStatus | null,
+    bwApprovalDate: r.bw_approval_date ?? null,
+    clientApproval: (r.client_approval ?? null) as ApprovalStatus | null,
+    clientApprovalDate: r.client_approval_date ?? null,
+    clientApprover: r.client_approver ?? null,
+    implementationPlan: r.implementation_plan ?? null,
+    notes: r.notes ?? null,
+    createdAt: r.created_at,
+  }))
+}
+
+// ─── RACI types ───────────────────────────────────────────────────────────────
+
+export type RaciValue = 'R' | 'A' | 'C' | 'I'
+
+export interface RaciAssignment {
+  id: string
+  taskId: string
+  role: string
+  raci: RaciValue
+}
+
+export interface RaciTask {
+  taskId: string
+  taskTitle: string
+  phaseNumber: number
+  phaseName: string
+  stepTitle: string
+  taskOrder: number
+  assignments: RaciAssignment[]
+}
+
+// ─── getProjectRaci ───────────────────────────────────────────────────────────
+
+export async function getProjectRaci(projectId: string): Promise<RaciTask[]> {
+  const supabase = await createClient()
+
+  const { data: taskRows, error: tasksErr } = await supabase
+    .from('tasks')
+    .select(
+      'id, title, task_order, step_id, project_steps(phase_number, phase_name, step_title)'
+    )
+    .eq('project_id', projectId)
+    .eq('hidden', false)
+    .order('task_order', { ascending: true })
+
+  if (tasksErr) {
+    console.error('[getProjectRaci] tasks:', tasksErr)
+    return []
+  }
+
+  const taskIds = (taskRows ?? []).map((t) => t.id)
+  if (taskIds.length === 0) return []
+
+  const { data: assignmentRows, error: assignErr } = await supabase
+    .from('task_role_assignments')
+    .select('id, task_id, role, raci')
+    .in('task_id', taskIds)
+
+  if (assignErr) {
+    console.error('[getProjectRaci] assignments:', assignErr)
+  }
+
+  const assignmentsByTask = new Map<string, RaciAssignment[]>()
+  for (const a of assignmentRows ?? []) {
+    const arr = assignmentsByTask.get(a.task_id) ?? []
+    arr.push({ id: a.id, taskId: a.task_id, role: a.role, raci: a.raci as RaciValue })
+    assignmentsByTask.set(a.task_id, arr)
+  }
+
+  return (taskRows ?? []).map((t) => {
+    const stepField = Array.isArray(t.project_steps) ? t.project_steps[0] : t.project_steps
+    const step = stepField as { phase_number: number; phase_name: string; step_title: string } | null
+    return {
+      taskId: t.id,
+      taskTitle: t.title,
+      phaseNumber: step?.phase_number ?? 0,
+      phaseName: step?.phase_name ?? '',
+      stepTitle: step?.step_title ?? '',
+      taskOrder: t.task_order,
+      assignments: assignmentsByTask.get(t.id) ?? [],
+    }
+  })
+}
