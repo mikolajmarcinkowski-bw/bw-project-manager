@@ -4,6 +4,34 @@
 
 ---
 
+## [1.4.0] — 2026-06-18 — 🚀 PRODUKCJA: Faza A (konta) + Faza B (lifecycle) + security hardening
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `bf82334`). Sesja 17.
+
+### Dodano — Faza A: System użytkowników (A1 + A3)
+- **Panel admina `/admin`** — hub z kartami do sekcji
+- **`/admin/users` (A1)** — lista kont (email z Auth, rola, aktywny/tester), dodawanie przez Auth Admin API, zmiana roli, dezaktywacja, reset hasła przez e-mail
+- **`/admin/team` (A3)** — pula specjalistów z profili, edycja imienia inline
+- **`ADMIN_NAV_ITEMS`** — sekcja Admin w sidebarze widoczna tylko dla admin/dev_admin
+- **`src/lib/actions/admin.ts`** — `createUserAccount`, `changeUserRole`, `toggleUserActive`, `updateUserFullName`, `resetUserPassword`
+
+### Dodano — Faza B: Cykl życia projektu
+- **P21** — `markProjectCompleted` + przycisk w nagłówku projektu (active → completed)
+- **P16** — `archiveProject` z detonatorem (wpisz nazwę projektu) + `ArchiveDialog`
+- **P20** — `/archiwum` pełny widok zarchiwizowanych projektów (klient, typy, daty, kto zarchiwizował)
+- **P11** — diamenciki zweryfikowane (działały poprawnie)
+
+### Naprawiono — Security hardening (po audycie opus)
+- **H-1 (HIGH):** `toggleUserActive` używa Supabase Auth `ban_duration` — faktyczne odcięcie logowania
+- **H-1:** `getSessionUser` sprawdza `is_active`, wylogowuje dezaktywowanych natychmiast
+- **M-1 (MEDIUM):** Server actions (`changeUserRole`, `toggleUserActive`, `resetUserPassword`) chronią konta `dev_admin`; guard `isSelf` po stronie serwera
+- **M-2 (MEDIUM):** `activity_log` w każdej akcji `admin.ts`
+- **P1-2:** `requireAdmin()` bezpośrednio na stronach `/admin/*` (nie tylko w layout)
+- **P1-5:** Strona `/forbidden` (polska, z linkiem powrotu)
+- **PGRST201:** FK explicit `profiles!projects_archived_by_fkey` w `getArchivedProjects`
+
+---
+
 ## [1.3.0] — 2026-06-18 — 🚀 PRODUKCJA: MCP kompletny (41/46) + auth consolidation + skill przebudowany
 
 > Status: **ZMERGOWANE → produkcja** (`main`, `651fdaf`). Sesja 16 (wieczór).

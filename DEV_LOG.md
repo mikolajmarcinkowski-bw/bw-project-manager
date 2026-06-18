@@ -5,6 +5,15 @@
 
 ---
 
+## [2026-06-18] feat+fix | Faza A/B + security hardening — `bf82334`
+
+- **Faza A (A1+A3):** Panel admina `/admin/users` + `/admin/team`. Server actions: createUserAccount (Auth Admin API + email_confirm), changeUserRole, toggleUserActive, updateUserFullName, resetUserPassword. Sekcja Admin w sidebarze tylko dla admin/dev_admin.
+- **Faza B (P21+P16+P20):** markProjectCompleted + ArchiveDialog z detonatorem (nazwa projektu) + widok archiwum z pełnymi danymi. P11 zweryfikowany — działał.
+- **Security (po audycie opus HIGH+MEDIUM):** Auth ban przy dezaktywacji, is_active guard w getSessionUser, ochrona dev_admin server-side, isSelf guard, activity_log w admin.ts, requireAdmin() per-page, strona /forbidden, fix PGRST201 archiwum.
+- TSC czyste, build OK, pentesty + code review + security audit przeprowadzone.
+
+---
+
 ## [2026-06-18] fix | MCP kompleksowe naprawy + skill przebudowany — `651fdaf`
 
 - **Auth consolidation**: 20 MCP routów → `verifyMcpToken` z `src/lib/mcp/auth.ts` (nie inline)
