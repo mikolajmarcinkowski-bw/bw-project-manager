@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import type { ChangeRequest, CrType, CrImpact, CrStatus, ApprovalStatus } from '@/lib/data/projects'
+import type { ChangeRequest, CrType, CrImpact, CrStatus, ApprovalStatus, Risk } from '@/lib/data/projects'
 import {
   addChangeRequest,
   updateChangeRequest,
@@ -13,6 +13,8 @@ import {
 interface CrViewProps {
   projectId: string
   initialCrs: ChangeRequest[]
+  initialRiskForCr?: Risk | null
+  onRiskCrHandled?: () => void
 }
 
 const STATUS_BADGE: Record<CrStatus, { label: string; cls: string }> = {
@@ -82,6 +84,7 @@ interface CrFormData {
   implementation_plan: string
   notes: string
   status: CrStatus
+  risk_id: string | null
 }
 
 function defaultForm(existingCrCount: number): CrFormData {
@@ -100,6 +103,7 @@ function defaultForm(existingCrCount: number): CrFormData {
     implementation_plan: '',
     notes: '',
     status: 'draft',
+    risk_id: null,
   }
 }
 
@@ -156,7 +160,7 @@ function CrFormDialog({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-background z-10">
           <h2 className="font-heading font-bold text-base">
-            {initial ? `Edytuj CR ${form.cr_number}` : 'Nowy CR'}
+            {crId ? `Edytuj CR ${form.cr_number}` : 'Nowy CR'}
           </h2>
           <button
             type="button"
@@ -215,6 +219,12 @@ function CrFormDialog({
                 </select>
               </div>
             </div>
+
+            {form.risk_id && (
+              <div className="mt-3 text-[0.7rem] font-meta text-muted-foreground bg-[#FAEEDA]/50 border border-[#EF9F27]/30 rounded-md px-3 py-2">
+                Powiazane ryzyko: {form.current_state?.slice(0, 80) || form.risk_id}
+              </div>
+            )}
 
             <div className="mt-3">
               <label className="block font-meta text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Typ zmiany</label>
@@ -486,12 +496,42 @@ function ApprovalBox({
 
 // ─── Main CrView ──────────────────────────────────────────────────────────────
 
-export function CrView({ projectId, initialCrs }: CrViewProps) {
+export function CrView({ projectId, initialCrs, initialRiskForCr, onRiskCrHandled }: CrViewProps) {
   const [crs, setCrs] = useState<ChangeRequest[]>(initialCrs)
   const [showForm, setShowForm] = useState(false)
   const [editCr, setEditCr] = useState<ChangeRequest | null>(null)
+  const [prefillForm, setPrefillForm] = useState<CrFormData | null>(null)
   const [formError, setFormError] = useState('')
   const [isPending, startTransition] = useTransition()
+
+  // Obsługa eskalacji ryzyka do CR — pre-wypełnienie formularza
+  useEffect(() => {
+    if (initialRiskForCr) {
+      const num = String(crs.length + 1).padStart(3, '0')
+      const prefilled: CrFormData = {
+        cr_number: `CR-${num}`,
+        title: `CR: ${initialRiskForCr.description.slice(0, 80)}`,
+        cr_type: 'scope',
+        submitted_date: new Date().toISOString().slice(0, 10),
+        current_state: initialRiskForCr.description,
+        desired_state: '',
+        business_rationale: '',
+        impact_level: initialRiskForCr.rag === 'R' ? 'high' : initialRiskForCr.rag === 'A' ? 'medium' : 'low',
+        impact_hours: '',
+        impact_cost: '',
+        implementation_plan: '',
+        notes: '',
+        status: 'draft',
+        risk_id: initialRiskForCr.id,
+      }
+      setPrefillForm(prefilled)
+      setEditCr(null)
+      setFormError('')
+      setShowForm(true)
+      onRiskCrHandled?.()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialRiskForCr])
 
   const totalHours = crs.reduce((s, c) => s + (c.impactHours ?? 0), 0)
   const totalCost = crs.reduce((s, c) => s + (c.impactCost ?? 0), 0)
@@ -661,12 +701,14 @@ export function CrView({ projectId, initialCrs }: CrViewProps) {
 
   function openEdit(cr: ChangeRequest) {
     setEditCr(cr)
+    setPrefillForm(null)
     setFormError('')
     setShowForm(true)
   }
 
   function openNew() {
     setEditCr(null)
+    setPrefillForm(null)
     setFormError('')
     setShowForm(true)
   }
@@ -691,8 +733,12 @@ export function CrView({ projectId, initialCrs }: CrViewProps) {
         implementation_plan: editCr.implementationPlan ?? '',
         notes: editCr.notes ?? '',
         status: editCr.status,
+        risk_id: null,
       }
     : undefined
+
+  // Formularz który przekazujemy do dialogu: edycja istniejącego, prefill z ryzyka lub domyślny
+  const dialogInitial: CrFormData | undefined = editFormData ?? prefillForm ?? undefined
 
   return (
     <div className="flex flex-col gap-4">
@@ -800,9 +846,9 @@ export function CrView({ projectId, initialCrs }: CrViewProps) {
       {/* Form dialog */}
       {showForm && (
         <CrFormDialog
-          onClose={() => { setShowForm(false); setEditCr(null) }}
+          onClose={() => { setShowForm(false); setEditCr(null); setPrefillForm(null) }}
           onSave={handleSave}
-          initial={editFormData}
+          initial={dialogInitial}
           crId={editCr?.id}
           initialApprovals={editCr ? { bwApproval: editCr.bwApproval, clientApproval: editCr.clientApproval } : undefined}
           onApprovalChanged={editCr ? handleApprovalChanged : undefined}

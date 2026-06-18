@@ -13,6 +13,7 @@ export interface PhaseStripProps {
   steps: GanttStep[]
   decisions: Decision[]
   onSelectStep: (stepId: string) => void
+  onRequestNewCr?: () => void
 }
 
 // ─── Pomocnicze ───────────────────────────────────────────────────────────────
@@ -129,9 +130,10 @@ function PhaseBlock({ step, onClick }: PhaseBlockProps) {
 interface DecisionDiamondProps {
   decision: Decision
   onSelectStep: (stepId: string) => void
+  onRequestNewCr?: () => void
 }
 
-function DecisionDiamond({ decision, onSelectStep }: DecisionDiamondProps) {
+function DecisionDiamond({ decision, onSelectStep, onRequestNewCr }: DecisionDiamondProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const label = DECISION_LABELS[decision.type]
@@ -202,6 +204,7 @@ function DecisionDiamond({ decision, onSelectStep }: DecisionDiamondProps) {
         }}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+        onRequestNewCr={onRequestNewCr}
       />
     </>
   )
@@ -231,7 +234,7 @@ function Arrow() {
  *   onSelectStep   — callback (stepId: string) => void; wołany przy kliknięciu
  *                    klocka lub diamencika (stepId decyzji)
  */
-export function PhaseStrip({ steps, decisions, onSelectStep }: PhaseStripProps) {
+export function PhaseStrip({ steps, decisions, onSelectStep, onRequestNewCr }: PhaseStripProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollRight, setCanScrollRight] = useState(false)
 
@@ -312,6 +315,7 @@ export function PhaseStrip({ steps, decisions, onSelectStep }: PhaseStripProps) 
               <DecisionDiamond
                 decision={item.decision}
                 onSelectStep={onSelectStep}
+                onRequestNewCr={onRequestNewCr}
               />
             )}
             {showArrow && <Arrow />}
