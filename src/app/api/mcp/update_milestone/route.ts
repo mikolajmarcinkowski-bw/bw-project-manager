@@ -62,11 +62,14 @@ export async function POST(request: NextRequest) {
     .update(updates)
     .eq('id', milestone_id)
     .select('id, project_id')
-    .single()
+    .maybeSingle()
 
   if (error) {
     console.error('[mcp/update_milestone] failed:', error)
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+  }
+  if (!data) {
+    return NextResponse.json({ ok: false, error: 'Milestone nie znaleziony.' }, { status: 404 })
   }
 
   const row = data as { id: string; project_id: string }
