@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, Fragment } from 'react'
 import { cn } from '@/lib/utils'
 import type { RaciTask, RaciValue, RaciAssignment } from '@/lib/data/projects'
 import { updateRaciRole } from '@/lib/actions/documents'
@@ -193,8 +193,8 @@ export function RaciView({ projectId: _projectId, initialRaci }: RaciViewProps) 
             </thead>
             <tbody>
               {filteredPhases.map(({ phaseNum, phaseName, tasks: pTasks }) => (
-                <>
-                  <tr key={`phase-${phaseNum}`} className="bg-[#f2f2f2] dark:bg-muted/30">
+                <Fragment key={`phase-${phaseNum}`}>
+                  <tr className="bg-[#f2f2f2] dark:bg-muted/30">
                     <td colSpan={ROLES.length + 2} className="px-3 py-1.5 font-bold text-[10px] uppercase tracking-wider text-foreground/70">
                       Faza {phaseNum} — {phaseName}
                     </td>
@@ -242,7 +242,7 @@ export function RaciView({ projectId: _projectId, initialRaci }: RaciViewProps) 
                       </tr>
                     )
                   })}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

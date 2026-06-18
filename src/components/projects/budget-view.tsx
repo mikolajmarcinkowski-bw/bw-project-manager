@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, Fragment } from 'react'
 import { cn } from '@/lib/utils'
 import type { BudgetSettings, BudgetLine, RateType } from '@/lib/data/projects'
 import {
@@ -15,7 +15,7 @@ interface BudgetViewProps {
   initialBudget: { settings: BudgetSettings | null; lines: BudgetLine[] }
 }
 
-type PhaseFilter = 'all' | 'crm' | 'spo' | 'int' | 'mkt' | 'erp'
+type RateFilter = 'all' | 'K' | 'W' | 'D'
 
 const RATE_BADGE: Record<RateType, { label: string; cls: string }> = {
   K: { label: 'K', cls: 'bg-[#E1F5EE] text-[#0F6E56] border-[#1D9E75]' },
@@ -23,13 +23,11 @@ const RATE_BADGE: Record<RateType, { label: string; cls: string }> = {
   D: { label: 'D', cls: 'bg-[#EBF2F9] text-[#185FA5] border-[#378ADD]' },
 }
 
-const FILTER_BTNS: { key: PhaseFilter; label: string }[] = [
+const FILTER_BTNS: { key: RateFilter; label: string }[] = [
   { key: 'all', label: 'Wszystkie' },
-  { key: 'crm', label: 'CRM' },
-  { key: 'spo', label: 'SPO' },
-  { key: 'int', label: 'INT' },
-  { key: 'mkt', label: 'MKT' },
-  { key: 'erp', label: 'ERP' },
+  { key: 'K', label: 'K — Konsultant' },
+  { key: 'W', label: 'W — Warsztat' },
+  { key: 'D', label: 'D — Deweloper' },
 ]
 
 function fmtH(n: number | null): string {
@@ -75,7 +73,7 @@ function groupByPhase(lines: BudgetLine[]): Map<string, BudgetLine[]> {
 export function BudgetView({ projectId, initialBudget }: BudgetViewProps) {
   const [settings, setSettings] = useState<BudgetSettings | null>(initialBudget.settings)
   const [lines, setLines] = useState<BudgetLine[]>(initialBudget.lines)
-  const [filter, setFilter] = useState<PhaseFilter>('all')
+  const [filter, setFilter] = useState<RateFilter>('all')
   const [settingsOpen, setSettingsOpen] = useState(!initialBudget.settings)
   const [showAddModal, setShowAddModal] = useState(false)
 
@@ -99,14 +97,11 @@ export function BudgetView({ projectId, initialBudget }: BudgetViewProps) {
   const bufPct = parseFloat(bufferPct) || 0
   const pmOverhead = parseFloat(pmPct) || 0
 
-  // Apply filter to lines (filter by phase prefix match)
+  // Apply filter to lines (filter by rate_type)
   const filteredLines =
     filter === 'all'
       ? lines
-      : lines.filter((l) => {
-          const p = (l.phase ?? '').toLowerCase()
-          return p.includes(filter)
-        })
+      : lines.filter((l) => l.rateType === filter)
 
   const grouped = groupByPhase(filteredLines)
 
@@ -375,9 +370,9 @@ export function BudgetView({ projectId, initialBudget }: BudgetViewProps) {
                 const pmActV = pmActH * pmRate
 
                 return (
-                  <>
+                  <Fragment key={phase}>
                     {/* Phase header */}
-                    <tr key={`ph-${phase}`} className="bg-[#f0f0f0] dark:bg-muted/30">
+                    <tr className="bg-[#f0f0f0] dark:bg-muted/30">
                       <td colSpan={10} className="px-3 py-1.5 font-bold text-[10px] uppercase tracking-wider text-foreground/70">
                         {phase}
                       </td>
@@ -433,7 +428,7 @@ export function BudgetView({ projectId, initialBudget }: BudgetViewProps) {
                     })}
 
                     {/* Subtotal */}
-                    <tr key={`sub-${phase}`} className="bg-muted/20 font-semibold">
+                    <tr className="bg-muted/20 font-semibold">
                       <td></td>
                       <td className="px-3 py-1.5 text-left text-[11px]">Suma etapu</td>
                       <td></td>
@@ -448,7 +443,7 @@ export function BudgetView({ projectId, initialBudget }: BudgetViewProps) {
 
                     {/* PM narzut row */}
                     {pmOverhead > 0 && (
-                      <tr key={`pm-${phase}`} className="bg-[#f0faf7] dark:bg-teal/5 italic text-[#0F6E56] dark:text-teal">
+                      <tr className="bg-[#f0faf7] dark:bg-teal/5 italic text-[#0F6E56] dark:text-teal">
                         <td></td>
                         <td className="px-3 py-1.5 text-left text-[11px]">PM narzut ({pmOverhead}%)</td>
                         <td className="px-2.5 py-1.5 text-center"><RateBadge type="K" /></td>
@@ -461,7 +456,7 @@ export function BudgetView({ projectId, initialBudget }: BudgetViewProps) {
                         <td></td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 )
               })}
 

@@ -107,6 +107,9 @@ function CrFormDialog({
   onClose,
   onSave,
   initial,
+  crId,
+  initialApprovals,
+  onApprovalChanged,
   isPending,
   error,
   existingCount,
@@ -114,6 +117,9 @@ function CrFormDialog({
   onClose: () => void
   onSave: (data: CrFormData) => void
   initial?: CrFormData
+  crId?: string
+  initialApprovals?: { bwApproval: ApprovalStatus | null; clientApproval: ApprovalStatus | null }
+  onApprovalChanged?: (side: 'bw' | 'client', status: ApprovalStatus) => void
   isPending: boolean
   error: string
   existingCount: number
@@ -211,7 +217,7 @@ function CrFormDialog({
             </div>
 
             <div className="mt-3">
-              <label className="field-label block mb-2">Typ zmiany</label>
+              <label className="block font-meta text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Typ zmiany</label>
               <div className="flex flex-wrap gap-2">
                 {TYPES.map((t) => (
                   <button
@@ -352,6 +358,34 @@ function CrFormDialog({
             </div>
           </section>
 
+          {/* Sekcja 5: Zatwierdzenia — widoczna tylko przy edycji istniejącego CR */}
+          {crId && onApprovalChanged && (
+            <section>
+              <h3 className="font-meta text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b-2 border-teal pb-1.5 mb-3">
+                5. Zatwierdzenia
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                {/* BW PM */}
+                <ApprovalBox
+                  label="BusinessWeb — Project Manager"
+                  current={initialApprovals?.bwApproval ?? null}
+                  onDecision={(s) => onApprovalChanged('bw', s)}
+                  isPending={isPending}
+                />
+                {/* Klient Sponsor */}
+                <ApprovalBox
+                  label="Klient — Sponsor / PM Klienta"
+                  current={initialApprovals?.clientApproval ?? null}
+                  onDecision={(s) => onApprovalChanged('client', s)}
+                  isPending={isPending}
+                />
+              </div>
+              <p className="mt-3 px-3 py-2 bg-muted/30 border-l-4 border-teal text-[11px] text-muted-foreground leading-snug rounded-r">
+                CR jest ważny dopiero po akceptacji obu stron.
+              </p>
+            </section>
+          )}
+
           {error && (
             <p className="text-xs text-destructive">{error}</p>
           )}
@@ -374,6 +408,77 @@ function CrFormDialog({
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── ApprovalBox sub-component ───────────────────────────────────────────────
+
+function ApprovalBox({
+  label,
+  current,
+  onDecision,
+  isPending,
+}: {
+  label: string
+  current: ApprovalStatus | null
+  onDecision: (status: ApprovalStatus) => void
+  isPending: boolean
+}) {
+  const boxCls =
+    current === 'approved'
+      ? 'border-[#1D9E75] bg-[#f0fdf4]'
+      : current === 'rejected'
+        ? 'border-[#E24B4A] bg-[#fff5f5]'
+        : 'border-[#EF9F27] bg-[#fffbf0]'
+
+  return (
+    <div className={cn('border rounded-lg p-3', boxCls)}>
+      <p className="font-meta text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">{label}</p>
+      {current && (
+        <p className={cn(
+          'font-meta text-xs font-semibold mb-2',
+          current === 'approved' ? 'text-[#0F6E56]' : current === 'rejected' ? 'text-[#A32D2D]' : 'text-[#854F0B]'
+        )}>
+          {current === 'approved' ? '✓ Zatwierdzono' : current === 'rejected' ? '✕ Odrzucono' : '⋯ Oczekuje'}
+        </p>
+      )}
+      <div className="flex gap-2 flex-wrap">
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={() => onDecision('approved')}
+          className={cn(
+            'rounded-full px-3 py-1 font-meta text-[10px] font-bold border transition-colors',
+            current === 'approved'
+              ? 'bg-[#E1F5EE] text-[#0F6E56] border-[#1D9E75]'
+              : 'bg-background text-muted-foreground border-border hover:border-[#1D9E75] hover:text-[#0F6E56]'
+          )}
+        >
+          Zatwierdzam ✓
+        </button>
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={() => onDecision('rejected')}
+          className={cn(
+            'rounded-full px-3 py-1 font-meta text-[10px] font-bold border transition-colors',
+            current === 'rejected'
+              ? 'bg-[#FCEBEB] text-[#A32D2D] border-[#E24B4A]'
+              : 'bg-background text-muted-foreground border-border hover:border-[#E24B4A] hover:text-[#A32D2D]'
+          )}
+        >
+          Odrzucam ✗
+        </button>
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={() => onDecision('pending')}
+          className="ml-auto rounded-full px-3 py-1 font-meta text-[10px] font-bold border border-border text-muted-foreground hover:bg-muted transition-colors"
+        >
+          Oczekuje
+        </button>
       </div>
     </div>
   )
@@ -497,6 +602,54 @@ export function CrView({ projectId, initialCrs }: CrViewProps) {
     setCrs((prev) => prev.filter((c) => c.id !== crId))
     startTransition(async () => {
       await deleteChangeRequest(crId)
+    })
+  }
+
+  function handleApprovalChanged(side: 'bw' | 'client', status: ApprovalStatus) {
+    if (!editCr) return
+    startTransition(async () => {
+      let res: { ok: true } | { error: string }
+      if (status === 'pending') {
+        // Reset to pending: clear the approval field via updateChangeRequest
+        const updateData = side === 'bw'
+          ? { status: 'pending' as CrStatus }
+          : { status: 'pending' as CrStatus }
+        res = await updateChangeRequest(editCr.id, updateData)
+      } else {
+        res = await approveCr(editCr.id, side, status)
+      }
+      if ('error' in res) { setFormError(res.error); return }
+      // Optimistic update on the CR in list
+      setCrs((prev) =>
+        prev.map((c) => {
+          if (c.id !== editCr.id) return c
+          const newBw = side === 'bw' ? status : c.bwApproval
+          const newClient = side === 'client' ? status : c.clientApproval
+          const newStatus: CrStatus =
+            newBw === 'rejected' || newClient === 'rejected'
+              ? 'rejected'
+              : newBw === 'approved' && newClient === 'approved'
+                ? 'approved'
+                : newBw === 'approved' || newClient === 'approved'
+                  ? 'pending'
+                  : c.status
+          return {
+            ...c,
+            bwApproval: newBw,
+            clientApproval: newClient,
+            status: newStatus,
+          }
+        })
+      )
+      // Also update editCr so the approval boxes reflect the new state
+      setEditCr((prev) => {
+        if (!prev || prev.id !== editCr.id) return prev
+        return {
+          ...prev,
+          bwApproval: side === 'bw' ? status : prev.bwApproval,
+          clientApproval: side === 'client' ? status : prev.clientApproval,
+        }
+      })
     })
   }
 
@@ -639,6 +792,9 @@ export function CrView({ projectId, initialCrs }: CrViewProps) {
           onClose={() => { setShowForm(false); setEditCr(null) }}
           onSave={handleSave}
           initial={editFormData}
+          crId={editCr?.id}
+          initialApprovals={editCr ? { bwApproval: editCr.bwApproval, clientApproval: editCr.clientApproval } : undefined}
+          onApprovalChanged={editCr ? handleApprovalChanged : undefined}
           isPending={isPending}
           error={formError}
           existingCount={crs.length}
