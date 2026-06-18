@@ -38,6 +38,23 @@ export async function POST(request: NextRequest) {
 
   const supabase = createAdminClient()
 
+  // Walidacja task_id — jeśli podany, musi należeć do tego projektu
+  if (typeof task_id === 'string' && task_id.trim()) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: taskRow, error: taskErr } = await (supabase as any)
+      .from('tasks')
+      .select('id, project_id')
+      .eq('id', task_id.trim())
+      .maybeSingle()
+    if (taskErr) {
+      console.error('[mcp/add_budget_line] task fetch failed:', taskErr)
+      return NextResponse.json({ ok: false, error: taskErr.message }, { status: 500 })
+    }
+    if (!taskRow || (taskRow as any).project_id !== project_id) {
+      return NextResponse.json({ ok: false, error: 'task_id nie należy do tego projektu.' }, { status: 400 })
+    }
+  }
+
   // TODO: budget_lines not in generated types/supabase.ts yet
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)

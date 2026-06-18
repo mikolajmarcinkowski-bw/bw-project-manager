@@ -34,5 +34,18 @@ export async function POST(request: NextRequest) {
     const { error: delErr } = await supabase.from('project_pms').delete().eq('project_id', body.project_id)
     if (delErr) return NextResponse.json({ ok: false, error: delErr.message }, { status: 500 })
   }
+
+  // Activity log — nieblokujące
+  try {
+    await supabase.from('activity_log').insert({
+      entity: 'project',
+      entity_id: body.project_id,
+      action: 'set_project_pms',
+      actor_id: user.userId,
+      before: null,
+      after: { pm_ids: body.pm_ids },
+    })
+  } catch { /* ignore log failures */ }
+
   return NextResponse.json({ ok: true, data: { pm_ids: body.pm_ids } })
 }

@@ -44,6 +44,7 @@ interface MilestoneInput {
   ms_code: string
   target_date?: string
   status?: string
+  name?: string
 }
 
 interface StakeholderInput {
@@ -273,6 +274,7 @@ export async function POST(request: NextRequest) {
         const upd: Record<string, unknown> = {}
         if (m.target_date) upd.target_date = m.target_date
         if (m.status) upd.status = m.status
+        if (m.name) upd.name = m.name
         if (Object.keys(upd).length > 0) {
           const { error } = await supabase.from('milestones').update(upd).eq('id', id)
           if (error) msErrors.push(`update ${m.ms_code}: ${error.message}`)
