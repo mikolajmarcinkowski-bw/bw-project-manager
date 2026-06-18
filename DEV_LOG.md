@@ -5,6 +5,22 @@
 
 ---
 
+## [2026-06-18] feat | Premium end-to-end — synergies + health metrics + MCP Faza 2 — `ff5f9c1`
+
+- **Wave 1 — 3 agenty równolegle** (haiku + 2× sonnet, worktree isolation):
+  - Agent A (haiku): `cache()` na 5 data functions + 5 nowych MCP tools
+  - Agent B (sonnet): RAID→CR (button ↑ CR + pre-fill tytułu/current_state/risk_id) + Diamencik CR-type → link formularza
+  - Agent C (sonnet): Budget→Gantt task picker (auto-fill opis + est) + health badges w project-header (▲R, CR pending, Burn%)
+- **Wave 2 — code-reviewer (sonnet) + security-auditor (opus)**:
+  - P1: `get_raci !inner` — wyciek danych innych projektów naprawiony
+  - P1: `set_project_pms` — walidacja profili przed DELETE+INSERT (brak stanu „zero PM-ów")
+  - MEDIUM: `mark_project_completed` — 404 dla nieistniejącego projektu
+- **Wave 3 — 3 haiku browser tests**: 0 critical, 2 medium (badge refresh timing, budget auto-fill), 3 low
+- **Fix layoutu** (z feedbacku Mikołaja): sidebar `h-screen sticky top-0` + layout `h-screen overflow-hidden` — stały pasek, scroll tylko w main
+- TSC czyste, build OK, **38 MCP tools** łącznie na main.
+
+---
+
 ## [2026-06-17] feat | P15 daily brief — Resend + Vercel Cron — branch `feat/p15-daily-brief`, commits `4d56668`, `b759108`
 
 - **Zaimplementowano P15** (daily brief mailem) na branchu `feat/p15-daily-brief`.

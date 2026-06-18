@@ -4,6 +4,45 @@
 
 ---
 
+## [1.2.0] — 2026-06-18 — 🚀 PRODUKCJA: Premium end-to-end — synergies, health metrics, MCP Faza 2
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `ff5f9c1`). Sesja 16 (popołudnie).
+> Pełna synergia dokumentów, health metrics, MCP Faza 2 (38 tools), fix layoutu.
+
+### Dodano — Synergies (przepływy między dokumentami)
+- **RAID → CR**: przycisk `↑ CR` przy ryzyku (open/monitor) → pre-wypełniony formularz CR z opisem ryzyka, poziomem wpływu z RAG, powiązanie `risk_id`
+- **Diamencik CR-type → CR form**: po zatwierdzeniu decyzji `change_request/yes` pojawia się link „Otwórz formularz Change Request"
+- **Budget → Gantt tasks**: task picker w formularzu budżetowym — wybór zadania auto-wypełnia opis i godziny
+
+### Dodano — Health metrics w nagłówku projektu
+- Mini-badges w headerze: `▲ NR` (ryzyka R), `CR: N` (oczekujące), `Burn: N%` (>75%)
+- Kolory wg kanonu RAG: czerwony >90% burn, amber >75%, ukryte gdy 0/null
+- `getProjectHealthMetrics()` — 3 równoległe SELECT (risks, change_requests, budget_lines)
+
+### Dodano — MCP Faza 2 (38 tools łącznie)
+- `add_task` — dodaj zadanie do kroku projektu (task_order auto-increment)
+- `add_decision_point` — dodaj diamencik decyzji (UAT/CR/odchylenie/inne)
+- `get_raci` — odczytaj macierz RACI dla projektu (`!inner` join — poprawny filtr)
+- `mark_project_completed` — zamknij projekt (status→completed, 404 gdy nie istnieje)
+- `set_project_pms` — ustaw PM-ów (walidacja profili przed DELETE+INSERT)
+
+### Dodano — Performance
+- `cache()` na 5 data functions: `getProjectRisks`, `getProjectKpis`, `getProjectBudget`, `getProjectChangeRequests`, `getProjectRaci` — eliminuje 5 zduplikowanych DB queries per page load
+
+### Naprawiono — layout
+- **Sidebar sticky**: lewy pasek `h-screen sticky top-0` — stały, scroll tylko w `<main>` (prawa część)
+- `key={project.id}` na `<ProjectViews>` — reset stanu między projektami przy nawigacji
+
+### Naprawiono — review/security
+- `get_raci !inner` — nie wyciekają dane innych projektów przez błędny PostgREST join
+- `set_project_pms` — walidacja profili przed DELETE, brak stanu „zero PM-ów" przy błędzie
+- `mark_project_completed` — 404 dla nieistniejącego projektu, before/after w activity_log
+- Ujednolicony `verifyMcpToken` z `src/lib/mcp/auth.ts` w nowych MCP routes
+
+### MCP tools łącznie: 38/40 (brakuje: `generate_document_content`, `add_steps_to_project`)
+
+---
+
 ## [1.1.0] — 2026-06-18 — 🚀 PRODUKCJA: MCP Server Faza 1 (P3, D-032) + skill Claude
 
 > Status: **ZMERGOWANE → produkcja** (`main`, `3566748`). Sesja 16.
