@@ -1,40 +1,26 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { verifyMcpToken } from '@/lib/mcp/auth'
 
 const ASSIGNEE_MAX_LENGTH = 120
 
-async function verifyToken(authHeader: string | null): Promise<string | null> {
-  if (!authHeader?.startsWith('Bearer ')) return null
-  const token = authHeader.slice(7).trim()
-  if (!token) return null
-  const supabase = createAdminClient()
-  const { data } = await supabase
-    .from('api_tokens')
-    .select('user_id')
-    .eq('token', token)
-    .is('revoked_at', null)
-    .single()
-  return data?.user_id ?? null
-}
-
 export async function POST(request: NextRequest) {
-  const userId = await verifyToken(request.headers.get('authorization'))
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const user = await verifyMcpToken(request.headers.get('authorization'))
+  if (!user) return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+  const userId = user.userId
 
   let body: unknown
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+    return NextResponse.json({ ok: false, error: 'Invalid JSON body' }, { status: 400 })
   }
 
   const { task_id, assignee_name, completion_date } = body as Record<string, unknown>
 
   if (!task_id || typeof task_id !== 'string') {
-    return NextResponse.json({ error: 'task_id jest wymagany.' }, { status: 400 })
+    return NextResponse.json({ ok: false, error: 'task_id jest wymagany.' }, { status: 400 })
   }
 
   // assignee_name: null (usun) lub string (max 120)
@@ -47,7 +33,7 @@ export async function POST(request: NextRequest) {
 
   if (trimmedAssignee !== null && trimmedAssignee.length > ASSIGNEE_MAX_LENGTH) {
     return NextResponse.json(
-      { error: `assignee_name nie moze przekraczac ${ASSIGNEE_MAX_LENGTH} znakow.` },
+      { ok: false, error: `assignee_name nie moze przekraczac ${ASSIGNEE_MAX_LENGTH} znakow.` },
       { status: 400 }
     )
   }
@@ -61,13 +47,13 @@ export async function POST(request: NextRequest) {
       const trimmed = completion_date.trim()
       if (trimmed && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
         return NextResponse.json(
-          { error: 'completion_date ma nieprawidlowy format (wymagane YYYY-MM-DD).' },
+          { ok: false, error: 'completion_date ma nieprawidlowy format (wymagane YYYY-MM-DD).' },
           { status: 400 }
         )
       }
       completionDateVal = trimmed || null
     } else {
-      return NextResponse.json({ error: 'completion_date musi byc stringiem lub null.' }, { status: 400 })
+      return NextResponse.json({ ok: false, error: 'completion_date musi byc stringiem lub null.' }, { status: 400 })
     }
   }
 
@@ -82,7 +68,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (fetchErr || !before) {
-      return NextResponse.json({ error: 'Nie znaleziono zadania.' }, { status: 404 })
+      return NextResponse.json({ ok: false, error: 'Nie znaleziono zadania.' }, { status: 404 })
     }
 
     const beforeTyped = before as {
@@ -107,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     if (updErr) {
       console.error('[set_task_owner] update failed:', updErr)
-      return NextResponse.json({ error: 'Nie udalo sie zapisac wlasciciela zadania.' }, { status: 500 })
+      return NextResponse.json({ ok: false, error: 'Nie udalo sie zapisac wlasciciela zadania.' }, { status: 500 })
     }
 
     // Activity log (nieblokujace)
@@ -128,7 +114,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error('[set_task_owner] Unexpected error:', err)
     return NextResponse.json(
-      { error: 'Internal server error', detail: String(err) },
+      { ok: false, error: 'Internal server error', detail: String(err) },
       { status: 500 }
     )
   }

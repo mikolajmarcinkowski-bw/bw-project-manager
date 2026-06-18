@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { verifyMcpToken } from '@/lib/mcp/auth'
 
 // Walidacja UUID — proste sprawdzenie formatu
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -8,32 +9,17 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 const VALID_IMPL_TYPES = ['CRM', 'SPO', 'INT', 'MKT', 'ERP'] as const
 type ImplType = (typeof VALID_IMPL_TYPES)[number]
 
-async function verifyToken(authHeader: string | null): Promise<string | null> {
-  if (!authHeader?.startsWith('Bearer ')) return null
-  const token = authHeader.slice(7).trim()
-  if (!token) return null
-  const supabase = createAdminClient()
-  const { data } = await supabase
-    .from('api_tokens')
-    .select('user_id')
-    .eq('token', token)
-    .is('revoked_at', null)
-    .single()
-  return data?.user_id ?? null
-}
-
 export async function POST(request: NextRequest) {
   // Auth
-  const userId = await verifyToken(request.headers.get('authorization'))
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const user = await verifyMcpToken(request.headers.get('authorization'))
+  if (!user) return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+  const userId = user.userId
 
   let body: unknown
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+    return NextResponse.json({ ok: false, error: 'Invalid JSON body' }, { status: 400 })
   }
 
   const {
@@ -49,20 +35,20 @@ export async function POST(request: NextRequest) {
   // Walidacja project_name
   const name = typeof project_name === 'string' ? project_name.trim() : ''
   if (!name) {
-    return NextResponse.json({ error: 'project_name jest wymagany.' }, { status: 400 })
+    return NextResponse.json({ ok: false, error: 'project_name jest wymagany.' }, { status: 400 })
   }
 
   // Walidacja type[]
   if (!Array.isArray(typeParam) || typeParam.length === 0) {
     return NextResponse.json(
-      { error: 'type[] wymagany co najmniej jeden element.' },
+      { ok: false, error: 'type[] wymagany co najmniej jeden element.' },
       { status: 400 }
     )
   }
   const types: ImplType[] = []
   for (const t of typeParam) {
     if (!VALID_IMPL_TYPES.includes(t as ImplType)) {
-      return NextResponse.json({ error: `Nieprawidlowy typ projektu: ${t}.` }, { status: 400 })
+      return NextResponse.json({ ok: false, error: `Nieprawidlowy typ projektu: ${t}.` }, { status: 400 })
     }
     types.push(t as ImplType)
   }
@@ -70,17 +56,17 @@ export async function POST(request: NextRequest) {
   // Walidacja start_date
   const start_date = typeof startDateParam === 'string' ? startDateParam.trim() : ''
   if (!start_date) {
-    return NextResponse.json({ error: 'start_date jest wymagany.' }, { status: 400 })
+    return NextResponse.json({ ok: false, error: 'start_date jest wymagany.' }, { status: 400 })
   }
   if (isNaN(Date.parse(start_date))) {
     return NextResponse.json(
-      { error: 'start_date ma nieprawidlowy format (wymagane ISO).' },
+      { ok: false, error: 'start_date ma nieprawidlowy format (wymagane ISO).' },
       { status: 400 }
     )
   }
   if (start_date < '2000-01-01') {
     return NextResponse.json(
-      { error: 'start_date jest nierealistycznie wczesna.' },
+      { ok: false, error: 'start_date jest nierealistycznie wczesna.' },
       { status: 400 }
     )
   }
@@ -99,7 +85,7 @@ export async function POST(request: NextRequest) {
   let client_id: string
   const clientNameStr = typeof client_name === 'string' ? client_name.trim() : ''
   if (!clientNameStr) {
-    return NextResponse.json({ error: 'client_name jest wymagany.' }, { status: 400 })
+    return NextResponse.json({ ok: false, error: 'client_name jest wymagany.' }, { status: 400 })
   }
 
   if (UUID_REGEX.test(clientNameStr)) {
@@ -114,11 +100,11 @@ export async function POST(request: NextRequest) {
 
     if (clientErr) {
       console.error('[create_project] clients lookup failed:', clientErr)
-      return NextResponse.json({ error: 'Blad wyszukiwania klienta.' }, { status: 500 })
+      return NextResponse.json({ ok: false, error: 'Blad wyszukiwania klienta.' }, { status: 500 })
     }
     if (!clients || clients.length === 0) {
       return NextResponse.json(
-        { error: `Klient "${clientNameStr}" nie zostal znaleziony.` },
+        { ok: false, error: `Klient "${clientNameStr}" nie zostal znaleziony.` },
         { status: 404 }
       )
     }
@@ -150,7 +136,7 @@ export async function POST(request: NextRequest) {
 
     if (projectError || !project) {
       console.error('[create_project] projects insert failed:', projectError)
-      return NextResponse.json({ error: 'Nie udalo sie utworzyc projektu.' }, { status: 500 })
+      return NextResponse.json({ ok: false, error: 'Nie udalo sie utworzyc projektu.' }, { status: 500 })
     }
 
     const projectId = (project as { id: string }).id
@@ -168,7 +154,7 @@ export async function POST(request: NextRequest) {
       console.error('[create_project] project_types insert failed:', typesError)
       await cleanup()
       return NextResponse.json(
-        { error: 'Nie udalo sie przypisac typow projektu.' },
+        { ok: false, error: 'Nie udalo sie przypisac typow projektu.' },
         { status: 500 }
       )
     }
@@ -182,7 +168,7 @@ export async function POST(request: NextRequest) {
         console.error('[create_project] project_pms insert failed:', pmsError)
         await cleanup()
         return NextResponse.json(
-          { error: 'Nie udalo sie przypisac kierownikow projektu.' },
+          { ok: false, error: 'Nie udalo sie przypisac kierownikow projektu.' },
           { status: 500 }
         )
       }
@@ -203,7 +189,7 @@ export async function POST(request: NextRequest) {
       console.error('[create_project] step_templates fetch failed:', stError)
       await cleanup()
       return NextResponse.json(
-        { error: 'Nie udalo sie pobrac szablonow krokow.' },
+        { ok: false, error: 'Nie udalo sie pobrac szablonow krokow.' },
         { status: 500 }
       )
     }
@@ -242,7 +228,7 @@ export async function POST(request: NextRequest) {
       console.error('[create_project] step_task_templates fetch failed:', ttError)
       await cleanup()
       return NextResponse.json(
-        { error: 'Nie udalo sie pobrac szablonow zadan.' },
+        { ok: false, error: 'Nie udalo sie pobrac szablonow zadan.' },
         { status: 500 }
       )
     }
@@ -283,7 +269,7 @@ export async function POST(request: NextRequest) {
         console.error('[create_project] project_steps insert failed:', stepInsertError)
         await cleanup()
         return NextResponse.json(
-          { error: 'Nie udalo sie utworzyc krokow projektu.' },
+          { ok: false, error: 'Nie udalo sie utworzyc krokow projektu.' },
           { status: 500 }
         )
       }
@@ -323,7 +309,7 @@ export async function POST(request: NextRequest) {
         console.error('[create_project] tasks insert failed:', tasksInsertError)
         await cleanup()
         return NextResponse.json(
-          { error: 'Nie udalo sie utworzyc zadan projektu.' },
+          { ok: false, error: 'Nie udalo sie utworzyc zadan projektu.' },
           { status: 500 }
         )
       }
@@ -342,17 +328,17 @@ export async function POST(request: NextRequest) {
       console.error('[create_project] activity_log insert failed:', logError)
     }
 
-    return NextResponse.json(
-      {
+    return NextResponse.json({
+      ok: true,
+      data: {
         project_id: projectId,
-        project_url: `/projects/${projectId}`,
-      },
-      { status: 201 }
-    )
+        project_url: `https://bw-project-manager.vercel.app/projects/${projectId}`,
+      }
+    })
   } catch (err) {
     console.error('[create_project] Unexpected error:', err)
     return NextResponse.json(
-      { error: 'Internal server error', detail: String(err) },
+      { ok: false, error: 'Internal server error', detail: String(err) },
       { status: 500 }
     )
   }
