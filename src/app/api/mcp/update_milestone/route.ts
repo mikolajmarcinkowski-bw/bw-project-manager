@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const { milestone_id, target_date, status } = body
+  const { milestone_id, target_date, status, name } = body
 
   if (typeof milestone_id !== 'string' || !milestone_id.trim()) {
     return NextResponse.json({ ok: false, error: 'milestone_id jest wymagany.' }, { status: 400 })
@@ -41,6 +41,12 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
     updates.status = status
+  }
+  if (name !== undefined) {
+    if (typeof name !== 'string' || !name.trim()) {
+      return NextResponse.json({ ok: false, error: 'name nie może być pusty.' }, { status: 400 })
+    }
+    updates.name = name.trim()
   }
 
   if (Object.keys(updates).length === 0) {
