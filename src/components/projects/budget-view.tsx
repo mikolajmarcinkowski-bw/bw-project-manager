@@ -85,6 +85,7 @@ export function BudgetView({ projectId, initialBudget }: BudgetViewProps) {
   const [pmPct, setPmPct] = useState(String(initialBudget.settings?.pmOverheadPct ?? '20'))
   const [budgetMax, setBudgetMax] = useState(String(initialBudget.settings?.budgetMax ?? ''))
   const [settingsError, setSettingsError] = useState('')
+  const [inlineError, setInlineError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   // Add line form state
@@ -207,15 +208,21 @@ export function BudgetView({ projectId, initialBudget }: BudgetViewProps) {
   }
 
   function handleActualChange(lineId: string, val: number) {
+    // Zapamiętaj poprzednią wartość do rollbacku
+    const prevActualH = lines.find((l) => l.id === lineId)?.actualH ?? 0
     // Optimistic update
+    setInlineError(null)
     setLines((prev) =>
       prev.map((l) => (l.id === lineId ? { ...l, actualH: val } : l))
     )
     startTransition(async () => {
       const res = await updateBudgetLineActual(lineId, val)
       if ('error' in res) {
-        // Revert on error (reload would fix, but keep optimistic for now)
-        console.error(res.error)
+        // Rollback: przywróć poprzednią wartość
+        setLines((prev) =>
+          prev.map((l) => (l.id === lineId ? { ...l, actualH: prevActualH } : l))
+        )
+        setInlineError(`Nie udało się zapisać: ${res.error}`)
       }
     })
   }
@@ -479,6 +486,11 @@ export function BudgetView({ projectId, initialBudget }: BudgetViewProps) {
           </table>
         </div>
       </div>
+
+      {/* Inline error (rollback notification) */}
+      {inlineError && (
+        <p className="text-xs text-destructive px-1">{inlineError}</p>
+      )}
 
       {/* Add line button */}
       <button

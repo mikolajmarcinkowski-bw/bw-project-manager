@@ -755,6 +755,10 @@ export async function updateChangeRequest(
 
   if (fetchErr || !existing) return { error: 'Nie znaleziono Change Request.' }
 
+  // Allowlist statusów dozwolonych przez updateChangeRequest
+  // 'approved' i 'rejected' wymagają przejścia przez approveCr (dual-approval)
+  const ALLOWED_STATUSES = ['draft', 'pending', 'implemented'] as const
+
   const updatePayload: Record<string, unknown> = {}
   if (data.title !== undefined) updatePayload.title = data.title
   if (data.cr_number !== undefined) updatePayload.cr_number = data.cr_number
@@ -768,7 +772,12 @@ export async function updateChangeRequest(
   if (data.impact_cost !== undefined) updatePayload.impact_cost = data.impact_cost
   if (data.schedule_impact !== undefined) updatePayload.schedule_impact = data.schedule_impact
   if (data.submitted_date !== undefined) updatePayload.submitted_date = data.submitted_date
-  if (data.status !== undefined) updatePayload.status = data.status
+  if (data.status !== undefined) {
+    if (!ALLOWED_STATUSES.includes(data.status as typeof ALLOWED_STATUSES[number])) {
+      return { error: 'Użyj approveCr do zatwierdzenia lub odrzucenia CR.' }
+    }
+    updatePayload.status = data.status
+  }
   if (data.implementation_plan !== undefined) updatePayload.implementation_plan = data.implementation_plan
   if (data.notes !== undefined) updatePayload.notes = data.notes
 
@@ -831,7 +840,7 @@ export async function approveCr(
 
   const { data: existing, error: fetchErr } = await supabase
     .from('change_requests')
-    .select('project_id, bw_approval, client_approval')
+    .select('id, project_id, bw_approval, client_approval')
     .eq('id', crId)
     .single()
 
@@ -872,6 +881,18 @@ export async function approveCr(
     console.error('[approveCr]:', error)
     return { error: 'Nie udało się zapisać decyzji.' }
   }
+
+  // Activity log (nieblokujące)
+  await supabase.from('activity_log').insert({
+    entity: 'project',
+    entity_id: existing.project_id,
+    action: 'approve_cr',
+    actor_id: user.id,
+    before: { [`${side}_approval`]: side === 'bw' ? existing.bw_approval : existing.client_approval },
+    after: { [`${side}_approval`]: status, notes },
+  }).then(({ error }) => {
+    if (error) console.error('[approveCr] activity_log failed:', error)
+  })
 
   revalidatePath(`/projects/${existing.project_id}`)
   return { ok: true }

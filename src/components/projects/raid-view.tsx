@@ -653,41 +653,29 @@ function RaidModalWrapper({
               <label className="text-xs font-medium text-foreground">
                 Prawdopodobieństwo (P) <span className="text-destructive">*</span>
               </label>
-              <Select
+              <select
                 value={String(form.probability)}
-                onValueChange={(v) => handleChange('probability', v ? parseInt(v) : 3)}
+                onChange={(e) => handleChange('probability', Number(e.target.value))}
+                className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 font-meta text-sm transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <SelectTrigger size="sm" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <SelectItem key={n} value={String(n)}>
-                      {PROB_LABELS[n]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <option key={n} value={String(n)}>{PROB_LABELS[n]}</option>
+                ))}
+              </select>
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-foreground">
                 Wpływ (W) <span className="text-destructive">*</span>
               </label>
-              <Select
+              <select
                 value={String(form.impact)}
-                onValueChange={(v) => handleChange('impact', v ? parseInt(v) : 3)}
+                onChange={(e) => handleChange('impact', Number(e.target.value))}
+                className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 font-meta text-sm transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <SelectTrigger size="sm" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <SelectItem key={n} value={String(n)}>
-                      {IMPACT_LABELS[n]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <option key={n} value={String(n)}>{IMPACT_LABELS[n]}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -733,19 +721,15 @@ function RaidModalWrapper({
           {/* Status */}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-foreground">Status</label>
-            <Select
+            <select
               value={form.status}
-              onValueChange={(v) => handleChange('status', (v ?? 'open') as RiskStatus)}
+              onChange={(e) => handleChange('status', e.target.value as RiskStatus)}
+              className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 font-meta text-sm transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             >
-              <SelectTrigger size="sm" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="open">Otwarte</SelectItem>
-                <SelectItem value="monitor">Monitorowane</SelectItem>
-                <SelectItem value="closed">Zamknięte</SelectItem>
-              </SelectContent>
-            </Select>
+              <option value="open">Otwarte</option>
+              <option value="monitor">Monitorowane</option>
+              <option value="closed">Zamknięte</option>
+            </select>
           </div>
 
           {formError && (
