@@ -834,7 +834,7 @@ export function GanttChart({ project, profiles = [], targetStepId, onTargetConsu
                                 <TaskAssigneeControl
                                   taskId={task.id}
                                   assigneeName={task.assigneeName}
-                                  profiles={profiles}
+                                  specialists={profiles}
                                 />
                               </div>
                               {/* Obszar tygodni + pasek */}
@@ -935,7 +935,7 @@ export function GanttChart({ project, profiles = [], targetStepId, onTargetConsu
                                 {task.est != null ? `${task.est}h` : '—'}
                               </div>
                               <div role="cell" className={cn(COL.own, 'px-1 py-1 flex items-center justify-center')}>
-                                <TaskAssigneeControl taskId={task.id} assigneeName={task.assigneeName} profiles={profiles} />
+                                <TaskAssigneeControl taskId={task.id} assigneeName={task.assigneeName} specialists={profiles} />
                               </div>
                               <div role="cell" className={cn(COL.wk, 'h-[34px]')} style={{ display: 'grid', gridTemplateColumns: `repeat(${weekCount}, minmax(28px, 1fr))`, gridTemplateRows: '1fr' }}>
                                 {weeks.map((k) => (

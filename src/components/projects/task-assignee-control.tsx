@@ -7,10 +7,13 @@ import { ChevronDownIcon, CheckIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { updateTaskAssignee } from '@/lib/actions/tasks'
 
-export interface Profile {
+export interface Specialist {
   id: string
   full_name: string | null
 }
+
+// Alias dla kompatybilności wstecznej z komponentami jeszcze niezmigrowanymi
+export type Profile = Specialist
 
 // ─── Pomocnicze ──────────────────────────────────────────────────────────────
 
@@ -30,10 +33,11 @@ function initials(name: string | null): string {
 interface TaskAssigneeControlProps {
   taskId: string
   assigneeName: string | null
-  profiles: Profile[]
+  specialists: Specialist[]
 }
 
-export function TaskAssigneeControl({ taskId, assigneeName, profiles }: TaskAssigneeControlProps) {
+export function TaskAssigneeControl({ taskId, assigneeName, specialists }: TaskAssigneeControlProps) {
+  const profiles = specialists
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)

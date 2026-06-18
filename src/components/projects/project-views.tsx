@@ -20,14 +20,14 @@ import { KpiView } from './kpi-view'
 import { BudgetView } from './budget-view'
 import { CrView } from './cr-view'
 import { RaciView } from './raci-view'
-import type { Profile } from './task-assignee-control'
+import type { Specialist } from './task-assignee-control'
 
 // Wszystkie zakładki dokumentów projektowych aktywne.
 type Tab = 'mapa' | 'harmonogram' | 'checklist' | 'RAID' | 'KPI' | 'Budżet' | 'CR' | 'RACI'
 
 export function ProjectViews({
   project,
-  profiles = [],
+  specialists = [],
   risks = [],
   kpis = [],
   budget = { settings: null, lines: [] },
@@ -35,7 +35,7 @@ export function ProjectViews({
   raci = [],
 }: {
   project: ProjectDetail
-  profiles?: Profile[]
+  specialists?: Specialist[]
   risks?: Risk[]
   kpis?: Kpi[]
   budget?: { settings: BudgetSettings | null; lines: BudgetLine[] }
@@ -106,7 +106,7 @@ export function ProjectViews({
         <div role="tabpanel" id="panel-harmonogram" aria-labelledby="tab-harmonogram">
           <GanttChart
             project={project}
-            profiles={profiles}
+            profiles={specialists}
             targetStepId={targetStepId}
             onTargetConsumed={() => setTargetStepId(null)}
           />
@@ -118,7 +118,7 @@ export function ProjectViews({
             return selectedStep ? (
               <PhaseChecklist
                 step={selectedStep}
-                profiles={profiles}
+                profiles={specialists}
                 allSteps={project.steps}
                 onSelectStep={(stepId) => setChecklistStepId(stepId)}
               />

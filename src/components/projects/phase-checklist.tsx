@@ -137,7 +137,7 @@ function TaskRow({ task, profiles }: TaskRowProps) {
         <TaskAssigneeControl
           taskId={task.id}
           assigneeName={task.assigneeName}
-          profiles={profiles}
+          specialists={profiles}
         />
       </div>
 

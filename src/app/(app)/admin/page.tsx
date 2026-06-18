@@ -34,7 +34,7 @@ export default function AdminPage() {
             </span>
           </div>
           <p className="font-meta text-xs text-muted-foreground leading-relaxed">
-            Twórz konta, zmieniaj role, dezaktywuj dostęp i wysyłaj linki do resetu hasła.
+            PM-owie i administratorzy — twórz konta, zmieniaj role, dezaktywuj dostęp.
           </p>
           <span className="font-meta text-[0.68rem] uppercase tracking-wide text-teal font-semibold mt-auto">
             Zarządzaj →
@@ -54,7 +54,7 @@ export default function AdminPage() {
             </span>
           </div>
           <p className="font-meta text-xs text-muted-foreground leading-relaxed">
-            Przegląd aktywnych profili — PM-ów i specjalistów przypisywanych do projektów.
+            Konsultanci BW bez kont — dodaj, dezaktywuj, monitoruj liczbę zadań i projektów.
           </p>
           <span className="font-meta text-[0.68rem] uppercase tracking-wide text-teal font-semibold mt-auto">
             Przeglądaj →
