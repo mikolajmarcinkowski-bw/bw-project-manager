@@ -3,21 +3,39 @@
 import { useState } from 'react'
 import { Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { ProjectDetail } from '@/lib/data/projects'
+import type { ProjectDetail, BudgetSettings, BudgetLine, ChangeRequest, RaciTask } from '@/lib/data/projects'
 import { PhaseStrip } from './phase-strip'
 import { ParallelView } from './parallel-view'
 import { GanttChart } from './gantt-chart'
 import { PhaseChecklist } from './phase-checklist'
+import { BudgetView } from './budget-view'
+import { CrView } from './cr-view'
+import { RaciView } from './raci-view'
 import type { Profile } from './task-assignee-control'
 
 // Widok projektu z zakładkami (ekran „Mapa klocków + phase strip" wg 06-wireframes.html).
 // Domyślnie „Mapa klocków"; „Harmonogram" = Gantt; „checklist" = Ekran 7 po kliknięciu klocka.
-// Pozostałe zakładki = Faza 3 (empty state).
-type Tab = 'mapa' | 'harmonogram' | 'checklist' | 'RACI' | 'RAID' | 'Budżet' | 'KPI'
+// Budżet, CR, RACI — aktywne od tej wersji.
+// RAID i KPI — Faza 3 (empty state).
+type Tab = 'mapa' | 'harmonogram' | 'checklist' | 'RACI' | 'RAID' | 'Budżet' | 'KPI' | 'CR'
 
-const FUTURE_TABS: Array<'RACI' | 'RAID' | 'Budżet' | 'KPI'> = ['RACI', 'RAID', 'Budżet', 'KPI']
+const FUTURE_TABS: Array<'RAID' | 'KPI'> = ['RAID', 'KPI']
 
-export function ProjectViews({ project, profiles = [] }: { project: ProjectDetail; profiles?: Profile[] }) {
+interface ProjectViewsProps {
+  project: ProjectDetail
+  profiles?: Profile[]
+  budget: { settings: BudgetSettings | null; lines: BudgetLine[] }
+  changeRequests: ChangeRequest[]
+  raci: RaciTask[]
+}
+
+export function ProjectViews({
+  project,
+  profiles = [],
+  budget,
+  changeRequests,
+  raci,
+}: ProjectViewsProps) {
   const [tab, setTab] = useState<Tab>('mapa')
   const [targetStepId, setTargetStepId] = useState<string | null>(null)
   // Ekran 7: domyślnie pierwsza aktywna faza lub pierwsza faza projektu
@@ -46,6 +64,9 @@ export function ProjectViews({ project, profiles = [] }: { project: ProjectDetai
         >
           Checklist fazy
         </TabPill>
+        <TabPill id="tab-budzet" controls="panel-budzet" active={tab === 'Budżet'} onClick={() => setTab('Budżet')}>Budżet</TabPill>
+        <TabPill id="tab-cr" controls="panel-cr" active={tab === 'CR'} onClick={() => setTab('CR')}>CR</TabPill>
+        <TabPill id="tab-raci" controls="panel-raci" active={tab === 'RACI'} onClick={() => setTab('RACI')}>RACI</TabPill>
         {FUTURE_TABS.map((t) => (
           <button
             key={t}
@@ -108,6 +129,18 @@ export function ProjectViews({ project, profiles = [] }: { project: ProjectDetai
               </p>
             )
           })()}
+        </div>
+      ) : tab === 'Budżet' ? (
+        <div role="tabpanel" id="panel-budzet" aria-labelledby="tab-budzet">
+          <BudgetView projectId={project.id} initialBudget={budget} />
+        </div>
+      ) : tab === 'CR' ? (
+        <div role="tabpanel" id="panel-cr" aria-labelledby="tab-cr">
+          <CrView projectId={project.id} initialCrs={changeRequests} />
+        </div>
+      ) : tab === 'RACI' ? (
+        <div role="tabpanel" id="panel-raci" aria-labelledby="tab-raci">
+          <RaciView projectId={project.id} initialRaci={raci} />
         </div>
       ) : (
         /* Faza 3 — zakładka istnieje ale treść jeszcze nie */
