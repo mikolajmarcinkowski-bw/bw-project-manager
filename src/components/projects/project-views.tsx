@@ -3,21 +3,33 @@
 import { useState } from 'react'
 import { Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { ProjectDetail } from '@/lib/data/projects'
+import type { ProjectDetail, Risk, Kpi } from '@/lib/data/projects'
 import { PhaseStrip } from './phase-strip'
 import { ParallelView } from './parallel-view'
 import { GanttChart } from './gantt-chart'
 import { PhaseChecklist } from './phase-checklist'
+import { RaidView } from './raid-view'
+import { KpiView } from './kpi-view'
 import type { Profile } from './task-assignee-control'
 
 // Widok projektu z zakładkami (ekran „Mapa klocków + phase strip" wg 06-wireframes.html).
 // Domyślnie „Mapa klocków"; „Harmonogram" = Gantt; „checklist" = Ekran 7 po kliknięciu klocka.
-// Pozostałe zakładki = Faza 3 (empty state).
+// RAID i KPI = pełne interaktywne widoki.
 type Tab = 'mapa' | 'harmonogram' | 'checklist' | 'RACI' | 'RAID' | 'Budżet' | 'KPI'
 
-const FUTURE_TABS: Array<'RACI' | 'RAID' | 'Budżet' | 'KPI'> = ['RACI', 'RAID', 'Budżet', 'KPI']
+const FUTURE_TABS: Array<'RACI' | 'Budżet'> = ['RACI', 'Budżet']
 
-export function ProjectViews({ project, profiles = [] }: { project: ProjectDetail; profiles?: Profile[] }) {
+export function ProjectViews({
+  project,
+  profiles = [],
+  risks = [],
+  kpis = [],
+}: {
+  project: ProjectDetail
+  profiles?: Profile[]
+  risks?: Risk[]
+  kpis?: Kpi[]
+}) {
   const [tab, setTab] = useState<Tab>('mapa')
   const [targetStepId, setTargetStepId] = useState<string | null>(null)
   // Ekran 7: domyślnie pierwsza aktywna faza lub pierwsza faza projektu
@@ -46,6 +58,8 @@ export function ProjectViews({ project, profiles = [] }: { project: ProjectDetai
         >
           Checklist fazy
         </TabPill>
+        <TabPill id="tab-raid" controls="panel-raid" active={tab === 'RAID'} onClick={() => setTab('RAID')}>RAID</TabPill>
+        <TabPill id="tab-kpi" controls="panel-kpi" active={tab === 'KPI'} onClick={() => setTab('KPI')}>KPI</TabPill>
         {FUTURE_TABS.map((t) => (
           <button
             key={t}
@@ -108,6 +122,18 @@ export function ProjectViews({ project, profiles = [] }: { project: ProjectDetai
               </p>
             )
           })()}
+        </div>
+      ) : tab === 'RAID' ? (
+        <div role="tabpanel" id="panel-raid" aria-labelledby="tab-raid">
+          <RaidView projectId={project.id} initialRisks={risks} />
+        </div>
+      ) : tab === 'KPI' ? (
+        <div role="tabpanel" id="panel-kpi" aria-labelledby="tab-kpi">
+          <KpiView
+            projectId={project.id}
+            initialKpis={kpis}
+            initialMilestones={project.milestones}
+          />
         </div>
       ) : (
         /* Faza 3 — zakładka istnieje ale treść jeszcze nie */
