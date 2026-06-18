@@ -10,6 +10,7 @@ import {
   getProjectBudget,
   getProjectChangeRequests,
   getProjectRaci,
+  getProjectHealthMetrics,
 } from '@/lib/data/projects'
 
 export async function generateMetadata({
@@ -29,7 +30,7 @@ interface ProjectPageProps {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { id } = await params
-  const [project, profiles, risks, kpis, budget, changeRequests, raci] = await Promise.all([
+  const [project, profiles, risks, kpis, budget, changeRequests, raci, health] = await Promise.all([
     getProjectDetail(id),
     getProfiles(),
     getProjectRisks(id),
@@ -37,6 +38,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     getProjectBudget(id),
     getProjectChangeRequests(id),
     getProjectRaci(id),
+    getProjectHealthMetrics(id),
   ])
 
   if (!project) {
@@ -50,7 +52,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         projectName={project.name}
         clientName={project.client.name}
       />
-      <ProjectHeader project={project} profiles={profiles} />
+      <ProjectHeader project={project} profiles={profiles} health={health} />
       <ProjectViews
         project={project}
         profiles={profiles}
