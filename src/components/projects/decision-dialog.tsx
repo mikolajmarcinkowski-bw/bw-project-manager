@@ -26,6 +26,7 @@ interface DecisionDialogProps {
   decision: DecisionInfo
   open: boolean
   onOpenChange: (open: boolean) => void
+  onRequestNewCr?: () => void
 }
 
 // ─── Pomocnicze ───────────────────────────────────────────────────────────────
@@ -59,11 +60,12 @@ function formatDate(iso: string | null | undefined): string {
 
 // ─── Komponent ────────────────────────────────────────────────────────────────
 
-export function DecisionDialog({ decision, open, onOpenChange }: DecisionDialogProps) {
+export function DecisionDialog({ decision, open, onOpenChange, onRequestNewCr }: DecisionDialogProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [notes, setNotes] = useState(decision.notes ?? '')
   const [localError, setLocalError] = useState<string | null>(null)
+  const [showCrLink, setShowCrLink] = useState(false)
 
   const isDecided = decision.status !== 'pending'
 
@@ -75,7 +77,12 @@ export function DecisionDialog({ decision, open, onOpenChange }: DecisionDialogP
         setLocalError(result.error)
       } else {
         router.refresh()
-        onOpenChange(false)
+        // Dla CR type + decyzja "robimy" — pokaż link zamiast zamykać
+        if (decision.type === 'change_request' && status === 'yes' && onRequestNewCr) {
+          setShowCrLink(true)
+        } else {
+          onOpenChange(false)
+        }
       }
     })
   }
@@ -183,15 +190,26 @@ export function DecisionDialog({ decision, open, onOpenChange }: DecisionDialogP
               </button>
             </div>
           ) : (
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={handleReset}
-                disabled={isPending}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Zmień decyzję
-              </button>
+            <div className="flex flex-col gap-2">
+              {showCrLink && onRequestNewCr && (
+                <button
+                  type="button"
+                  onClick={() => { onRequestNewCr(); onOpenChange(false); setShowCrLink(false) }}
+                  className="w-full text-left text-[0.75rem] font-meta text-teal underline hover:no-underline"
+                >
+                  Otwórz formularz Change Request dla tej decyzji
+                </button>
+              )}
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  disabled={isPending}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Zmień decyzję
+                </button>
+              </div>
             </div>
           )}
         </div>

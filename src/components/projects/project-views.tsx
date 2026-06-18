@@ -44,6 +44,7 @@ export function ProjectViews({
 }) {
   const [tab, setTab] = useState<Tab>('mapa')
   const [targetStepId, setTargetStepId] = useState<string | null>(null)
+  const [pendingRiskForCr, setPendingRiskForCr] = useState<Risk | null>(null)
   const defaultStepId =
     project.steps.find((s) => s.isActive)?.id ??
     project.steps.find((s) => s.status === 'in_progress')?.id ??
@@ -93,7 +94,12 @@ export function ProjectViews({
       {/* Treść zakładki */}
       {tab === 'mapa' ? (
         <div role="tabpanel" id="panel-mapa" aria-labelledby="tab-mapa" className="flex flex-col gap-5">
-          <PhaseStrip steps={project.steps} decisions={project.decisions} onSelectStep={handleSelectStep} />
+          <PhaseStrip
+          steps={project.steps}
+          decisions={project.decisions}
+          onSelectStep={handleSelectStep}
+          onRequestNewCr={() => setTab('CR')}
+        />
           <ParallelView steps={project.steps} decisions={project.decisions} />
         </div>
       ) : tab === 'harmonogram' ? (
@@ -123,7 +129,14 @@ export function ProjectViews({
         </div>
       ) : tab === 'RAID' ? (
         <div role="tabpanel" id="panel-raid" aria-labelledby="tab-raid">
-          <RaidView projectId={project.id} initialRisks={risks} />
+          <RaidView
+            projectId={project.id}
+            initialRisks={risks}
+            onEscalateRisk={(risk) => {
+              setPendingRiskForCr(risk)
+              setTab('CR')
+            }}
+          />
         </div>
       ) : tab === 'KPI' ? (
         <div role="tabpanel" id="panel-kpi" aria-labelledby="tab-kpi">
@@ -135,7 +148,12 @@ export function ProjectViews({
         </div>
       ) : tab === 'CR' ? (
         <div role="tabpanel" id="panel-cr" aria-labelledby="tab-cr">
-          <CrView projectId={project.id} initialCrs={changeRequests} />
+          <CrView
+            projectId={project.id}
+            initialCrs={changeRequests}
+            initialRiskForCr={pendingRiskForCr}
+            onRiskCrHandled={() => setPendingRiskForCr(null)}
+          />
         </div>
       ) : tab === 'RACI' ? (
         <div role="tabpanel" id="panel-raci" aria-labelledby="tab-raci">
