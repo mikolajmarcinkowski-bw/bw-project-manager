@@ -1,53 +1,39 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { verifyMcpToken } from '@/lib/mcp/auth'
 
 const MAX_TASK_IDS = 100
 
-async function verifyToken(authHeader: string | null): Promise<string | null> {
-  if (!authHeader?.startsWith('Bearer ')) return null
-  const token = authHeader.slice(7).trim()
-  if (!token) return null
-  const supabase = createAdminClient()
-  const { data } = await supabase
-    .from('api_tokens')
-    .select('user_id')
-    .eq('token', token)
-    .is('revoked_at', null)
-    .single()
-  return data?.user_id ?? null
-}
-
 export async function POST(request: NextRequest) {
-  const userId = await verifyToken(request.headers.get('authorization'))
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const user = await verifyMcpToken(request.headers.get('authorization'))
+  if (!user) return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+  const userId = user.userId
 
   let body: unknown
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+    return NextResponse.json({ ok: false, error: 'Invalid JSON body' }, { status: 400 })
   }
 
   const { task_ids } = body as Record<string, unknown>
 
   if (!Array.isArray(task_ids)) {
-    return NextResponse.json({ error: 'task_ids musi byc tablicą.' }, { status: 400 })
+    return NextResponse.json({ ok: false, error: 'task_ids musi byc tablicą.' }, { status: 400 })
   }
   if (task_ids.length === 0) {
-    return NextResponse.json({ error: 'task_ids nie moze byc pusta.' }, { status: 400 })
+    return NextResponse.json({ ok: false, error: 'task_ids nie moze byc pusta.' }, { status: 400 })
   }
   if (task_ids.length > MAX_TASK_IDS) {
     return NextResponse.json(
-      { error: `task_ids nie moze zawierac wiecej niz ${MAX_TASK_IDS} elementow.` },
+      { ok: false, error: `task_ids nie moze zawierac wiecej niz ${MAX_TASK_IDS} elementow.` },
       { status: 400 }
     )
   }
   for (const id of task_ids) {
     if (typeof id !== 'string' || !id.trim()) {
-      return NextResponse.json({ error: 'Kazdy element task_ids musi byc niepustym stringiem.' }, { status: 400 })
+      return NextResponse.json({ ok: false, error: 'Kazdy element task_ids musi byc niepustym stringiem.' }, { status: 400 })
     }
   }
 
@@ -63,7 +49,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (fetchErr || !firstTask) {
-      return NextResponse.json({ error: 'Nie znaleziono zadania (task_ids[0]).' }, { status: 404 })
+      return NextResponse.json({ ok: false, error: 'Nie znaleziono zadania (task_ids[0]).' }, { status: 404 })
     }
 
     const projectId = (firstTask as { id: string; project_id: string }).project_id
@@ -76,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     if (updErr) {
       console.error('[bulk_hide_tasks] update failed:', updErr)
-      return NextResponse.json({ error: 'Nie udalo sie ukryc zadan.' }, { status: 500 })
+      return NextResponse.json({ ok: false, error: 'Nie udalo sie ukryc zadan.' }, { status: 500 })
     }
 
     // Jedno zbiorcze activity_log
@@ -94,7 +80,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error('[bulk_hide_tasks] Unexpected error:', err)
     return NextResponse.json(
-      { error: 'Internal server error', detail: String(err) },
+      { ok: false, error: 'Internal server error', detail: String(err) },
       { status: 500 }
     )
   }

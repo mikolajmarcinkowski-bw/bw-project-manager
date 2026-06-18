@@ -1,29 +1,15 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { verifyMcpToken } from '@/lib/mcp/auth'
 
 const VALID_STATUSES = ['yes', 'no', 'pending'] as const
 type DecisionStatus = (typeof VALID_STATUSES)[number]
 
-async function verifyToken(authHeader: string | null): Promise<string | null> {
-  if (!authHeader?.startsWith('Bearer ')) return null
-  const token = authHeader.slice(7).trim()
-  if (!token) return null
-  const supabase = createAdminClient()
-  const { data } = await supabase
-    .from('api_tokens')
-    .select('user_id')
-    .eq('token', token)
-    .is('revoked_at', null)
-    .single()
-  return data?.user_id ?? null
-}
-
 export async function POST(request: NextRequest) {
-  const userId = await verifyToken(request.headers.get('authorization'))
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const user = await verifyMcpToken(request.headers.get('authorization'))
+  if (!user) return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+  const userId = user.userId
 
   let body: unknown
   try {
