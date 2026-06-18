@@ -20,8 +20,12 @@ const FUTURE_TABS: Array<'RACI' | 'RAID' | 'Budżet' | 'KPI'> = ['RACI', 'RAID',
 export function ProjectViews({ project, profiles = [] }: { project: ProjectDetail; profiles?: Profile[] }) {
   const [tab, setTab] = useState<Tab>('mapa')
   const [targetStepId, setTargetStepId] = useState<string | null>(null)
-  // Ekran 7: id kroku wybranego przez klik klocka na Mapie klocków
-  const [checklistStepId, setChecklistStepId] = useState<string | null>(null)
+  // Ekran 7: domyślnie pierwsza aktywna faza lub pierwsza faza projektu
+  const defaultStepId = project.steps.find(s => s.isActive)?.id
+    ?? project.steps.find(s => s.status === 'in_progress')?.id
+    ?? project.steps[0]?.id
+    ?? null
+  const [checklistStepId, setChecklistStepId] = useState<string | null>(defaultStepId)
 
   function handleSelectStep(stepId: string) {
     setChecklistStepId(stepId)
@@ -34,17 +38,14 @@ export function ProjectViews({ project, profiles = [] }: { project: ProjectDetai
       <div role="tablist" aria-label="Widoki projektu" className="flex flex-wrap items-center gap-1.5 border-b border-border pb-3">
         <TabPill id="tab-mapa" controls="panel-mapa" active={tab === 'mapa'} onClick={() => setTab('mapa')}>Mapa klocków</TabPill>
         <TabPill id="tab-harmonogram" controls="panel-harmonogram" active={tab === 'harmonogram'} onClick={() => setTab('harmonogram')}>Harmonogram</TabPill>
-        {/* Zakładka „Checklist fazy" pojawia się tylko po wybraniu klocka */}
-        {checklistStepId !== null && (
-          <TabPill
-            id="tab-checklist"
-            controls="panel-checklist"
-            active={tab === 'checklist'}
-            onClick={() => setTab('checklist')}
-          >
-            Checklist fazy
-          </TabPill>
-        )}
+        <TabPill
+          id="tab-checklist"
+          controls="panel-checklist"
+          active={tab === 'checklist'}
+          onClick={() => setTab('checklist')}
+        >
+          Checklist fazy
+        </TabPill>
         {FUTURE_TABS.map((t) => (
           <button
             key={t}
