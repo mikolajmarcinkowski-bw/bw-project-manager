@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { MoreHorizontal, ShieldCheck, ShieldOff, RotateCcw, KeyRound } from 'lucide-react'
+import { ShieldCheck, ShieldOff, RotateCcw, KeyRound, Pencil, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -11,16 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { changeUserRole, toggleUserActive, resetUserPassword } from '@/lib/actions/admin'
+import { changeUserRole, toggleUserActive, resetUserPassword, updateUserFullName } from '@/lib/actions/admin'
 
-interface UserActionsProps {
-  userId: string
-  currentRole: 'admin' | 'user' | 'dev_admin'
-  isActive: boolean
-  /** Zabezpieczenie: nie pozwól adminowi zablokować własnego konta */
-  isSelf: boolean
-}
-
+// ---------------------------------------------------------------------------
+// UserRoleSelect — dropdown zmiany roli w wierszu tabeli
+// ---------------------------------------------------------------------------
 export function UserRoleSelect({ userId, currentRole, isSelf }: {
   userId: string
   currentRole: 'admin' | 'user' | 'dev_admin'
@@ -72,6 +68,9 @@ export function UserRoleSelect({ userId, currentRole, isSelf }: {
   )
 }
 
+// ---------------------------------------------------------------------------
+// ToggleActiveButton — aktywuj / dezaktywuj konto
+// ---------------------------------------------------------------------------
 export function ToggleActiveButton({ userId, isActive, isSelf }: {
   userId: string
   isActive: boolean
@@ -126,6 +125,9 @@ export function ToggleActiveButton({ userId, isActive, isSelf }: {
   )
 }
 
+// ---------------------------------------------------------------------------
+// ResetPasswordButton — wyślij link do resetu hasła
+// ---------------------------------------------------------------------------
 export function ResetPasswordButton({ userId }: { userId: string }) {
   const [isPending, startTransition] = useTransition()
   const [status, setStatus] = useState<'idle' | 'ok' | 'error'>('idle')
@@ -176,5 +178,101 @@ export function ResetPasswordButton({ userId }: { userId: string }) {
   )
 }
 
-// Nie używany osobno — eksport pomocniczy
-export { MoreHorizontal }
+// ---------------------------------------------------------------------------
+// EditFullNameControl — inline edycja imienia i nazwiska (A3)
+// ---------------------------------------------------------------------------
+export function EditFullNameControl({ userId, currentName }: {
+  userId: string
+  currentName: string | null
+}) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [isEditing, setIsEditing] = useState(false)
+  const [value, setValue] = useState(currentName ?? '')
+  const [error, setError] = useState<string | null>(null)
+
+  function handleEdit() {
+    setValue(currentName ?? '')
+    setError(null)
+    setIsEditing(true)
+  }
+
+  function handleCancel() {
+    setIsEditing(false)
+    setError(null)
+  }
+
+  async function handleSave() {
+    setError(null)
+    startTransition(async () => {
+      const result = await updateUserFullName(userId, value)
+      if ('error' in result) {
+        setError(result.error)
+      } else {
+        setIsEditing(false)
+        router.refresh()
+      }
+    })
+  }
+
+  if (!isEditing) {
+    return (
+      <div className="flex items-center gap-1.5 group">
+        <span className="font-medium text-foreground text-sm">
+          {currentName ?? '—'}
+        </span>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 p-0 rounded opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+          onClick={handleEdit}
+          aria-label="Edytuj imię i nazwisko"
+        >
+          <Pencil className="h-3 w-3" aria-hidden="true" />
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-1.5">
+        <Input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="h-7 text-sm w-44"
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSave()
+            if (e.key === 'Escape') handleCancel()
+          }}
+          aria-label="Imię i nazwisko"
+          disabled={isPending}
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0 rounded text-teal hover:bg-teal/10"
+          onClick={handleSave}
+          disabled={isPending}
+          aria-label="Zapisz"
+        >
+          <Check className="h-3.5 w-3.5" aria-hidden="true" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0 rounded text-muted-foreground hover:bg-muted"
+          onClick={handleCancel}
+          disabled={isPending}
+          aria-label="Anuluj"
+        >
+          <X className="h-3.5 w-3.5" aria-hidden="true" />
+        </Button>
+      </div>
+      {error && (
+        <p className="font-meta text-[0.68rem] text-status-off" role="alert">{error}</p>
+      )}
+    </div>
+  )
+}

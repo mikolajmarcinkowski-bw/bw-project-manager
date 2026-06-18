@@ -128,6 +128,38 @@ export async function toggleUserActive(
 }
 
 // ---------------------------------------------------------------------------
+// Edycja pełnego imienia i nazwiska
+// ---------------------------------------------------------------------------
+export async function updateUserFullName(
+  userId: string,
+  full_name: string
+): Promise<{ ok: true } | { error: string }> {
+  await requireAdmin()
+
+  if (!userId) return { error: 'Brak identyfikatora użytkownika.' }
+  const name = (full_name ?? '').trim()
+  if (!name) return { error: 'Imię i nazwisko nie może być puste.' }
+  if (name.length > 200) return { error: 'Imię i nazwisko jest za długie (max 200 znaków).' }
+
+  const adminClient = createAdminClient()
+
+  const { error } = await adminClient
+    .from('profiles')
+    .update({ full_name: name })
+    .eq('id', userId)
+
+  if (error) {
+    console.error('[updateUserFullName] update failed:', error)
+    return { error: 'Nie udało się zaktualizować imienia i nazwiska.' }
+  }
+
+  revalidatePath('/admin/users')
+  revalidatePath('/admin/team')
+
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
 // Reset hasła — wysyłamy e-mail z linkiem do resetu
 // ---------------------------------------------------------------------------
 export async function resetUserPassword(
