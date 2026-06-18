@@ -195,9 +195,10 @@ function RagBadge({ rag }: { rag: RagValue | null }) {
 interface RaidViewProps {
   projectId: string
   initialRisks: Risk[]
+  onEscalateRisk?: (risk: Risk) => void
 }
 
-export function RaidView({ projectId, initialRisks }: RaidViewProps) {
+export function RaidView({ projectId, initialRisks, onEscalateRisk }: RaidViewProps) {
   const router = useRouter()
   const [risks, setRisks] = useState<Risk[]>(initialRisks)
   const [isPending, startTransition] = useTransition()
@@ -474,6 +475,16 @@ export function RaidView({ projectId, initialRisks }: RaidViewProps) {
                   </td>
                   <td className="px-2 py-2.5">
                     <div className="flex items-center justify-center gap-1">
+                      {onEscalateRisk && (risk.status === 'open' || risk.status === 'monitor') && (
+                        <button
+                          type="button"
+                          onClick={() => onEscalateRisk(risk)}
+                          className="text-[0.6rem] font-meta text-muted-foreground hover:text-orange-600 transition-colors px-1.5 py-0.5 rounded hover:bg-orange-50 dark:hover:bg-orange-950/20"
+                          title="Eskaluj do Change Request"
+                        >
+                          ↑ CR
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => openEdit(risk)}
