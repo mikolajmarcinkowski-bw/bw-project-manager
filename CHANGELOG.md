@@ -4,6 +4,32 @@
 
 ---
 
+## [1.1.0] — 2026-06-18 — 🚀 PRODUKCJA: MCP Server Faza 1 (P3, D-032) + skill Claude
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `3566748`). Sesja 16.
+> Główna ścieżka tworzenia projektów przez Claude jest teraz aktywna.
+
+### Dodano — MCP Server (27 operacji)
+- **Fundament auth:** tabela `api_tokens` (migracja wdrożona), `verifyMcpToken()` (Bearer token), `createMcpHandler()`, endpoint `/api/mcp/tokens`
+- **7 READ tools:** `get_clients`, `get_projects`, `get_project_detail` (D-037 status), `get_tasks`, `get_step_templates`, `get_team_members`, `get_activity_log`
+- **5 WRITE core:** `create_project` (R15 auto-insert), `update_task_status` (hidden sync), `set_task_owner`, `update_task`, `bulk_hide_tasks`
+- **14 WRITE domain:** `add/update_risk`, `add/update_change_request`, `update_milestone`, `add/update_kpi`, `set_budget_settings`, `add/update_budget_line`, `add_stakeholder`, `add/update_question`
+- **MEGA-TOOL:** `setup_project_full` — projekt + budżet + ryzyka + milestony + stakeholderzy + KPI w jednym wywołaniu
+- **Smoke test** potwierdzony: create_project z R15 (10 faz, 49 zadań), add_risk, setup_project_full
+
+### Dodano — Skill Claude `/bw-project-manager`
+- Lokalny stdio MCP server (`~/.claude/bw-mcp/server.mjs`) zarejestrowany w Claude Code (`--scope user`)
+- Skill z instrukcjami flow: potwierdzenie przed zapisem (R10), flow tworzenia projektu krok po kroku
+- Token MCP wygenerowany dla konta mikolaj.marcinkowski@businessweb.pl
+
+### Naprawiono
+- Checklist fazy: zakładka zawsze widoczna (nie tylko po kliknięciu klocka)
+- Checklist fazy: domyślnie otwiera pierwszą aktywną fazę projektu
+
+### Server actions WRITE (aktualnie): 7/26 + 27 MCP tools
+
+---
+
 ## [1.0.0] — 2026-06-17 — 🚀 PRODUKCJA: Faza 2c kompletna + 50 ulepszeń UX + edycja projektu/klienta
 
 > Status: **ZMERGOWANE → produkcja** (`main`, `fe210a2`). Sesja 14.
