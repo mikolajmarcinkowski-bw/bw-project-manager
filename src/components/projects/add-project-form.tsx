@@ -458,12 +458,24 @@ function Step2Tasks({
       {/* Lista faz + zadania */}
       <div className="max-h-[calc(100vh-300px)] min-h-[250px] overflow-y-auto flex flex-col gap-4 pr-1">
         <p className="font-meta text-xs text-muted-foreground">
-          Zadania oznaczone jako N/A nie pojawią się w harmonogramie. Można je odkryć później przez przycisk „Pokaż N/A".
+          Zadania oznaczone jako N/D nie pojawią się w harmonogramie. Można je odkryć później przez przycisk „Pokaż N/D".
         </p>
         {phases.length === 0 ? (
-          <p className="font-meta text-sm text-muted-foreground py-4 text-center">
-            Brak zadań pasujących do wybranych typów wdrożenia.
-          </p>
+          <div className="flex flex-col items-center gap-3 py-6 text-center">
+            <p className="font-meta text-sm text-muted-foreground">
+              Brak zadań pasujących do wybranych typów wdrożenia.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-full gap-1.5"
+              onClick={onBack}
+            >
+              <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
+              Wróć do danych
+            </Button>
+          </div>
         ) : (
           phases.map((phase) => (
             <PhaseSection

@@ -783,6 +783,7 @@ export function CrView({ projectId, initialCrs, initialRiskForCr, onRiskCrHandle
                   <th className="text-white px-3 py-2 text-right font-bold tracking-wide w-24">Koszt</th>
                   <th className="text-white px-3 py-2 text-left font-bold tracking-wide w-24">Zgłoszono</th>
                   <th className="text-white px-3 py-2 text-left font-bold tracking-wide w-24">Status</th>
+                  <th className="text-white px-3 py-2 text-left font-bold tracking-wide w-28">Zatwierdzenia</th>
                   <th className="text-white px-3 py-2 w-16"></th>
                 </tr>
               </thead>
@@ -814,6 +815,36 @@ export function CrView({ projectId, initialCrs, initialRiskForCr, onRiskCrHandle
                       <span className={cn('inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border', STATUS_BADGE[cr.status].cls)}>
                         {STATUS_BADGE[cr.status].label}
                       </span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold border',
+                            cr.bwApproval === 'approved'
+                              ? 'bg-teal/10 text-teal border-teal/30'
+                              : cr.bwApproval === 'rejected'
+                                ? 'bg-status-off/10 text-status-off border-status-off/30'
+                                : 'bg-muted text-muted-foreground border-border'
+                          )}
+                          title="Zatwierdzenie BW"
+                        >
+                          BW: {cr.bwApproval === 'approved' ? '✓' : cr.bwApproval === 'rejected' ? '✕' : '—'}
+                        </span>
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold border',
+                            cr.clientApproval === 'approved'
+                              ? 'bg-teal/10 text-teal border-teal/30'
+                              : cr.clientApproval === 'rejected'
+                                ? 'bg-status-off/10 text-status-off border-status-off/30'
+                                : 'bg-muted text-muted-foreground border-border'
+                          )}
+                          title="Zatwierdzenie klienta"
+                        >
+                          Klient: {cr.clientApproval === 'approved' ? '✓' : cr.clientApproval === 'rejected' ? '✕' : '—'}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-center">
                       <div className="flex gap-1 justify-center">

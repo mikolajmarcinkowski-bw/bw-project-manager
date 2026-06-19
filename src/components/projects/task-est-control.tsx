@@ -148,7 +148,7 @@ export function TaskEstControl({ taskId, est }: TaskEstControlProps) {
         {error && (
           <span
             role="alert"
-            className="block max-w-[48px] truncate text-[0.5rem] font-heading text-destructive leading-none"
+            className="block max-w-[120px] truncate text-[0.65rem] font-heading text-destructive leading-none"
             title={error}
           >
             {error}
@@ -187,7 +187,7 @@ export function TaskEstControl({ taskId, est }: TaskEstControlProps) {
       {error && (
         <span
           role="alert"
-          className="block max-w-[48px] truncate text-[0.5rem] font-heading text-destructive leading-none"
+          className="block max-w-[120px] truncate text-[0.65rem] font-heading text-destructive leading-none"
           title={error}
         >
           {error}

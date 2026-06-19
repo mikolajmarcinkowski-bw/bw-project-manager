@@ -11,7 +11,7 @@ export const metadata = {
 
 function RoleBadge({ role }: { role: string }) {
   const map: Record<string, { label: string; className: string }> = {
-    dev_admin: { label: 'dev_admin', className: 'bg-orange/15 text-orange border border-orange/30' },
+    dev_admin: { label: 'Dev Admin', className: 'bg-orange/15 text-orange border border-orange/30' },
     admin: { label: 'Admin', className: 'bg-teal/10 text-teal-strong border border-teal/30' },
     user: { label: 'Użytkownik', className: 'bg-muted text-muted-foreground border border-border' },
   }
@@ -116,9 +116,10 @@ export default async function AdminUsersPage() {
 
       {/* Tabela */}
       {users.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card py-12 text-center">
-          <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" aria-hidden="true" />
+        <div className="rounded-xl border border-dashed border-border bg-card py-12 text-center flex flex-col items-center gap-4">
+          <Users className="h-10 w-10 text-muted-foreground/30" aria-hidden="true" />
           <p className="font-meta text-sm text-muted-foreground">Brak użytkowników. Dodaj pierwsze konto.</p>
+          <AddUserDialog />
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden shadow-whisper">

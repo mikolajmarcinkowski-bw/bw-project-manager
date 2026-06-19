@@ -272,6 +272,9 @@ export function PhaseChecklist({ step, profiles, pmProfiles = [], allSteps, onSe
             </span>
             <span className="text-muted-foreground/60"> / {totalCount}</span>
             <span className="ml-1">zadań ukończonych</span>
+            {hiddenTasks.length > 0 && (
+              <span className="ml-1 text-muted-foreground/50">(+ {hiddenTasks.length} N/D)</span>
+            )}
           </span>
 
           {totalCount > 0 && (
@@ -337,8 +340,8 @@ export function PhaseChecklist({ step, profiles, pmProfiles = [], allSteps, onSe
                 ▶
               </span>
               {showHidden
-                ? `Ukryj ${hiddenTasks.length} zadań N/A`
-                : `Pokaż ${hiddenTasks.length} ukrytych zadań N/A`}
+                ? `Ukryj ${hiddenTasks.length} zadań N/D`
+                : `Pokaż ${hiddenTasks.length} ukrytych zadań N/D`}
             </button>
 
             {showHidden &&
@@ -351,7 +354,7 @@ export function PhaseChecklist({ step, profiles, pmProfiles = [], allSteps, onSe
 
       {/* ── Nota R2 ──────────────────────────────────────────────────────── */}
       <p className="pt-3 font-meta text-[0.65rem] text-muted-foreground/70 leading-relaxed">
-        Ukończenie fazy nie wymaga zamknięcia wszystkich zadań (R2). Zadania oznaczone jako N/D
+        Ukończenie fazy nie wymaga zamknięcia wszystkich zadań (R2). Zadania oznaczone jako N/D (Nie Dotyczy)
         są wykluczone z licznika postępu.
       </p>
     </div>

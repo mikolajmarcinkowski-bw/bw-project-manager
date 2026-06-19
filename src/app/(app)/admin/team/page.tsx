@@ -105,12 +105,14 @@ export default async function AdminTeamPage() {
                   <th
                     scope="col"
                     className="px-4 py-3 text-left font-meta text-xs font-semibold text-muted-foreground uppercase tracking-wide"
+                    title="Aktywne zadania przypisane do tego konsultanta"
                   >
                     Zadania
                   </th>
                   <th
                     scope="col"
                     className="px-4 py-3 text-left font-meta text-xs font-semibold text-muted-foreground uppercase tracking-wide"
+                    title="Aktywne projekty w których konsultant ma przypisane zadania"
                   >
                     Projekty
                   </th>

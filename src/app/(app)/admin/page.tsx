@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Users, UserCog, Shield } from 'lucide-react'
+import { Users, Shield } from 'lucide-react'
 
 export const metadata = {
   title: 'Panel admina · BW Project Manager',
@@ -47,7 +47,7 @@ export default function AdminPage() {
         >
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal/10">
-              <UserCog className="h-4.5 w-4.5 text-teal" aria-hidden="true" />
+              <Users className="h-4.5 w-4.5 text-teal" aria-hidden="true" />
             </div>
             <span className="text-sm font-semibold text-foreground group-hover:text-teal-strong transition-colors">
               Pula konsultantów

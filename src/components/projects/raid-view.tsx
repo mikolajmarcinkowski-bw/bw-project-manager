@@ -434,9 +434,9 @@ export function RaidView({ projectId, initialRisks, onEscalateRisk }: RaidViewPr
                 <th className="text-left px-3 py-2 font-medium text-muted-foreground min-w-[200px]">Ryzyko</th>
                 <th className="text-left px-3 py-2 font-medium text-muted-foreground">Kat.</th>
                 <th className="text-left px-3 py-2 font-medium text-muted-foreground">Faza</th>
-                <th className="text-center px-2 py-2 font-medium text-muted-foreground">P</th>
-                <th className="text-center px-2 py-2 font-medium text-muted-foreground">W</th>
-                <th className="text-center px-2 py-2 font-medium text-muted-foreground">P×W</th>
+                <th className="text-center px-2 py-2 font-medium text-muted-foreground" title="Prawdopodobieństwo (1–5)">P</th>
+                <th className="text-center px-2 py-2 font-medium text-muted-foreground" title="Wpływ (1–5)">W</th>
+                <th className="text-center px-2 py-2 font-medium text-muted-foreground" title="P × W = poziom ryzyka">P×W</th>
                 <th className="text-center px-2 py-2 font-medium text-muted-foreground">RAG</th>
                 <th className="text-left px-3 py-2 font-medium text-muted-foreground">Właściciel</th>
                 <th className="text-left px-3 py-2 font-medium text-muted-foreground min-w-[160px]">Mitigacja</th>
@@ -456,9 +456,9 @@ export function RaidView({ projectId, initialRisks, onEscalateRisk }: RaidViewPr
                   </td>
                   <td className="px-3 py-2.5 text-muted-foreground">{risk.category ?? '—'}</td>
                   <td className="px-3 py-2.5 text-muted-foreground">{risk.phase ?? '—'}</td>
-                  <td className="px-2 py-2.5 text-center text-foreground">{risk.probability ?? '—'}</td>
-                  <td className="px-2 py-2.5 text-center text-foreground">{risk.impact ?? '—'}</td>
-                  <td className="px-2 py-2.5 text-center font-semibold text-foreground">{risk.score ?? '—'}</td>
+                  <td className="px-2 py-2.5 text-center text-foreground" title="Prawdopodobieństwo (1–5)">{risk.probability ?? '—'}</td>
+                  <td className="px-2 py-2.5 text-center text-foreground" title="Wpływ (1–5)">{risk.impact ?? '—'}</td>
+                  <td className="px-2 py-2.5 text-center font-semibold text-foreground" title="P × W = poziom ryzyka">{risk.score ?? '—'}</td>
                   <td className="px-2 py-2.5 text-center">
                     <RagBadge rag={risk.rag} />
                   </td>

@@ -471,8 +471,8 @@ export function GanttChart({ project, profiles = [], pmProfiles = [], targetStep
                 aria-pressed={showHidden}
               >
                 {showHidden
-                  ? `Ukryj N/A (${hiddenTaskCount})`
-                  : `Pokaż N/A (${hiddenTaskCount})`}
+                  ? `Ukryj N/D (${hiddenTaskCount})`
+                  : `Pokaż N/D (${hiddenTaskCount})`}
               </button>
             </>
           )}
@@ -921,7 +921,7 @@ export function GanttChart({ project, profiles = [], pmProfiles = [], targetStep
                             <div
                               key={`task-hidden-${task.id}`}
                               role="row"
-                              aria-label={`[N/A] ${task.title}`}
+                              aria-label={`[N/D] ${task.title}`}
                               className="flex items-center min-h-[34px] border-t border-dashed border-border/20 opacity-50"
                             >
                               <div role="cell" className={cn(COL.id, 'px-1.5 py-1 font-mono text-[0.6rem] text-muted-foreground/60')}>

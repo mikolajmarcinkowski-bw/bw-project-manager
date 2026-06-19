@@ -61,7 +61,7 @@ export default async function ClientPage({ params, searchParams }: ClientPagePro
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1.5">
           {/* Breadcrumb */}
-          <nav aria-label="Nawigacja okruszkowa">
+          <nav aria-label="Ścieżka nawigacyjna">
             <Link
               href="/dashboard"
               className="font-meta text-xs text-teal-strong hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal rounded"
