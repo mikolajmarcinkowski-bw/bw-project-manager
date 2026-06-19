@@ -102,6 +102,8 @@ export function ProjectViews({
           decisions={project.decisions}
           onSelectStep={handleSelectStep}
           onRequestNewCr={() => setTab('CR')}
+          specialists={specialists}
+          pmProfiles={pmProfiles}
         />
           <ParallelView steps={project.steps} decisions={project.decisions} />
         </div>
