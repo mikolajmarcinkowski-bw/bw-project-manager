@@ -1,14 +1,18 @@
 import { Folder, FolderOpen } from 'lucide-react'
 import { ClientCard } from '@/components/clients/client-card'
 import { AddClientDialog } from '@/components/clients/add-client-dialog'
-import { getClientsWithStats } from '@/lib/data/projects'
+import { getClientsWithStats, getDashboardBriefData } from '@/lib/data/projects'
+import { DashboardBriefing } from '@/components/dashboard/dashboard-briefing'
 
 export const metadata = {
   title: 'Dashboard · BW Project Manager',
 }
 
 export default async function DashboardPage() {
-  const clients = await getClientsWithStats()
+  const [clients, briefData] = await Promise.all([
+    getClientsWithStats(),
+    getDashboardBriefData(),
+  ])
 
   const today = new Date().toLocaleDateString('pl-PL', {
     weekday: 'long',
@@ -38,6 +42,9 @@ export default async function DashboardPage() {
         </div>
         {clients.length > 0 && <AddClientDialog />}
       </div>
+
+      {/* Dzienny briefing PM-a (D-R1) */}
+      <DashboardBriefing data={briefData} />
 
       {/* Lista teczek */}
       {clients.length > 0 ? (

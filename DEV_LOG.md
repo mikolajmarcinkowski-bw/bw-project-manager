@@ -5,6 +5,23 @@
 
 ---
 
+## [2026-06-19] fix | Literówka + Gantt table overflow + status pill — `753ce21` (v2.0.0)
+
+- **Literówka admin/team:** "1 konsultantw puli" → "1 konsultant w puli" (JSX whitespace stripping — template literal)
+- **task-status-control:** dwa osobne label maps — `TASK_STATUS_LABEL_PILL` (Plan./W toku/QA/N/D) w pillu komórki + `TASK_STATUS_LABEL` (pełne) w menu dropdownu. Naprawia `"QA / Weryfikacja"` wylewające się z kolumny 76px.
+- **gantt-chart COL:** `task` max-w-[300px]; `kind` 72→64px; `st` i `own` overflow-hidden
+
+---
+
+## [2026-06-19] fix+feat | KPI select bug + dashboard click + phase strip task panel — `74629f5` (v1.9.0)
+
+- **KPI SelectValue:** Base UI bez render function → raw "at" zamiast "Zagrożony". Fix: `{(value) => KPI_STATUS_LABEL[v]}`
+- **RAID SelectValue:** analogiczna poprawka
+- **Dashboard click:** `active:scale-[0.97]` na client card (inspekcja: "nie podświetla się przy kliknięciu")
+- **Phase strip task panel:** klik klocka → expanduje inline panel zadań (status/est/konsultant/PM interaktywne); auto-scroll do aktywnej fazy; "Checklist →"
+
+---
+
 ## [2026-06-19] fix | Audyt impeccable — wszystkie 18 krytycznych + HIGH + MEDIUM + LOW — `ae6bf9e` (v1.8.0)
 
 **v1.7.0 (🔴 krytyczne):** "zmień" zamiast "change", teal avatar konsultanta, "PM prowadzący", "Zaplanowane"/"QA Weryfikacja", admin/team button zawsze widoczny, ArchiveDialog czerwone + hint, burn% overspend alert, RACI overflow-x-auto.

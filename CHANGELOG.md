@@ -4,6 +4,79 @@
 
 ---
 
+## [2.0.0] — 2026-06-19 — 🚀 PRODUKCJA: Literówka + Gantt table fixes
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `753ce21`). Sesja 20.
+
+### Naprawiono
+- **Literówka admin/team:** JSX whitespace stripping powodował "1 konsultantw puli" → template literal wymusza spację
+- **Gantt status pill overflow:** `"QA / Weryfikacja"` (~90px) wylewało się z kolumny 76px. Rozwiązanie: dwa osobne label maps — `TASK_STATUS_LABEL_PILL` (krótkie: Plan./W toku/QA/N/D) dla pilla w komórce + `TASK_STATUS_LABEL` (pełne) dla menu dropdownu
+- **Gantt kolumny:** `task` max-w-[300px] (nie marnuje przestrzeni), `st` overflow-hidden, `own` overflow-hidden, `kind` 72→64px
+- **Wbudowane zweryfikowane fixes z v1.7.0–v1.9.0** (18 krytycznych, 29 HIGH, 29 MED, 18 LOW z audytu impeccable)
+
+---
+
+## [1.9.0] — 2026-06-19 — 🚀 PRODUKCJA: KPI select bug + phase strip task panel
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `74629f5`). Sesja 20.
+
+### Naprawiono
+- **KPI SelectValue bug:** Base UI `SelectPrimitive.Value` bez render function renderowało raw `"at"` zamiast `"Zagrożony"`. Fix: `{(value) => KPI_STATUS_LABEL[value as KpiStatus] ?? value}` — teraz dropdown i badge spójne
+- **RAID SelectValue:** analogiczna poprawka
+- **Dashboard click feedback:** `active:scale-[0.97]` na client card — folder podświetla się przy kliknięciu
+
+### Dodano
+- **Phase Strip — inline task panel:** klik klocka → panel z zadaniami fazy bezpośrednio pod paskiem (status/est/konsultant/PM w pełni interaktywne); "Checklist →" przełącza zakładkę; auto-scroll do aktywnej fazy; props `specialists` + `pmProfiles` przekazane do PhaseStrip
+
+---
+
+## [1.8.0] — 2026-06-19 — 🚀 PRODUKCJA: Audyt impeccable HIGH + MEDIUM + LOW (19 plików)
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `ae6bf9e`). Sesja 19.
+
+### Naprawiono (HIGH)
+- Health badges w project-header z tokenami CSS (nie hardkodowane hex); ciemny tryb OK
+- CR approval status (BW/Klient) widoczny bezpośrednio w tabeli CR
+- Error text w task controls: 0.5rem→0.65rem, max-w 72→120px
+- N/A→N/D ujednolicone w całej aplikacji (phase-checklist, gantt-chart, add-project-form)
+- Filtry /projekty: badge "Filtry (N) × Wyczyść" gdy filtry aktywne
+- Kreator Step 2: "← Wróć do danych" w empty state
+- `/admin/users` empty state: AddUserDialog wewnątrz box
+- RACI legenda: Odpowiedzialny/Rozliczany/Konsultowany/Informowany (po polsku)
+
+### Naprawiono (MEDIUM)
+- Pluralizacja klientów/projektów na dashboardzie
+- Licznik N/D obok progress w phase-checklist
+- AlertDialog potwierdzenia dezaktywacji konta użytkownika
+- Archiwum: kolumna Typy zawsze widoczna (nie `hidden sm:`)
+- RAID tooltips: P = Prawdopodobieństwo (1–5), W = Wpływ (1–5)
+
+### Naprawiono (LOW)
+- `dev_admin` → `'Dev Admin'` w badge roli
+- Tooltips nagłówków Zadania/Projekty w admin/team
+- `aria-label="Nawigacja okruszkowa"` → `"Ścieżka nawigacyjna"` (3 pliki)
+- Ikona admin/page: `UserCog` → `Users` dla puli konsultantów
+
+---
+
+## [1.7.0] — 2026-06-19 — 🚀 PRODUKCJA: Audyt impeccable — 12 krytycznych fixes
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `788c33c`). Sesja 19.
+
+### Naprawiono (KRYTYCZNE)
+- `"Pula specjalistów"` → `"Pula konsultantów"` (admin/page.tsx)
+- Potwierdzenie daty: `"change"` → `"zmień"` (task-date-control.tsx)
+- `"Kierownik projektu (PM)"` → `"PM prowadzący"` (edit-project-dialog.tsx)
+- Status labels: `todo="Zaplanowane"`, `for_quality="QA / Weryfikacja"`
+- `TaskAssigneeControl`: avatar teal gdy konsultant przypisany (był szary)
+- `/admin/team`: "Dodaj konsultanta" zawsze widoczny (też gdy pula pusta)
+- `ArchiveDialog`: ostrzeżenie czerwone + hint z dokładną nazwą projektu
+- `budget-view.tsx`: burn% > 90 = amber, > 100 = red (visual overspend alert)
+- `raci-view.tsx`: overflow-x-auto wrapper — tabela przewijalna na mobile
+- `edit-project-dialog.tsx`: `min={startDate}` na polu deadline
+
+---
+
 ## [1.6.0] — 2026-06-19 — 🚀 PRODUKCJA: Inline edit estymacji + auto-sync budżetu
 
 > Status: **ZMERGOWANE → produkcja** (`main`, `4f7849f`). Sesja 19.
