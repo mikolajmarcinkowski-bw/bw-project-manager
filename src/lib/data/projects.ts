@@ -652,11 +652,13 @@ export async function getTaskTemplatesForCreation(): Promise<TaskTemplateForCrea
 // Nie korzysta z getAtRiskProjectIds żeby uniknąć niezgodności typów klientów.
 
 export interface BriefAtRiskProject {
+  projectId: string
   name: string
   clientName: string
 }
 
 export interface BriefTask {
+  projectId: string
   title: string
   projectName: string
   assigneeName: string | null
@@ -703,12 +705,12 @@ export async function getProjectsForBrief(): Promise<BriefData> {
   for (const t of riskTaskRows ?? []) riskIds.add(t.project_id)
   for (const p of riskProjectRows ?? []) riskIds.add(p.id)
 
-  // Pobierz dane projektów zagrożonych (name + clientName)
+  // Pobierz dane projektów zagrożonych (id + name + clientName)
   let atRiskProjects: BriefAtRiskProject[] = []
   if (riskIds.size > 0) {
     const { data: riskProjectData } = await supabase
       .from('projects')
-      .select('name, clients(name)')
+      .select('id, name, clients(name)')
       .in('id', [...riskIds])
       .order('name', { ascending: true })
 
@@ -718,6 +720,7 @@ export async function getProjectsForBrief(): Promise<BriefData> {
         ? (clientsField[0] as { name: string } | undefined) ?? null
         : (clientsField as { name: string } | null)
       return {
+        projectId: p.id,
         name: p.name,
         clientName: clientRow?.name ?? '',
       }
@@ -727,7 +730,7 @@ export async function getProjectsForBrief(): Promise<BriefData> {
   // Zadania na dziś (due_date = today, status != done/na)
   const { data: todayTaskRows } = await supabase
     .from('tasks')
-    .select('title, assignee_name, due_date, projects(name)')
+    .select('project_id, title, assignee_name, due_date, projects(name)')
     .eq('due_date', today)
     .not('status', 'in', '(done,na)')
     .order('title', { ascending: true })
@@ -738,6 +741,7 @@ export async function getProjectsForBrief(): Promise<BriefData> {
       ? (projectsField[0] as { name: string } | undefined) ?? null
       : (projectsField as { name: string } | null)
     return {
+      projectId: t.project_id,
       title: t.title,
       projectName: projectRow?.name ?? '',
       assigneeName: t.assignee_name ?? null,
@@ -755,7 +759,7 @@ export async function getProjectsForBrief(): Promise<BriefData> {
 
   const { data: soonTaskRows } = await supabase
     .from('tasks')
-    .select('title, assignee_name, due_date, projects(name)')
+    .select('project_id, title, assignee_name, due_date, projects(name)')
     .gte('due_date', tomorrow)
     .lte('due_date', dayAfter)
     .not('status', 'in', '(done,na)')
@@ -767,6 +771,7 @@ export async function getProjectsForBrief(): Promise<BriefData> {
       ? (projectsField[0] as { name: string } | undefined) ?? null
       : (projectsField as { name: string } | null)
     return {
+      projectId: t.project_id,
       title: t.title,
       projectName: projectRow?.name ?? '',
       assigneeName: t.assignee_name ?? null,
@@ -1148,6 +1153,7 @@ export async function getProjectHealthMetrics(projectId: string): Promise<Projec
 // Rozszerza BriefData o alerty burn rate >= 80%. Admin client (brak sesji).
 
 export interface BurnAlertProject {
+  projectId: string
   name: string
   clientName: string
   burnRate: number // 0–100+
@@ -1196,6 +1202,7 @@ export async function getDashboardBriefData(): Promise<DashboardBriefData> {
       ? (clientsField[0] as { name: string } | undefined) ?? null
       : (clientsField as { name: string } | null)
     burnAlerts.push({
+      projectId: project.id,
       name: project.name,
       clientName: clientRow?.name ?? '',
       burnRate,
@@ -1206,6 +1213,181 @@ export async function getDashboardBriefData(): Promise<DashboardBriefData> {
   burnAlerts.sort((a, b) => b.burnRate - a.burnRate)
 
   return { ...briefData, burnAlerts }
+}
+
+// ─── getActiveProjectsWithHealth (D-R1 — Project Health Cards) ────────────────
+
+export interface ProjectHealthCard {
+  id: string
+  name: string
+  clientName: string
+  risksRed: number
+  crPending: number
+  burnRate: number | null
+  currentPhase: string | null
+}
+
+export async function getActiveProjectsWithHealth(): Promise<ProjectHealthCard[]> {
+  const supabase = createAdminClient()
+
+  // Pobierz wszystkie aktywne projekty z klientem i aktywną fazą
+  const { data: projects } = await supabase
+    .from('projects')
+    .select('id, name, clients(name)')
+    .eq('status', 'active')
+    .order('name', { ascending: true })
+
+  if (!projects || projects.length === 0) return []
+
+  const projectIds = projects.map((p) => p.id)
+
+  // Pobierz health data w 3 zapytaniach równoległych (wszystkie projekty naraz)
+  const [
+    { data: redRisks },
+    { data: pendingCrs },
+    { data: budgetLines },
+    { data: activeSteps },
+  ] = await Promise.all([
+    supabase.from('risks').select('project_id').eq('rag', 'R').neq('status', 'closed').in('project_id', projectIds),
+    supabase.from('change_requests').select('project_id').eq('status', 'pending').in('project_id', projectIds),
+    supabase.from('budget_lines').select('project_id, est_h, actual_h').in('project_id', projectIds),
+    supabase.from('project_steps').select('project_id, phase_name').eq('is_active', true).in('project_id', projectIds),
+  ])
+
+  // Zagreguj per projekt w JS
+  const risksByProject = new Map<string, number>()
+  for (const r of redRisks ?? []) {
+    risksByProject.set(r.project_id, (risksByProject.get(r.project_id) ?? 0) + 1)
+  }
+
+  const crsByProject = new Map<string, number>()
+  for (const cr of pendingCrs ?? []) {
+    crsByProject.set(cr.project_id, (crsByProject.get(cr.project_id) ?? 0) + 1)
+  }
+
+  const budgetByProject = new Map<string, { estH: number; actualH: number }>()
+  for (const line of budgetLines ?? []) {
+    const prev = budgetByProject.get(line.project_id) ?? { estH: 0, actualH: 0 }
+    budgetByProject.set(line.project_id, {
+      estH: prev.estH + (line.est_h ?? 0),
+      actualH: prev.actualH + (line.actual_h ?? 0),
+    })
+  }
+
+  // Pierwsza aktywna faza per projekt
+  const phaseByProject = new Map<string, string>()
+  for (const step of activeSteps ?? []) {
+    if (!phaseByProject.has(step.project_id)) {
+      phaseByProject.set(step.project_id, step.phase_name)
+    }
+  }
+
+  const cards: ProjectHealthCard[] = projects.map((p) => {
+    const clientsField = p.clients
+    const clientRow = Array.isArray(clientsField)
+      ? (clientsField[0] as { name: string } | undefined) ?? null
+      : (clientsField as { name: string } | null)
+
+    const budget = budgetByProject.get(p.id)
+    let burnRate: number | null = null
+    if (budget && budget.estH > 0) {
+      burnRate = Math.round((budget.actualH / budget.estH) * 100)
+    }
+
+    return {
+      id: p.id,
+      name: p.name,
+      clientName: clientRow?.name ?? '',
+      risksRed: risksByProject.get(p.id) ?? 0,
+      crPending: crsByProject.get(p.id) ?? 0,
+      burnRate,
+      currentPhase: phaseByProject.get(p.id) ?? null,
+    }
+  })
+
+  // Sortuj: najgorszy health score na górze
+  cards.sort((a, b) => {
+    const scoreA = (a.risksRed * 3) + (a.crPending * 2) + ((a.burnRate ?? 0) >= 80 ? 1 : 0)
+    const scoreB = (b.risksRed * 3) + (b.crPending * 2) + ((b.burnRate ?? 0) >= 80 ? 1 : 0)
+    return scoreB - scoreA
+  })
+
+  return cards
+}
+
+// ─── getUpcomingMilestones (D-R1 — Milestone Timeline) ───────────────────────
+
+export interface UpcomingMilestone {
+  id: string
+  projectId: string
+  projectName: string
+  clientName: string
+  msCode: string | null
+  name: string
+  week: number | null
+  status: MilestoneStatus
+}
+
+export async function getUpcomingMilestones(daysAhead = 14): Promise<UpcomingMilestone[]> {
+  const supabase = createAdminClient()
+
+  // Pobierz aktywne projekty z datą startu (do obliczenia tygodnia → daty)
+  const { data: activeProjects } = await supabase
+    .from('projects')
+    .select('id, name, start_date, clients(name)')
+    .eq('status', 'active')
+
+  if (!activeProjects || activeProjects.length === 0) return []
+
+  const projectIds = activeProjects.map((p) => p.id)
+
+  // Pobierz wszystkie nieukończone milestony dla aktywnych projektów
+  const { data: milestoneRows } = await supabase
+    .from('milestones')
+    .select('id, project_id, ms_code, name, week, status')
+    .neq('status', 'done')
+    .in('project_id', projectIds)
+    .order('week', { ascending: true })
+
+  if (!milestoneRows) return []
+
+  // Map project info
+  const projectMap = new Map(activeProjects.map((p) => [p.id, p]))
+
+  // Filtruj wg tygodnia (week offset od start_date)
+  const today = new Date()
+  const cutoff = new Date(today.getTime() + daysAhead * 24 * 60 * 60 * 1000)
+
+  const result: UpcomingMilestone[] = []
+  for (const ms of milestoneRows) {
+    const project = projectMap.get(ms.project_id)
+    if (!project || ms.week === null) continue
+
+    // Oblicz szacowaną datę: start_date + (week - 1) * 7 dni
+    const startDate = project.start_date ? new Date(project.start_date) : null
+    if (startDate) {
+      const estimatedDate = new Date(startDate.getTime() + (ms.week - 1) * 7 * 24 * 60 * 60 * 1000)
+      if (estimatedDate > cutoff) continue // poza oknem
+    }
+
+    const clientsField = project.clients
+    const clientRow = Array.isArray(clientsField)
+      ? (clientsField[0] as { name: string } | undefined) ?? null
+      : (clientsField as { name: string } | null)
+
+    result.push({
+      id: ms.id,
+      projectId: ms.project_id,
+      projectName: project.name,
+      clientName: clientRow?.name ?? '',
+      msCode: ms.ms_code,
+      name: ms.name,
+      week: ms.week,
+      status: ms.status as MilestoneStatus,
+    })
+  }
+
+  return result.slice(0, 10) // max 10 nadchodzących
 }
 
 // ─── getArchivedProjects (P20 — widok archiwum) ───────────────────────────────

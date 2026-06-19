@@ -1,17 +1,26 @@
 import { Folder, FolderOpen } from 'lucide-react'
 import { ClientCard } from '@/components/clients/client-card'
 import { AddClientDialog } from '@/components/clients/add-client-dialog'
-import { getClientsWithStats, getDashboardBriefData } from '@/lib/data/projects'
+import {
+  getClientsWithStats,
+  getDashboardBriefData,
+  getActiveProjectsWithHealth,
+  getUpcomingMilestones,
+} from '@/lib/data/projects'
 import { DashboardBriefing } from '@/components/dashboard/dashboard-briefing'
+import { DashboardPortfolioStrip } from '@/components/dashboard/dashboard-portfolio-strip'
+import { DashboardProjectHealthCards } from '@/components/dashboard/dashboard-project-health-cards'
 
 export const metadata = {
   title: 'Dashboard · BW Project Manager',
 }
 
 export default async function DashboardPage() {
-  const [clients, briefData] = await Promise.all([
+  const [clients, briefData, projectsHealth, milestones] = await Promise.all([
     getClientsWithStats(),
     getDashboardBriefData(),
+    getActiveProjectsWithHealth(),
+    getUpcomingMilestones(14),
   ])
 
   const today = new Date().toLocaleDateString('pl-PL', {
@@ -23,6 +32,8 @@ export default async function DashboardPage() {
 
   const totalActive = clients.reduce((sum, c) => sum + c.activeCount, 0)
   const totalProjects = clients.reduce((sum, c) => sum + c.projectCount, 0)
+  const atRiskCount = briefData.atRiskProjects.length
+  const tasksTodayCount = briefData.tasksDueToday.length
 
   return (
     <div className="flex flex-col gap-6">
@@ -43,8 +54,21 @@ export default async function DashboardPage() {
         {clients.length > 0 && <AddClientDialog />}
       </div>
 
+      {/* Pasek statystyk portfolia (D-R1 v2) */}
+      <DashboardPortfolioStrip
+        totalActive={totalActive}
+        atRiskCount={atRiskCount}
+        tasksTodayCount={tasksTodayCount}
+        upcomingMilestonesCount={milestones.length}
+      />
+
       {/* Dzienny briefing PM-a (D-R1) */}
-      <DashboardBriefing data={briefData} />
+      <DashboardBriefing data={briefData} milestones={milestones} />
+
+      {/* Karty zdrowia projektów (D-R1 v2) — tylko gdy są aktywne */}
+      {projectsHealth.length > 0 && (
+        <DashboardProjectHealthCards projects={projectsHealth} />
+      )}
 
       {/* Lista teczek */}
       {clients.length > 0 ? (
