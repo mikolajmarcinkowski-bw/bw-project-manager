@@ -1,9 +1,14 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
+import { ChevronUp, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { GanttStep, ProjectDetail } from '@/lib/data/projects'
 import { DecisionDialog } from '@/components/projects/decision-dialog'
+import { TaskStatusControl } from './task-status-control'
+import { TaskAssigneeControl, type Specialist } from './task-assignee-control'
+import { TaskPmControl, type Profile as PmProfile } from './task-pm-control'
+import { TaskEstControl } from './task-est-control'
 
 // ─── Typy ─────────────────────────────────────────────────────────────────────
 
@@ -14,6 +19,8 @@ export interface PhaseStripProps {
   decisions: Decision[]
   onSelectStep: (stepId: string) => void
   onRequestNewCr?: () => void
+  specialists?: Specialist[]
+  pmProfiles?: PmProfile[]
 }
 
 // ─── Pomocnicze ───────────────────────────────────────────────────────────────
@@ -234,9 +241,10 @@ function Arrow() {
  *   onSelectStep   — callback (stepId: string) => void; wołany przy kliknięciu
  *                    klocka lub diamencika (stepId decyzji)
  */
-export function PhaseStrip({ steps, decisions, onSelectStep, onRequestNewCr }: PhaseStripProps) {
+export function PhaseStrip({ steps, decisions, onSelectStep, onRequestNewCr, specialists, pmProfiles }: PhaseStripProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollRight, setCanScrollRight] = useState(false)
+  const [expandedStepId, setExpandedStepId] = useState<string | null>(null)
 
   useEffect(() => {
     const el = scrollRef.current
@@ -253,6 +261,15 @@ export function PhaseStrip({ steps, decisions, onSelectStep, onRequestNewCr }: P
       ro.disconnect()
     }
   }, [])
+
+  // Auto-scroll to first active step on mount
+  useEffect(() => {
+    const activeStep = steps.find(s => s.isActive)
+    if (activeStep && scrollRef.current) {
+      const el = scrollRef.current.querySelector(`[data-step-id="${activeStep.id}"]`)
+      el?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    }
+  }, [steps])
 
   // Budujemy uporządkowaną listę elementów paska:
   // każdy krok może mieć dopasowane decyzje (stepId === step.id).
@@ -305,11 +322,15 @@ export function PhaseStrip({ steps, decisions, onSelectStep, onRequestNewCr }: P
         const showArrow = !isLast
 
         return (
-          <div key={item.kind === 'step' ? item.step.id : item.decision.id} className="flex items-stretch">
+          <div
+            key={item.kind === 'step' ? item.step.id : item.decision.id}
+            className="flex items-stretch"
+            {...(item.kind === 'step' ? { 'data-step-id': item.step.id } : {})}
+          >
             {item.kind === 'step' ? (
               <PhaseBlock
                 step={item.step}
-                onClick={() => onSelectStep(item.step.id)}
+                onClick={() => setExpandedStepId(id => id === item.step.id ? null : item.step.id)}
               />
             ) : (
               <DecisionDiamond
@@ -323,6 +344,85 @@ export function PhaseStrip({ steps, decisions, onSelectStep, onRequestNewCr }: P
         )
       })}
     </div>
+
+    {/* Panel rozwinięcia — zadania wybranej fazy */}
+    {expandedStepId && (() => {
+      const step = steps.find(s => s.id === expandedStepId)
+      if (!step) return null
+      const visibleTasks = step.tasks.filter(t => !t.hidden)
+      const done = visibleTasks.filter(t => t.status === 'done').length
+      return (
+        <div className="mt-2 rounded-xl border border-teal/20 bg-card shadow-whisper overflow-hidden">
+          {/* Nagłówek panelu */}
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-muted/30">
+            <div className="flex items-center gap-2">
+              <span className="font-heading font-semibold text-sm text-foreground">{step.phaseName}</span>
+              <span className="font-meta text-xs text-muted-foreground">
+                {done}/{visibleTasks.length} ukończone
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onSelectStep(expandedStepId)}
+                className="flex items-center gap-1 font-meta text-xs text-teal hover:text-teal-strong transition-colors"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Checklist
+              </button>
+              <button
+                type="button"
+                onClick={() => setExpandedStepId(null)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Zamknij panel"
+              >
+                <ChevronUp className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          {/* Lista zadań */}
+          {visibleTasks.length === 0 ? (
+            <p className="px-4 py-6 text-center font-meta text-xs text-muted-foreground">
+              Brak widocznych zadań w tej fazie.
+            </p>
+          ) : (
+            <div className="divide-y divide-border/50">
+              {visibleTasks.map(task => (
+                <div key={task.id} className={cn(
+                  'flex items-center gap-2 px-3 py-2',
+                  task.status === 'done' && 'opacity-60',
+                  task.status === 'na' && 'opacity-40'
+                )}>
+                  {/* Status */}
+                  <div className="shrink-0">
+                    <TaskStatusControl taskId={task.id} status={task.status} />
+                  </div>
+                  {/* Tytuł */}
+                  <span className={cn(
+                    'flex-1 font-heading text-xs leading-snug min-w-0 truncate',
+                    task.status === 'done' ? 'line-through text-muted-foreground' : 'text-foreground'
+                  )}>
+                    {task.title}
+                  </span>
+                  {/* Estymacja */}
+                  <div className="shrink-0">
+                    <TaskEstControl taskId={task.id} est={task.est} />
+                  </div>
+                  {/* Wykonawca (konsultant) */}
+                  <div className="shrink-0">
+                    <TaskAssigneeControl taskId={task.id} assigneeName={task.assigneeName} specialists={specialists ?? []} />
+                  </div>
+                  {/* PM */}
+                  <div className="shrink-0">
+                    <TaskPmControl taskId={task.id} pmAssigneeId={task.pmAssigneeId} profiles={pmProfiles ?? []} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )
+    })()}
     </div>
   )
 }

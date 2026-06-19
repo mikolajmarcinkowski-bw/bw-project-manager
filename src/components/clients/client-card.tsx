@@ -51,7 +51,7 @@ export function ClientCard({ id, name, projectCount, activeCount, atRisk, index 
       className={cn(
         'group flex items-start gap-3 rounded-[10px] border bg-card px-4 py-4 shadow-whisper',
         'transition-all duration-200 ease-out',
-        'hover:-translate-y-0.5 hover:shadow-whisper-lg active:translate-y-0 active:shadow-whisper',
+        'hover:-translate-y-0.5 hover:shadow-whisper-lg active:translate-y-0 active:shadow-whisper active:scale-[0.97] active:opacity-90',
         'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2',
         // Wejście: tylko gdy ruch dozwolony; baza = w pełni widoczna (fail-safe).
         'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:fill-mode-both motion-safe:duration-500',

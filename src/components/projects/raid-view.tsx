@@ -634,7 +634,9 @@ function RaidModalWrapper({
                 onValueChange={(v) => handleChange('category', v ?? '')}
               >
                 <SelectTrigger size="sm" className="w-full">
-                  <SelectValue placeholder="Wybierz…" />
+                  <SelectValue placeholder="Wybierz…">
+                    {(value: string) => value || 'Wybierz…'}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {CATEGORY_OPTIONS.slice(1).map((opt) => (

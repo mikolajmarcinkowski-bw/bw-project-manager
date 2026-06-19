@@ -305,7 +305,9 @@ function KpiModal({
               onValueChange={(v) => handleChange('status', v ?? 'on')}
             >
               <SelectTrigger size="sm" className="w-full">
-                <SelectValue />
+                <SelectValue placeholder="Wybierz status...">
+                  {(value: string) => KPI_STATUS_LABEL[value as KpiStatus] ?? value}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="on">Na czasie</SelectItem>
