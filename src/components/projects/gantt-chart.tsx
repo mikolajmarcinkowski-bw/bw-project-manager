@@ -23,13 +23,13 @@ import { TaskEstControl } from '@/components/projects/task-est-control'
 
 const COL = {
   id: 'w-[42px] shrink-0 text-center',
-  task: 'flex-1 min-w-[200px]',
-  kind: 'w-[72px] shrink-0 text-center',
+  task: 'flex-1 min-w-[180px] max-w-[300px]',  // max-w zapobiega marnowaniu przestrzeni przy krótkich tytułach
+  kind: 'w-[64px] shrink-0 text-center',
   typ: 'w-[44px] shrink-0 text-center',
   est: 'w-[48px] shrink-0 text-center',
-  own: 'w-[52px] shrink-0 text-center',
+  own: 'w-[52px] shrink-0 text-center overflow-hidden',
   wk: 'flex-1 min-w-[220px] shrink-0',   // obszar tygodni (osobny sub-grid)
-  st: 'w-[76px] shrink-0 text-center',
+  st: 'w-[72px] shrink-0 text-center overflow-hidden',  // overflow-hidden chroni przed wychodzeniem pilla poza komórkę
 } as const
 
 // ─── Kolory KIND (paleta data-viz — kategoryczna, dozwolone hex wg spec) ─────────
