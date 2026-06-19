@@ -1144,6 +1144,70 @@ export async function getProjectHealthMetrics(projectId: string): Promise<Projec
   return { risksRed, crPending, burnRate }
 }
 
+// ─── getDashboardBriefData (D-R1 — Today's Briefing) ─────────────────────────
+// Rozszerza BriefData o alerty burn rate >= 80%. Admin client (brak sesji).
+
+export interface BurnAlertProject {
+  name: string
+  clientName: string
+  burnRate: number // 0–100+
+}
+
+export interface DashboardBriefData extends BriefData {
+  burnAlerts: BurnAlertProject[]
+}
+
+export async function getDashboardBriefData(): Promise<DashboardBriefData> {
+  const supabase = createAdminClient()
+
+  // Pobierz bazowe dane briefu
+  const briefData = await getProjectsForBrief()
+
+  // Pobierz aktywne projekty
+  const { data: activeProjects } = await supabase
+    .from('projects')
+    .select('id, name, clients(name)')
+    .eq('status', 'active')
+
+  // Pobierz linie budżetowe z est_h i actual_h
+  const { data: budgetLines } = await supabase
+    .from('budget_lines')
+    .select('project_id, est_h, actual_h')
+    .not('est_h', 'is', null)
+
+  // Agreguj burn rate per projekt w JS
+  const burnByProject = new Map<string, { estH: number; actualH: number }>()
+  for (const line of budgetLines ?? []) {
+    const prev = burnByProject.get(line.project_id) ?? { estH: 0, actualH: 0 }
+    burnByProject.set(line.project_id, {
+      estH: prev.estH + (line.est_h ?? 0),
+      actualH: prev.actualH + (line.actual_h ?? 0),
+    })
+  }
+
+  const burnAlerts: BurnAlertProject[] = []
+  for (const project of activeProjects ?? []) {
+    const budget = burnByProject.get(project.id)
+    if (!budget || budget.estH === 0) continue
+    const burnRate = Math.round((budget.actualH / budget.estH) * 100)
+    if (burnRate < 80) continue
+    const clientsField = project.clients
+    const clientRow = Array.isArray(clientsField)
+      ? (clientsField[0] as { name: string } | undefined) ?? null
+      : (clientsField as { name: string } | null)
+    burnAlerts.push({
+      name: project.name,
+      clientName: clientRow?.name ?? '',
+      burnRate,
+    })
+  }
+
+  // Sortuj: najwyższy burn rate na górze
+  burnAlerts.sort((a, b) => b.burnRate - a.burnRate)
+
+  return { ...briefData, burnAlerts }
+}
+
 // ─── getArchivedProjects (P20 — widok archiwum) ───────────────────────────────
 
 export interface ArchivedProject {
