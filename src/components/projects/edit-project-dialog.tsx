@@ -62,6 +62,7 @@ export function EditProjectDialog({ project, profiles }: EditProjectDialogProps)
   const [validationError, setValidationError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [watchStartDate, setWatchStartDate] = useState<string>(project.startDate ?? '')
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -133,6 +134,8 @@ export function EditProjectDialog({ project, profiles }: EditProjectDialogProps)
         if (!nextOpen) {
           setValidationError(null)
           setSubmitError(null)
+        } else {
+          setWatchStartDate(project.startDate ?? '')
         }
       }}
     >
@@ -207,7 +210,7 @@ export function EditProjectDialog({ project, profiles }: EditProjectDialogProps)
 
           {/* PM */}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-project-pm">Kierownik projektu (PM)</Label>
+            <Label htmlFor="edit-project-pm">PM prowadzący</Label>
             <Select name="pm_id" defaultValue={defaultPmId}>
               <SelectTrigger id="edit-project-pm" className="w-full">
                 <SelectValue placeholder="Wybierz PM...">
@@ -241,6 +244,7 @@ export function EditProjectDialog({ project, profiles }: EditProjectDialogProps)
                 type="date"
                 min="2000-01-01"
                 defaultValue={project.startDate ?? ''}
+                onChange={(e) => setWatchStartDate(e.target.value)}
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -249,7 +253,7 @@ export function EditProjectDialog({ project, profiles }: EditProjectDialogProps)
                 id="edit-project-end"
                 name="end_date"
                 type="date"
-                min="2000-01-01"
+                min={watchStartDate || '2000-01-01'}
                 defaultValue={project.endDate ?? ''}
                 aria-label="Termin zakończenia projektu (opcjonalne)"
               />

@@ -41,14 +41,14 @@ function fmtPLN(n: number): string {
 }
 
 function burnColor(pct: number): string {
-  if (pct > 90) return 'text-[#A32D2D]'
-  if (pct > 75) return 'text-[#854F0B]'
+  if (pct > 100) return 'text-status-off'
+  if (pct > 90) return 'text-status-at'
   return 'text-[#0F6E56]'
 }
 
 function burnBarColor(pct: number): string {
-  if (pct > 90) return 'bg-[#E24B4A]'
-  if (pct > 75) return 'bg-[#EF9F27]'
+  if (pct > 100) return 'bg-status-off'
+  if (pct > 90) return 'bg-[#EF9F27]'
   return 'bg-[#28B39B]'
 }
 
@@ -306,7 +306,7 @@ export function BudgetView({ projectId, initialBudget, steps }: BudgetViewProps)
           label="Przepracowane"
           value={`${fmtH(grandActH)} h`}
           sub={`${burnPct.toFixed(0)}% estymacji`}
-          accent={burnPct > 90 ? 'red' : burnPct > 75 ? 'amber' : 'teal'}
+          accent={burnPct > 100 ? 'red' : burnPct > 90 ? 'amber' : 'teal'}
           progress={{ value: burnPct, color: burnBarColor(burnPct) }}
         />
         <KpiCard
@@ -319,7 +319,7 @@ export function BudgetView({ projectId, initialBudget, steps }: BudgetViewProps)
           label="Burn rate"
           value={`${burnPct.toFixed(0)}%`}
           sub="est. vs przepracowane"
-          accent={burnPct > 90 ? 'red' : burnPct > 75 ? 'amber' : 'teal'}
+          accent={burnPct > 100 ? 'red' : burnPct > 90 ? 'amber' : 'teal'}
           valueClass={burnColor(burnPct)}
         />
       </div>

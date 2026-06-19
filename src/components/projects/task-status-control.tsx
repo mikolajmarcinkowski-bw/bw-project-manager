@@ -10,10 +10,10 @@ import { updateTaskStatus, type TaskStatus } from '@/lib/actions/tasks'
 // ─── Mapowania statusów ──────────────────────────────────────────────────────
 
 const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
-  todo:        'Plan',
+  todo:        'Zaplanowane',
   in_progress: 'W toku',
   done:        'Gotowe',
-  for_quality: 'QA',
+  for_quality: 'QA / Weryfikacja',
   na:          'N/D',
 }
 

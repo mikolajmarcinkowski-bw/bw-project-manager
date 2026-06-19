@@ -4,6 +4,20 @@
 
 ---
 
+## [1.6.0] — 2026-06-19 — 🚀 PRODUKCJA: Inline edit estymacji + auto-sync budżetu
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `4f7849f`). Sesja 19.
+
+### Dodano — Edycja estymacji zadań (h)
+
+- **`TaskEstControl`** — nowy komponent: klik na „4.5h" → input inline (step 0.5, 0–9999h). `useOptimistic` dla natychmiastowego UI. Enter/blur zapisuje, Escape anuluje.
+- **`updateTaskEst`** — server action: zapisuje `tasks.est` + auto-synchronizuje `budget_lines.est_h` dla linii powiązanych z zadaniem (`task_id`). Zaokrąglenie do 0.5h.
+- **Efekt holistic:** zmiana est → zmiana `est_h` w budżecie → `Burn:N%` w health metrics przelicza się.
+- GanttChart: kolumna `est` 40→48px; oba miejsca wyświetlania zastąpione komponentem.
+- PhaseChecklist: `TaskEstControl` po `KindChip` dla zadań niebędących milestoneami.
+
+---
+
 ## [1.5.0] — 2026-06-18 — 🚀 PRODUKCJA: Pula konsultantów + dwa pola przypisania zadań
 
 > Status: **ZMERGOWANE → produkcja** (`main`, `675dec0`). Sesja 18.

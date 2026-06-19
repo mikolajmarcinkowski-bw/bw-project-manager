@@ -56,18 +56,16 @@ export default async function AdminTeamPage() {
           </p>
         </div>
 
-        {/* Przycisk dodawania — tylko gdy tabela jest widoczna */}
-        {specialists.length > 0 && (
-          <AddSpecialistDialog>
-            <Button
-              size="sm"
-              className="gap-1.5 rounded-md h-8 px-3 bg-teal text-white hover:bg-teal-strong text-xs font-medium"
-            >
-              <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />
-              Dodaj konsultanta
-            </Button>
-          </AddSpecialistDialog>
-        )}
+        {/* Przycisk dodawania — zawsze widoczny */}
+        <AddSpecialistDialog>
+          <Button
+            size="sm"
+            className="gap-1.5 rounded-md h-8 px-3 bg-teal text-white hover:bg-teal-strong text-xs font-medium"
+          >
+            <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />
+            Dodaj konsultanta
+          </Button>
+        </AddSpecialistDialog>
       </div>
 
       {/* Tabela lub pusty stan */}

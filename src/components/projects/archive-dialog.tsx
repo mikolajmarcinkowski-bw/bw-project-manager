@@ -86,9 +86,9 @@ export function ArchiveDialog({ project }: ArchiveDialogProps) {
 
           <div className="flex flex-col gap-4 py-1">
             {/* Ostrzeżenie */}
-            <div className="rounded-lg border border-status-at/30 bg-status-at/5 px-3 py-2.5 text-xs text-muted-foreground leading-relaxed">
+            <div className="rounded-lg border border-status-off/30 bg-status-off/5 px-3 py-2.5 text-xs text-status-off leading-relaxed">
               Projekt zostanie przeniesiony do archiwum.{' '}
-              <span className="font-semibold text-foreground">Tej operacji nie można cofnąć.</span>
+              <span className="font-semibold">Tej operacji nie można cofnąć.</span>
             </div>
 
             {/* Potwierdzenie nazwą */}
@@ -109,6 +109,9 @@ export function ArchiveDialog({ project }: ArchiveDialogProps) {
                 className={cn(isConfirmed && confirmName.length > 0 && 'border-teal')}
                 disabled={isPending}
               />
+              <p className="font-meta text-[0.68rem] text-muted-foreground mt-1">
+                Wpisz dokładnie: <span className="font-semibold text-foreground">{project.name}</span>
+              </p>
             </div>
 
             {/* Błąd */}

@@ -99,8 +99,10 @@ export function TaskAssigneeControl({ taskId, assigneeName, specialists }: TaskA
           title={error ?? assigneeName ?? 'Brak osoby'}
           className={cn(
             'inline-grid place-items-center rounded-full',
-            'bg-muted border border-border',
-            'font-heading font-semibold text-muted-foreground',
+            optimisticAssignee !== null
+              ? 'bg-teal/10 border border-teal/40 text-teal'
+              : 'bg-muted border border-border text-muted-foreground',
+            'font-heading font-semibold',
             ini === '—' ? 'text-[0.65rem]' : 'text-[0.55rem]',
             'cursor-pointer select-none',
             'transition-opacity motion-reduce:transition-none',

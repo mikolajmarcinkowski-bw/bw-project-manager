@@ -176,8 +176,8 @@ export function RaciView({ projectId: _projectId, initialRaci }: RaciViewProps) 
       </div>
 
       {/* RACI Table */}
-      <div className="border border-border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="border border-border rounded-lg overflow-x-auto">
+        <div>
           <table className="w-full text-xs min-w-[800px]">
             <thead>
               {/* Role legend bar */}
