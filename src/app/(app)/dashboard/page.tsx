@@ -4,22 +4,19 @@ import { AddClientDialog } from '@/components/clients/add-client-dialog'
 import {
   getClientsWithStats,
   getDashboardBriefData,
-  getActiveProjectsWithHealth,
   getUpcomingMilestones,
 } from '@/lib/data/projects'
 import { DashboardBriefing } from '@/components/dashboard/dashboard-briefing'
 import { DashboardPortfolioStrip } from '@/components/dashboard/dashboard-portfolio-strip'
-import { DashboardProjectHealthCards } from '@/components/dashboard/dashboard-project-health-cards'
 
 export const metadata = {
   title: 'Dashboard · BW Project Manager',
 }
 
 export default async function DashboardPage() {
-  const [clients, briefData, projectsHealth, milestones] = await Promise.all([
+  const [clients, briefData, milestones] = await Promise.all([
     getClientsWithStats(),
     getDashboardBriefData(),
-    getActiveProjectsWithHealth(),
     getUpcomingMilestones(14),
   ])
 
@@ -64,11 +61,6 @@ export default async function DashboardPage() {
 
       {/* Dzienny briefing PM-a (D-R1) */}
       <DashboardBriefing data={briefData} milestones={milestones} />
-
-      {/* Karty zdrowia projektów (D-R1 v2) — tylko gdy są aktywne */}
-      {projectsHealth.length > 0 && (
-        <DashboardProjectHealthCards projects={projectsHealth} />
-      )}
 
       {/* Lista teczek */}
       {clients.length > 0 ? (
