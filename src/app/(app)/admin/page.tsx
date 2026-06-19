@@ -50,11 +50,11 @@ export default function AdminPage() {
               <UserCog className="h-4.5 w-4.5 text-teal" aria-hidden="true" />
             </div>
             <span className="text-sm font-semibold text-foreground group-hover:text-teal-strong transition-colors">
-              Pula specjalistów
+              Pula konsultantów
             </span>
           </div>
           <p className="font-meta text-xs text-muted-foreground leading-relaxed">
-            Konsultanci BW bez kont — dodaj, dezaktywuj, monitoruj liczbę zadań i projektów.
+            Konsultanci BW — bez kont, dostępni do przypisania do zadań i śledzenia alokacji.
           </p>
           <span className="font-meta text-[0.68rem] uppercase tracking-wide text-teal font-semibold mt-auto">
             Przeglądaj →

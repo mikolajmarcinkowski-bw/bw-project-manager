@@ -44,7 +44,7 @@ export function TaskDateControl({ taskId, dueDate, alertLevel }: TaskDateControl
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  const confirmWord = 'change'
+  const confirmWord = 'zmień'
   const isConfirmed = confirm.trim().toLowerCase() === confirmWord
   const hasChanged = newDate !== (dueDate ?? '')
 
