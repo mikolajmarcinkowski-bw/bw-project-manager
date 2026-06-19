@@ -28,7 +28,7 @@ export default async function NewProjectPage({ searchParams }: NewProjectPagePro
     <div className="flex flex-col gap-6 max-w-2xl">
       {/* Nagłówek z breadcrumb */}
       <div className="flex flex-col gap-1.5">
-        <nav aria-label="Nawigacja okruszkowa">
+        <nav aria-label="Ścieżka nawigacyjna">
           {clientId ? (
             <>
               <Link

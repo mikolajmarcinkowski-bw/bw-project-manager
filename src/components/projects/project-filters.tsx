@@ -83,6 +83,8 @@ export function ProjectFilters({ clients, profiles = [], currentUserId }: Projec
 
   const hasFilters = currentStatus || currentType || currentClient || currentAtRisk || currentSort || currentQ || currentPm
 
+  const activeFilterCount = [currentStatus, currentType, currentClient, currentAtRisk ? '1' : '', currentSort, currentQ, currentPm].filter(Boolean).length
+
   const selectCls = 'h-7 rounded-full border border-border bg-background px-2.5 font-meta text-xs text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 hover:border-teal/40'
 
   return (
@@ -206,10 +208,10 @@ export function ProjectFilters({ clients, profiles = [], currentUserId }: Projec
               router.push(pathname)
             })
           }}
-          className="h-7 rounded-full px-2.5 font-meta text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+          className="h-7 rounded-full px-2.5 font-meta text-xs font-semibold text-teal border border-teal/30 bg-teal/5 hover:bg-teal/10 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
           aria-label="Wyczyść wszystkie filtry"
         >
-          Wyczyść filtry
+          Filtry ({activeFilterCount}) × Wyczyść
         </button>
       )}
     </div>

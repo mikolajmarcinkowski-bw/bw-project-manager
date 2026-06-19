@@ -169,7 +169,7 @@ export function RaciView({ projectId: _projectId, initialRaci }: RaciViewProps) 
             <span className={cn('inline-flex items-center justify-center w-5 h-5 rounded-full text-[9px] font-bold border', RACI_BADGE[v].cls)}>
               {v}
             </span>
-            <span>{v === 'R' ? 'Responsible' : v === 'A' ? 'Accountable' : v === 'C' ? 'Consulted' : 'Informed'}</span>
+            <span>{v === 'R' ? 'Odpowiedzialny' : v === 'A' ? 'Rozliczany' : v === 'C' ? 'Konsultowany' : 'Informowany'}</span>
           </span>
         ))}
         <span className="text-muted-foreground/50">Kliknij komórkę — zmień rolę</span>

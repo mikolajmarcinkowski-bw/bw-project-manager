@@ -40,7 +40,7 @@ export function ProjectHeader({ project, profiles, health }: ProjectHeaderProps)
   return (
     <header className="mb-6">
       {/* Breadcrumb */}
-      <nav aria-label="Nawigacja okruszkowa" className="mb-2 flex items-center gap-1.5 font-meta text-xs text-muted-foreground">
+      <nav aria-label="Ścieżka nawigacyjna" className="mb-2 flex items-center gap-1.5 font-meta text-xs text-muted-foreground">
         <Link
           href="/dashboard"
           className="text-teal-strong hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal rounded"
@@ -142,8 +142,7 @@ export function ProjectHeader({ project, profiles, health }: ProjectHeaderProps)
           <div className="flex items-center gap-1.5 flex-wrap" aria-label="Status dokumentów projektu">
             {health.risksRed > 0 && (
               <span
-                className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[0.6rem] font-heading font-semibold"
-                style={{ background: '#FCEBEB', color: '#A32D2D', border: '1px solid #E24B4A' }}
+                className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[0.6rem] font-heading font-semibold bg-status-off/10 border border-status-off/30 text-status-off"
                 title={`${health.risksRed} aktywnych ryzyk R`}
               >
                 ▲ {health.risksRed}R
@@ -151,8 +150,7 @@ export function ProjectHeader({ project, profiles, health }: ProjectHeaderProps)
             )}
             {health.crPending > 0 && (
               <span
-                className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[0.6rem] font-heading font-semibold"
-                style={{ background: '#FAEEDA', color: '#854F0B', border: '1px solid #EF9F27' }}
+                className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[0.6rem] font-heading font-semibold bg-status-at/10 border border-status-at/30 text-status-at"
                 title={`${health.crPending} CR oczekujących na zatwierdzenie`}
               >
                 CR: {health.crPending}
@@ -160,12 +158,14 @@ export function ProjectHeader({ project, profiles, health }: ProjectHeaderProps)
             )}
             {health.burnRate !== null && health.burnRate > 75 && (
               <span
-                className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[0.6rem] font-heading font-semibold"
-                style={{
-                  background: health.burnRate > 90 ? '#FCEBEB' : '#FAEEDA',
-                  color: health.burnRate > 90 ? '#A32D2D' : '#854F0B',
-                  border: `1px solid ${health.burnRate > 90 ? '#E24B4A' : '#EF9F27'}`,
-                }}
+                className={[
+                  'inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[0.6rem] font-heading font-semibold border',
+                  health.burnRate > 90
+                    ? 'bg-status-off/10 border-status-off/30 text-status-off'
+                    : health.burnRate > 80
+                      ? 'bg-status-at/10 border-status-at/30 text-status-at'
+                      : 'bg-muted border-border text-muted-foreground',
+                ].join(' ')}
                 title={`Burn rate: ${health.burnRate}%`}
               >
                 Burn: {health.burnRate}%

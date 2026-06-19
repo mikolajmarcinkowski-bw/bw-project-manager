@@ -212,7 +212,7 @@ export function TaskAssigneeControl({ taskId, assigneeName, specialists }: TaskA
       {error && (
         <span
           aria-hidden="true"
-          className="block max-w-[72px] truncate text-[0.5rem] font-heading text-destructive leading-none"
+          className="block max-w-[120px] truncate text-[0.65rem] font-heading text-destructive leading-none"
           title={error}
         >
           {error}

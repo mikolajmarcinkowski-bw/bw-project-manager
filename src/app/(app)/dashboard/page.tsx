@@ -107,7 +107,7 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <FolderOpen className="h-3.5 w-3.5 text-teal" aria-hidden="true" />
             <span className="font-meta text-xs">
-              {clients.length} {clients.length === 1 ? 'klient' : clients.length < 5 ? 'klienci' : 'klientów'}
+              {clients.length} {clients.length === 1 ? 'klient' : 'klientów'}
             </span>
           </div>
           {totalActive > 0 && (

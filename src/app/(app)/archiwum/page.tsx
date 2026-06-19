@@ -65,7 +65,7 @@ export default async function ArchiwumPage() {
             <span className="font-meta text-[0.7rem] uppercase tracking-wide text-muted-foreground">
               Projekt
             </span>
-            <span className="hidden sm:block font-meta text-[0.7rem] uppercase tracking-wide text-muted-foreground">
+            <span className="font-meta text-[0.7rem] uppercase tracking-wide text-muted-foreground">
               Typy
             </span>
             <span className="hidden md:block font-meta text-[0.7rem] uppercase tracking-wide text-muted-foreground">
@@ -100,7 +100,7 @@ export default async function ArchiwumPage() {
                 </div>
 
                 {/* Typy */}
-                <div className="hidden sm:flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-1 shrink-0 flex-wrap">
                   {project.types.map((t) => (
                     <ImplTypeBadge key={t} type={t} />
                   ))}

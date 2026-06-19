@@ -12,6 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { changeUserRole, toggleUserActive, resetUserPassword, updateUserFullName } from '@/lib/actions/admin'
 
 // ---------------------------------------------------------------------------
@@ -79,8 +87,9 @@ export function ToggleActiveButton({ userId, isActive, isSelf }: {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
-  async function handleToggle() {
+  async function executeToggle() {
     setError(null)
     startTransition(async () => {
       const result = await toggleUserActive(userId, !isActive)
@@ -90,6 +99,16 @@ export function ToggleActiveButton({ userId, isActive, isSelf }: {
         router.refresh()
       }
     })
+  }
+
+  function handleClick() {
+    if (isActive) {
+      // Dezaktywacja — pokaż dialog potwierdzenia
+      setConfirmOpen(true)
+    } else {
+      // Aktywacja — bezpośrednio
+      executeToggle()
+    }
   }
 
   return (
@@ -102,7 +121,7 @@ export function ToggleActiveButton({ userId, isActive, isSelf }: {
             ? 'text-status-off hover:bg-status-off/10'
             : 'text-teal hover:bg-teal/10'
         }`}
-        onClick={handleToggle}
+        onClick={handleClick}
         disabled={isPending || isSelf}
         title={isSelf ? 'Nie możesz dezaktywować własnego konta' : undefined}
       >
@@ -121,6 +140,36 @@ export function ToggleActiveButton({ userId, isActive, isSelf }: {
       {error && (
         <p className="font-meta text-[0.68rem] text-status-off" role="alert">{error}</p>
       )}
+
+      {/* Dialog potwierdzenia dezaktywacji */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Dezaktywuj konto?</DialogTitle>
+            <DialogDescription>
+              Użytkownik straci dostęp natychmiast. Można aktywować ponownie.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirmOpen(false)}
+              disabled={isPending}
+            >
+              Anuluj
+            </Button>
+            <Button
+              size="sm"
+              className="bg-status-off text-white hover:bg-status-off/90"
+              onClick={() => { setConfirmOpen(false); executeToggle() }}
+              disabled={isPending}
+            >
+              Dezaktywuj
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
