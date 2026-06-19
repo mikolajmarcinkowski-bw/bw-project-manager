@@ -5,6 +5,17 @@
 
 ---
 
+## [2026-06-19] feat | Inline edit estymacji zadań + auto-sync budżetu — `ee65754` (v1.6.0)
+
+- **`TaskEstControl`**: klik na wartość "4h" w Gantcie/Checkliście → input inline (step 0.5, 0–9999h, Enter/Blur zapisuje, Escape anuluje). `useOptimistic` dla natychmiastowego UI.
+- **`updateTaskEst`**: zapisuje `tasks.est` + auto-synchronizuje `budget_lines.est_h` gdzie `task_id = task.id` (holistic sync — zmiana estymacji zadania = aktualizacja budżetu projektu).
+- **Efekt end-to-end**: zmiana est zadania → zmiana est_h w powiązanej linii budżetowej → zmiana `Burn:N%` w health metrics nagłówka projektu.
+- GanttChart: COL.est 40→48px; oba miejsca renderowania est zastąpione komponentem.
+- PhaseChecklist: TaskEstControl dodany po KindChip (zadania niebędące milestoneami).
+- TSC czyste, build OK, deployed.
+
+---
+
 ## [2026-06-18] feat | Dwa pola przypisania zadania — Konsultant + PM — `c29eb4f`
 
 - **Problem:** Gantt miał jedną kolumnę „PM" która po naszej zmianie pokazywała konsultantów z `team_members` — etykieta kłamała, nie dało się zaznaczyć PM-a nadzorującego.
