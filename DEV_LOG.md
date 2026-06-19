@@ -5,6 +5,13 @@
 
 ---
 
+## [2026-06-19] fix | Audyt impeccable — wszystkie 18 krytycznych + HIGH + MEDIUM + LOW — `ae6bf9e` (v1.8.0)
+
+**v1.7.0 (🔴 krytyczne):** "zmień" zamiast "change", teal avatar konsultanta, "PM prowadzący", "Zaplanowane"/"QA Weryfikacja", admin/team button zawsze widoczny, ArchiveDialog czerwone + hint, burn% overspend alert, RACI overflow-x-auto.
+**v1.8.0 (🟠HIGH + 🟡MED + 🟢LOW):** health badges tokeny, CR approval w tabeli, error text 0.65rem, N/D ujednolicone, filtry badge aktywne, wróć do danych w kreatorze, potwierdzenie dezaktywacji, RACI legenda po polsku, pluralizacja klientów, licznik N/D w checklist, archiwum Typy zawsze widoczne, RAID tooltips P/W, 'Dev Admin' label, breadcrumb PL, ikona Users.
+
+---
+
 ## [2026-06-19] feat | Inline edit estymacji zadań + auto-sync budżetu — `ee65754` (v1.6.0)
 
 - **`TaskEstControl`**: klik na wartość "4h" w Gantcie/Checkliście → input inline (step 0.5, 0–9999h, Enter/Blur zapisuje, Escape anuluje). `useOptimistic` dla natychmiastowego UI.
