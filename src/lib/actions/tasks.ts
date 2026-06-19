@@ -174,6 +174,64 @@ export async function updateTaskPmAssignee(
   return { ok: true }
 }
 
+// ---------------------------------------------------------------------------
+// updateTaskEst — edycja estymacji zadania (h) z auto-sync powiązanej budget_line.est_h
+// ---------------------------------------------------------------------------
+export async function updateTaskEst(
+  taskId: string,
+  est: number | null
+): Promise<{ ok: true } | { error: string }> {
+  if (est !== null) {
+    if (!Number.isFinite(est) || est < 0 || est > 9999) {
+      return { error: 'Nieprawidłowa wartość estymacji (0–9999h).' }
+    }
+    // zaokrąglamy do 0.5h
+    est = Math.round(est * 2) / 2
+  }
+
+  const user = await requireUser()
+  const supabase = await createClient()
+
+  const { data: before, error: fetchErr } = await supabase
+    .from('tasks')
+    .select('id, est, project_id')
+    .eq('id', taskId)
+    .single()
+
+  if (fetchErr || !before) return { error: 'Nie znaleziono zadania.' }
+  if (before.est === est) return { ok: true }
+
+  const { error: updErr } = await supabase
+    .from('tasks')
+    .update({ est })
+    .eq('id', taskId)
+
+  if (updErr) {
+    console.error('[updateTaskEst] update failed:', updErr)
+    return { error: 'Nie udało się zapisać estymacji.' }
+  }
+
+  // Synchronizuj powiązaną linię budżetową (jeśli jest — budget_lines.task_id = task.id)
+  if (est !== null) {
+    await supabase
+      .from('budget_lines')
+      .update({ est_h: est })
+      .eq('task_id', taskId)
+  }
+
+  await supabase.from('activity_log').insert({
+    entity: 'task',
+    entity_id: taskId,
+    action: 'update_task_est',
+    actor_id: user.id,
+    before: { est: before.est },
+    after: { est },
+  }).then(({ error }) => { if (error) console.error('[updateTaskEst] log failed:', error) })
+
+  revalidatePath(`/projects/${before.project_id}`)
+  return { ok: true }
+}
+
 // Faza 2c · P18 — Edycja terminu zadania z potwierdzeniem (R6/D-022).
 // Wymaga wpisania słowa „change" w UI przed wywołaniem (walidacja client-side).
 // Automatycznie zeruje warning_muted gdy data się zmienia (R5c).
