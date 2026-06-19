@@ -9,6 +9,7 @@ import { TaskAssigneeControl } from './task-assignee-control'
 import type { Profile } from './task-assignee-control'
 import { TaskPmControl, type Profile as PmProfile } from './task-pm-control'
 import { TaskDateControl } from './task-date-control'
+import { TaskEstControl } from './task-est-control'
 
 // ─── Kolory KIND (zsync z gantt-chart.tsx) ────────────────────────────────────
 // SYNC: gdy zmieniasz KIND_COLOR w gantt-chart.tsx, zmień też tutaj.
@@ -132,6 +133,11 @@ function TaskRow({ task, profiles, pmProfiles }: TaskRowProps) {
       {/* Chip rodzaju — nie dla milestona (wyróżniony rombem) */}
       {!task.isMilestone && (
         <KindChip kind={task.kind} />
+      )}
+
+      {/* Estymacja — edytowalna inline */}
+      {!task.isMilestone && (
+        <TaskEstControl taskId={task.id} est={task.est} />
       )}
 
       {/* Owner konsultant + PM nadzorujący */}

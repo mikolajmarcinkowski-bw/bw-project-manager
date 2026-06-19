@@ -17,6 +17,7 @@ import { TaskAssigneeControl, type Profile } from '@/components/projects/task-as
 import { TaskPmControl, type Profile as PmProfile } from '@/components/projects/task-pm-control'
 import { TaskDateControl } from '@/components/projects/task-date-control'
 import { muteTaskWarning } from '@/lib/actions/tasks'
+import { TaskEstControl } from '@/components/projects/task-est-control'
 
 // ─── Stałe szerokości kolumn (muszą być identyczne w ghead i każdym wierszu grow) ─
 
@@ -25,7 +26,7 @@ const COL = {
   task: 'flex-1 min-w-[200px]',
   kind: 'w-[72px] shrink-0 text-center',
   typ: 'w-[44px] shrink-0 text-center',
-  est: 'w-[40px] shrink-0 text-right',
+  est: 'w-[48px] shrink-0 text-center',
   own: 'w-[52px] shrink-0 text-center',
   wk: 'flex-1 min-w-[220px] shrink-0',   // obszar tygodni (osobny sub-grid)
   st: 'w-[76px] shrink-0 text-center',
@@ -818,15 +819,12 @@ export function GanttChart({ project, profiles = [], pmProfiles = [], targetStep
                               >
                                 <ImplTypeChips types={task.types} />
                               </div>
-                              {/* Est. — mono */}
+                              {/* Est. — edytowalne inline */}
                               <div
                                 role="cell"
-                                className={cn(
-                                  COL.est,
-                                  'px-1 py-1.5 font-mono text-[0.65rem] text-muted-foreground'
-                                )}
+                                className={cn(COL.est, 'px-0.5 py-1 flex items-center justify-center')}
                               >
-                                {task.est != null ? `${task.est}h` : '—'}
+                                <TaskEstControl taskId={task.id} est={task.est} />
                               </div>
                               {/* Own — konsultant + PM nadzorujący */}
                               <div
@@ -938,8 +936,8 @@ export function GanttChart({ project, profiles = [], pmProfiles = [], targetStep
                               <div role="cell" className={cn(COL.typ, 'px-1 py-1 flex items-center justify-center')}>
                                 <ImplTypeChips types={task.types} />
                               </div>
-                              <div role="cell" className={cn(COL.est, 'px-1 py-1 font-mono text-[0.65rem] text-muted-foreground/60')}>
-                                {task.est != null ? `${task.est}h` : '—'}
+                              <div role="cell" className={cn(COL.est, 'px-0.5 py-1 flex items-center justify-center')}>
+                                <TaskEstControl taskId={task.id} est={task.est} />
                               </div>
                               <div role="cell" className={cn(COL.own, 'px-0.5 py-1 flex items-center justify-center gap-1')}>
                                 <TaskAssigneeControl taskId={task.id} assigneeName={task.assigneeName} specialists={profiles} />
