@@ -9,6 +9,16 @@ import { updateTaskStatus, type TaskStatus } from '@/lib/actions/tasks'
 
 // ─── Mapowania statusów ──────────────────────────────────────────────────────
 
+// Etykiety w pillu (krótkie — muszą zmieścić się w kolumnie ~76px)
+const TASK_STATUS_LABEL_PILL: Record<TaskStatus, string> = {
+  todo:        'Plan.',
+  in_progress: 'W toku',
+  done:        'Gotowe',
+  for_quality: 'QA',
+  na:          'N/D',
+}
+
+// Etykiety w menu dropdownu (pełne, opisowe)
 const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
   todo:        'Zaplanowane',
   in_progress: 'W toku',
@@ -101,7 +111,7 @@ export function TaskStatusControl({ taskId, status }: TaskStatusControlProps) {
             isPending && 'cursor-wait'
           )}
         >
-          {TASK_STATUS_LABEL[optimisticStatus]}
+          {TASK_STATUS_LABEL_PILL[optimisticStatus]}
           <ChevronDownIcon
             aria-hidden="true"
             className="size-2.5 shrink-0 opacity-60"

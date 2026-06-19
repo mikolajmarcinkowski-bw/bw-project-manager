@@ -48,7 +48,7 @@ export default async function AdminTeamPage() {
           <p className="font-meta text-xs text-muted-foreground mt-0.5">
             {specialists.length > 0 ? (
               <>
-                {specialists.length} {pluralKonsultant(specialists.length)} w puli &mdash; zarządzaj listą i statusami.
+                {`${specialists.length} ${pluralKonsultant(specialists.length)} w puli`} &mdash; zarządzaj listą i statusami.
               </>
             ) : (
               'Dodaj konsultantów, aby móc przypisywać ich do zadań.'
