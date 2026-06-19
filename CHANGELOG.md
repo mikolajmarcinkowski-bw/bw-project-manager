@@ -4,6 +4,57 @@
 
 ---
 
+## [2.3.0] — 2026-06-19 — 🚀 PRODUKCJA: D-R1 Dashboard (brief + portfolio strip + teczki)
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `8bc51e9`). Sesja 20.
+> Ostateczna forma D-R1: zamiast przytłaczającego gridu projektów — karta briefingu + pasek statystyk + teczki klientów.
+
+### Układ dashboardu (finalny)
+1. Header ("Teczki klientów" + data + AddClientDialog)
+2. **DashboardPortfolioStrip** — 4 kompaktowe stat chips (aktywne projekty / zagrożone / zadania dziś / kamienie 14 dni)
+3. **DashboardBriefing** — interaktywny brief z klikalnymi linkami:
+   - Zagrożone projekty → `[Link /projects/id]` + ArrowRight hover
+   - Zadania na dziś → `[Link /projects/id]`
+   - Zadania wkrótce → `[Link /projects/id]`
+   - Burn rate alerts → `[Link /projects/id]`
+   - Kamienie milowe 14 dni → `[Link /projects/id]`
+   - All-clear state (zielony, gdy brak pilnych spraw)
+4. Teczki klientów (bez zmian)
+5. Portfolio stats footer (bez zmian)
+
+### Usunięto
+- `DashboardProjectHealthCards` z widoku dashboard (zbyt dużo informacji; komponent pozostaje w kodzie)
+
+---
+
+## [2.2.0] — 2026-06-19 — 🚀 PRODUKCJA: D-R1 v2 tactical dashboard
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `d15807e`). Sesja 20 (zastąpione przez v2.3.0).
+
+### Dodano — Data layer (D-R1)
+- `BriefAtRiskProject`, `BriefTask`, `BurnAlertProject`: dodano `projectId` → nawigacja
+- `getActiveProjectsWithHealth()`: batch health metrics per projekt, sortowanie worst-first
+- `getUpcomingMilestones(daysAhead)`: kamienie milowe w oknie N dni cross-project
+
+### Dodano — Komponenty
+- `DashboardPortfolioStrip` — 4 stat chips z kolorowym kodowaniem
+- `DashboardProjectHealthCards` — mini-karty klikalne per projekt (usunięte z dashboard w v2.3.0)
+- `DashboardBriefing` — klikalne linki do projektów, sekcja milestones
+
+---
+
+## [2.1.0] — 2026-06-19 — 🚀 PRODUKCJA: D-R1 Today's Briefing v1 (podstawa)
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `12298fa`). Sesja 20 (rozwinięte w v2.2.0).
+
+### Dodano
+- `getDashboardBriefData()` = `getProjectsForBrief()` + burn rate alerts (>=80%)
+- `DashboardBriefing` Server Component: zagrożone projekty, zadania dziś, wkrótce, burn — ikony Lucide
+- All-clear state (zielony pasek gdy brak pilnych spraw)
+- Maks. 5 pozycji per sekcja z "+ N więcej"
+
+---
+
 ## [2.0.0] — 2026-06-19 — 🚀 PRODUKCJA: Literówka + Gantt table fixes
 
 > Status: **ZMERGOWANE → produkcja** (`main`, `753ce21`). Sesja 20.

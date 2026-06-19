@@ -5,6 +5,33 @@
 
 ---
 
+## [2026-06-19] fix | Dashboard — usuń grid projektów, finalizacja D-R1 — `8bc51e9` (v2.3.0)
+
+- Usunięto `DashboardProjectHealthCards` z widoku dashboard (zbyt dużo informacji naraz).
+- Finalny układ: header → portfolio strip → briefing (klikalne) → teczki klientów → stats.
+- `getActiveProjectsWithHealth()` pozostaje w data layer do przyszłego użycia (np. /portfel).
+
+---
+
+## [2026-06-19] feat | D-R1 v2 taktyczny dashboard — `d15807e` (v2.2.0)
+
+- Data layer: `BriefAtRiskProject` + `BriefTask` + `BurnAlertProject` dostają `projectId` → nawigacja.
+- `getActiveProjectsWithHealth()`: batch health per projekt (ryzyka R, CR pending, burn%), sorted worst-first.
+- `getUpcomingMilestones(14)`: kamienie milowe w oknie 14 dni cross-project.
+- `DashboardPortfolioStrip`: 4 stat chips (aktywne/zagrożone/dziś/kamienie) z kolorowym kodowaniem.
+- `DashboardProjectHealthCards`: mini-karty klikalne (zastąpione przez usunięcie w v2.3.0).
+- `DashboardBriefing`: klikalne linki `<Link>` na każdej pozycji + sekcja milestones.
+
+---
+
+## [2026-06-19] feat | D-R1 Today's Briefing v1 — `12298fa` (v2.1.0)
+
+- `getDashboardBriefData()`: getProjectsForBrief() + burn rate alerts (>=80%).
+- `DashboardBriefing` Server Component: zagrożone projekty, zadania dziś/wkrótce, burn — ikony Lucide, bez emoji.
+- All-clear state (zielony pasek gdy brak pilnych spraw). Max 5 pozycji per sekcja.
+
+---
+
 ## [2026-06-19] fix | Literówka + Gantt table overflow + status pill — `753ce21` (v2.0.0)
 
 - **Literówka admin/team:** "1 konsultantw puli" → "1 konsultant w puli" (JSX whitespace stripping — template literal)
