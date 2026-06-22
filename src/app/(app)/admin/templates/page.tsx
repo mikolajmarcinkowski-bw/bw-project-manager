@@ -2,7 +2,7 @@ import { requireAdmin } from '@/lib/auth/dal'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ChevronLeft, FolderCog, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
-import { TemplateStepEditor, TemplateTaskEditor } from '@/components/admin/template-editor'
+import { TemplateStepEditor, TemplateTaskEditor, AddTaskButton } from '@/components/admin/template-editor'
 
 export const metadata = { title: 'Szablony faz · BW Project Manager' }
 
@@ -18,7 +18,7 @@ export default async function AdminTemplatesPage() {
       .order('step_order', { ascending: true }),
     supabase
       .from('step_task_templates')
-      .select('id, step_template_id, task_order, task_title, kind, est, is_milestone')
+      .select('id, step_template_id, task_order, task_title, kind, est, is_milestone, applies_to_types')
       .order('task_order', { ascending: true }),
   ])
 
@@ -101,10 +101,12 @@ export default async function AdminTemplatesPage() {
                         taskId={task.id}
                         currentTitle={task.task_title}
                         currentEst={task.est}
+                        currentAppliesTo={task.applies_to_types ?? []}
                         isMilestone={task.is_milestone ?? false}
                       />
                     </div>
                   ))}
+                  <AddTaskButton stepTemplateId={step.id} />
                 </div>
               ))}
             </div>
