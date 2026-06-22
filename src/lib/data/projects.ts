@@ -1436,19 +1436,47 @@ export async function getProjectActivityLog(
     return []
   }
 
+  // Batch-resolve PM UUIDs from before/after fields (update_task_pm logs only the ID)
+  const pmIds = new Set<string>()
+  for (const row of data) {
+    const b = row.before as Record<string, unknown> | null
+    const a = row.after as Record<string, unknown> | null
+    if (typeof b?.pm_assignee_id === 'string') pmIds.add(b.pm_assignee_id)
+    if (typeof a?.pm_assignee_id === 'string') pmIds.add(a.pm_assignee_id)
+  }
+
+  const pmNameMap = new Map<string, string>()
+  if (pmIds.size > 0) {
+    const { data: pmProfiles } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', [...pmIds])
+    for (const p of pmProfiles ?? []) {
+      if (p.full_name) pmNameMap.set(p.id, p.full_name)
+    }
+  }
+
   return data.map((row) => {
     const profilesField = row.profiles
     const profile = Array.isArray(profilesField)
       ? (profilesField[0] as { full_name: string | null } | undefined) ?? null
       : (profilesField as { full_name: string | null } | null)
+
+    // Replace pm_assignee_id UUID with resolved name in before/after
+    const resolvePm = (obj: Record<string, unknown> | null): Record<string, unknown> | null => {
+      if (!obj) return null
+      if (typeof obj.pm_assignee_id !== 'string') return obj
+      return { ...obj, pm_assignee_id: pmNameMap.get(obj.pm_assignee_id) ?? obj.pm_assignee_id }
+    }
+
     return {
       id: row.id,
       entity: row.entity,
       entityId: row.entity_id ?? '',
       action: row.action,
       actorName: profile?.full_name ?? null,
-      before: row.before as Record<string, unknown> | null,
-      after: row.after as Record<string, unknown> | null,
+      before: resolvePm(row.before as Record<string, unknown> | null),
+      after: resolvePm(row.after as Record<string, unknown> | null),
       createdAt: row.created_at,
     }
   })

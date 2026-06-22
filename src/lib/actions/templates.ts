@@ -36,7 +36,7 @@ export async function updateTaskTemplateEst(
   est: number | null
 ): Promise<{ ok: true } | { error: string }> {
   await requireAdmin()
-  if (est !== null && (est < 0 || est > 9999)) return { error: 'Nieprawidłowa estymacja.' }
+  if (est !== null && (!Number.isFinite(est) || est < 0 || est > 9999)) return { error: 'Nieprawidłowa estymacja.' }
   const supabase = createAdminClient()
   const { error } = await supabase.from('step_task_templates').update({ est }).eq('id', id)
   if (error) return { error: 'Nie udało się zapisać.' }

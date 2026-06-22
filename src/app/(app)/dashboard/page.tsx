@@ -145,7 +145,7 @@ export default async function DashboardPage() {
             <>
               <span className="font-meta text-[0.65rem] text-muted-foreground/40" aria-hidden="true">·</span>
               <span className="font-meta text-xs text-muted-foreground">
-                {totalProjects} projektów łącznie
+                {totalProjects} {totalProjects === 1 ? 'projekt' : totalProjects % 10 >= 2 && totalProjects % 10 <= 4 && !(totalProjects % 100 >= 12 && totalProjects % 100 <= 14) ? 'projekty' : 'projektów'} łącznie
               </span>
             </>
           )}
