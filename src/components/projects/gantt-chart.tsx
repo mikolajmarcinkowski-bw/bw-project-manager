@@ -23,13 +23,13 @@ import { TaskEstControl } from '@/components/projects/task-est-control'
 
 const COL = {
   id: 'w-[42px] shrink-0 text-center',
-  task: 'flex-1 min-w-[180px] max-w-[300px]',  // max-w zapobiega marnowaniu przestrzeni przy krótkich tytułach
+  task: 'flex-1 min-w-[160px] max-w-[240px]',
   kind: 'w-[64px] shrink-0 text-center',
   typ: 'w-[44px] shrink-0 text-center',
   est: 'w-[48px] shrink-0 text-center',
   own: 'w-[52px] shrink-0 text-center overflow-hidden',
-  wk: 'flex-1 min-w-[220px] shrink-0',   // obszar tygodni (osobny sub-grid)
-  st: 'w-[72px] shrink-0 text-center overflow-hidden',  // overflow-hidden chroni przed wychodzeniem pilla poza komórkę
+  wk: 'flex-1 min-w-[220px] shrink-0',
+  st: 'w-[84px] shrink-0 text-center',
 } as const
 
 // ─── Kolory KIND (paleta data-viz — kategoryczna, dozwolone hex wg spec) ─────────
@@ -664,7 +664,7 @@ export function GanttChart({ project, profiles = [], pmProfiles = [], targetStep
                     <div
                       id={`gantt-phase-${step.id}`}
                       role="row"
-                      aria-label={`Faza: ${step.stepTitle}`}
+                      aria-label={`Faza: ${step.phaseName}`}
                       className="flex items-center min-h-[36px] border-t border-border/40 bg-muted/50"
                     >
                       {/* # — chevron + numer fazy (klikalny przycisk) */}
@@ -700,13 +700,13 @@ export function GanttChart({ project, profiles = [], pmProfiles = [], targetStep
                           'px-2.5 py-1.5 font-heading font-bold text-[0.7rem] text-foreground flex items-center gap-2'
                         )}
                       >
-                        <span>FAZA {step.phaseNumber} — {step.phaseName}</span>
+                        <span className="truncate">{step.phaseName}</span>
                         {step.isRecurring && (
                           <RefreshCw className="h-3 w-3 text-muted-foreground/50 shrink-0" aria-label="Cykliczny" />
                         )}
                         {isCollapsed && phaseTotalCount > 0 && (
-                          <span className="text-[0.6rem] font-normal font-mono text-muted-foreground shrink-0">
-                            {phaseDoneCount}/{phaseTotalCount} gotowe
+                          <span className="text-[0.6rem] font-normal font-mono text-muted-foreground shrink-0 whitespace-nowrap">
+                            {phaseDoneCount}/{phaseTotalCount}
                             {phaseEstSum > 0 && ` · ${phaseEstSum}h`}
                           </span>
                         )}
@@ -967,7 +967,7 @@ export function GanttChart({ project, profiles = [], pmProfiles = [], targetStep
                             key={`ms-${ms.id}`}
                             role="row"
                             aria-label={`Kamień milowy: ${ms.name}`}
-                            className="flex items-center min-h-[36px] border-t border-border/30 border-l-2 border-l-status-at/60 bg-status-at/10 dark:bg-status-at/20"
+                            className="flex items-center min-h-[36px] border-t border-border/30 bg-status-at/8 dark:bg-status-at/12"
                           >
                             {/* # — msCode */}
                             <div
@@ -1043,7 +1043,7 @@ export function GanttChart({ project, profiles = [], pmProfiles = [], targetStep
                   key={`ms-tail-${ms.id}`}
                   role="row"
                   aria-label={`Kamień milowy: ${ms.name}`}
-                  className="flex items-center min-h-[36px] border-t border-border/30 border-l-2 border-l-status-at/60 bg-status-at/10 dark:bg-status-at/20"
+                  className="flex items-center min-h-[36px] border-t border-border/30 bg-status-at/8 dark:bg-status-at/12"
                 >
                   {/* # — msCode */}
                   <div

@@ -99,17 +99,15 @@ export function ProjectHeader({ project, profiles, health }: ProjectHeaderProps)
       </div>
 
       {/* Rząd metadanych */}
-      <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
         {/* Status projektu */}
-        <div className="flex items-center gap-1.5">
-          {isKnownStatus(status) ? (
-            <ProjectStatusBadge status={status} />
-          ) : (
-            <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 font-meta text-[0.7rem] font-medium text-muted-foreground">
-              {status}
-            </span>
-          )}
-        </div>
+        {isKnownStatus(status) ? (
+          <ProjectStatusBadge status={status} />
+        ) : (
+          <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 font-meta text-[0.7rem] font-medium text-muted-foreground">
+            {status}
+          </span>
+        )}
 
         {/* Typy wdrożenia */}
         {types.length > 0 && (
@@ -120,27 +118,33 @@ export function ProjectHeader({ project, profiles, health }: ProjectHeaderProps)
           </div>
         )}
 
+        {/* Separator */}
+        <span aria-hidden="true" className="text-border/60 select-none">·</span>
+
         {/* PM-owie */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-muted-foreground/70 text-xs uppercase tracking-wide font-medium">PM:</span>
+        <span className="inline-flex items-center gap-1">
+          <span className="font-meta text-[0.65rem] uppercase tracking-wide text-muted-foreground/60">PM</span>
           {pms.length === 0 ? (
-            <span className="text-muted-foreground/60 italic text-xs">— Bez PM —</span>
+            <span className="text-muted-foreground/50 italic">— Bez PM —</span>
           ) : (
-            <span>
+            <span className="text-foreground/80 font-medium">
               {pms.map((pm) => pm.fullName ?? '—').join(', ')}
             </span>
           )}
-        </div>
+        </span>
+
+        {/* Separator */}
+        <span aria-hidden="true" className="text-border/60 select-none">·</span>
 
         {/* Zakres dat */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-muted-foreground/70 text-xs uppercase tracking-wide font-medium">Zakres:</span>
-          <span>
+        <span className="inline-flex items-center gap-1">
+          <span className="font-meta text-[0.65rem] uppercase tracking-wide text-muted-foreground/60">Zakres</span>
+          <span className="font-mono text-foreground/70">
             {formatDate(startDate)}
             <span className="mx-1 text-border">–</span>
             {formatDate(endDate)}
           </span>
-        </div>
+        </span>
 
         {/* Health badges */}
         {health && (health.risksRed > 0 || health.crPending > 0 || (health.burnRate !== null && health.burnRate > 75)) && (

@@ -274,7 +274,7 @@ export function ParallelView({ steps, decisions = [], onSelectStep }: ParallelVi
 
   return (
     <div
-      className={cn('grid gap-3', cols)}
+      className={cn('grid gap-3 items-start', cols)}
       aria-label="Aktywne fazy projektu"
     >
       {combined.map((step) => (
