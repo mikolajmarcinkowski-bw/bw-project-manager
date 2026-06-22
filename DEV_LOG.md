@@ -5,6 +5,33 @@
 
 ---
 
+## [2026-06-22] feat | Impeccable polish sprint — `4b57502` (v3.3.0)
+
+**Brand violations:** KpiCard border-l-4 → dot indicator + kolorowa wartość; CR info-box → bg-teal/5 pełny border; portfolio strip → 2 chipy (Aktywne + Kamienie); ASCII "sie" → "się".
+**Animacje (motion-safe wszędzie):** ParallelView expand slide-in + stagger 30ms; ActivityLog stagger 40ms; briefing sekcje fade-in; phase strip panel slide-in + stagger 25ms; admin templates stagger 60ms; scrollIntoView respects prefers-reduced-motion.
+**Interactive states:** admin karty hover:-translate-y-px + active:scale + stagger 80ms; status pill active:scale; est input transition-colors; sidebar focus rings; ParallelView aktywna faza border-2 ring-1 teal.
+**Impeccable score:** 32/40 → ~37/40. Zapisano `.impeccable/critique/2026-06-22T08-06-02Z__bw-project-manager-v3-2-0-full-app.md`.
+
+---
+
+## [2026-06-22] feat | ParallelView N faz + sidebar szablony + konfigurator — `ce6e16f` (v3.2.0)
+
+- ParallelView: wszystkie aktywne fazy widoczne (usunięto slice(0,2)), expand z task rows
+- Sidebar: "Szablony faz" (FolderCog) → /admin/templates
+- Konfigurator: chipy typów per zadanie (toggle CRM/SPO/INT/MKT/ERP), dodawanie zadań inline
+
+---
+
+## [2026-06-22] feat | P1 completion: A4+A2+P22+P12 + testy integracyjne — `4b53411` (v3.0.0) → `fd7ce11` (v3.1.0)
+
+- A4: Historia zmian (zakładka + timeline + humanizacja 13 akcji + stagger)
+- A2: /admin/templates (accordion per faza, inline edit klocków + zadań + est)
+- P22: badge DEV, radio Standard/Deweloperski w kreatorze
+- P12: badge ↺ na cyklicznych (phase-strip + Gantt)
+- Testy 6 agentów: security MCP is_active, NaN, PM UUID, linki, plural — naprawione
+
+---
+
 ## [2026-06-19] fix | Dashboard — usuń grid projektów, finalizacja D-R1 — `8bc51e9` (v2.3.0)
 
 - Usunięto `DashboardProjectHealthCards` z widoku dashboard (zbyt dużo informacji naraz).

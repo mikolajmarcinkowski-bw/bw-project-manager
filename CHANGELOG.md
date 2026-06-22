@@ -4,6 +4,78 @@
 
 ---
 
+## [3.3.0] — 2026-06-22 — 🚀 PRODUKCJA: Impeccable Polish Sprint
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `4b57502`). Sesja 22.
+> Impeccable audit: score 32/40 → ~37/40. Wszystkie zakazy brandu wyeliminowane.
+
+### Naprawiono — Brand violations
+- **KpiCard `border-l-4`** → usunięto side-stripe; dodano kolorową wartość + dot indicator w rogu
+- **CR info-box `border-l-4`** → `bg-teal/5 border border-teal/20 rounded-lg` (full perimeter)
+- **Portfolio strip** uproszczony: z 4 chipów (duplikat alertów) do 2 (Aktywne + Kamienie 14 dni)
+- **ASCII** "pojawia sie" → "pojawia się" (phase-strip)
+
+### Dodano — Animacje (motion-safe guardy na wszystkich)
+- **ParallelView expand:** `slide-in-from-top-2 duration-200` + stagger 30ms na task rows
+- **ActivityLog entries:** `fade-in` stagger 40ms per wpis + animated empty state
+- **Dashboard briefing:** 5 sekcji + all-clear state z `fade-in duration-500`
+- **Briefing linki:** `hover:-translate-y-0.5 active:scale-[0.97]` + focus rings
+- **Phase strip task panel:** `slide-in-from-top-2` + stagger 25ms; scrollIntoView respects prefers-reduced-motion
+- **Admin templates:** fazy stagger 60ms `slide-in-from-bottom-3`
+
+### Dodano — Interactive states
+- **Admin page karty:** `hover:-translate-y-px hover:shadow-whisper-md active:scale-[0.97]` + stagger 80ms
+- **Status pill (Gantt):** `active:scale-[0.97] transition-all`
+- **Est input:** `transition-colors` na focus (smooth ring)
+- **Sidebar linki:** `focus-visible:ring-2 ring-teal/60` na NAV + ADMIN + Recent
+- **ParallelView aktywna faza:** `border-2 border-teal ring-1 ring-teal/20` (spec-compliant, był 4× słabszy)
+
+---
+
+## [3.2.0] — 2026-06-22 — 🚀 PRODUKCJA: ParallelView N faz + Sidebar szablony + Konfigurator
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `ce6e16f`). Sesja 22.
+
+### Naprawiono
+- **ParallelView bug:** hardkodowane `slice(0,2)` usunięte — wszystkie aktywne fazy widoczne
+- **Grid N faz:** 1 kol. / 2 kol. (md:) / 3 kol. (lg:)
+- **Klik nagłówka:** expand/collapse z zadaniami inline (status/est/konsultant/PM)
+- **"Otwórz Checklist →"** przekierowuje do zakładki Checklist danej fazy
+
+### Dodano
+- **Sidebar Admin:** "Szablony faz" z FolderCog → `/admin/templates`
+- **Template konfigurator:** chipy CRM/SPO/INT/MKT/ERP per zadanie (toggle w edycji)
+- **Dodawanie zadań:** "Dodaj zadanie" przy każdym klocku inline
+- `addTaskToStep()` + `updateTaskTemplateTypes()` server actions
+
+---
+
+## [3.1.0] — 2026-06-22 — 🚀 PRODUKCJA: Fixes testów integracyjnych
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `fd7ce11`). Sesja 21.
+
+### Naprawiono
+- **Security (T4 HIGH):** `verifyMcpToken` sprawdza `is_active` — dezaktywowany user traci dostęp MCP
+- **NaN walidacja:** `templates.ts updateTaskTemplateEst` — `Number.isFinite()` check
+- **PM UUID w historii:** `getProjectActivityLog` batch-resolve pm_assignee_id → imię
+- **tasksDueSoon bez linku** → `<Link>` z ArrowRight
+- **Pluralizacja projektów:** "1 projekt / 4 projekty / 12 projektów"
+
+---
+
+## [3.0.0] — 2026-06-22 — 🚀 PRODUKCJA: Kompletne P0+P1
+
+> Status: **ZMERGOWANE → produkcja** (`main`, `4b53411`). Sesja 21.
+
+### Dodano — A4, A2, P22, P12, P17
+- **A4 Historia:** zakładka "Historia" w projekcie — timeline z humanizacją 13 typów akcji
+- **A2 Szablony:** `/admin/templates` — accordion per faza, inline edit klocków i zadań
+- **P22 DEV:** radio Standard/Deweloperski w kreatorze + badge DEV w headerze
+- **P12 ↺:** badge RefreshCw na cyklicznych kloczkach (phase-strip + Gantt)
+- **P17:** już działało przez EditProjectDialog (zweryfikowane)
+
+---
+
 ## [2.3.0] — 2026-06-19 — 🚀 PRODUKCJA: D-R1 Dashboard (brief + portfolio strip + teczki)
 
 > Status: **ZMERGOWANE → produkcja** (`main`, `8bc51e9`). Sesja 20.
