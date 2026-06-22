@@ -35,7 +35,7 @@ interface ProjectHeaderProps {
 }
 
 export function ProjectHeader({ project, profiles, health }: ProjectHeaderProps) {
-  const { client, name, description, status, types, pms, startDate, endDate, atRisk } = project
+  const { client, name, description, status, variant, types, pms, startDate, endDate, atRisk } = project
 
   return (
     <header className="mb-6">
@@ -63,6 +63,11 @@ export function ProjectHeader({ project, profiles, health }: ProjectHeaderProps)
         <h1 className="flex-1 min-w-0 text-xl font-semibold leading-tight tracking-tight truncate">
           {name}
         </h1>
+        {variant === 'dev' && (
+          <span className="inline-flex items-center rounded-full px-2 py-0.5 font-meta text-[0.65rem] font-semibold bg-spo/10 text-spo border border-spo/30 shrink-0 self-center">
+            DEV
+          </span>
+        )}
         <div className="flex items-center gap-2 shrink-0">
           <EditProjectDialog
             project={{

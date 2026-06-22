@@ -2,7 +2,7 @@
 
 import { type CSSProperties, useState, useEffect, useMemo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type {
   ProjectDetail,
@@ -701,6 +701,9 @@ export function GanttChart({ project, profiles = [], pmProfiles = [], targetStep
                         )}
                       >
                         <span>FAZA {step.phaseNumber} — {step.phaseName}</span>
+                        {step.isRecurring && (
+                          <RefreshCw className="h-3 w-3 text-muted-foreground/50 shrink-0" aria-label="Cykliczny" />
+                        )}
                         {isCollapsed && phaseTotalCount > 0 && (
                           <span className="text-[0.6rem] font-normal font-mono text-muted-foreground shrink-0">
                             {phaseDoneCount}/{phaseTotalCount} gotowe

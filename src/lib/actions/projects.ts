@@ -13,6 +13,7 @@ const VALID_IMPL_TYPES: ImplType[] = ['CRM', 'SPO', 'INT', 'MKT', 'ERP']
 export async function createProjectAction(input: {
   client_id: string
   name: string
+  variant?: 'dev' | 'standard'
   types: ImplType[]
   pm_ids: string[]
   start_date: string
@@ -77,7 +78,7 @@ export async function createProjectAction(input: {
       end_date,
       description,
       status: 'active',
-      variant: 'standard',
+      variant: input.variant === 'dev' ? 'dev' : 'standard',
     })
     .select('id')
     .single()
