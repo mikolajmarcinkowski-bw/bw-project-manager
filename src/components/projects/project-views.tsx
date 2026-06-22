@@ -112,7 +112,7 @@ export function ProjectViews({
           specialists={specialists}
           pmProfiles={pmProfiles}
         />
-          <ParallelView steps={project.steps} decisions={project.decisions} />
+          <ParallelView steps={project.steps} decisions={project.decisions} onSelectStep={handleSelectStep} />
         </div>
       ) : tab === 'harmonogram' ? (
         <div role="tabpanel" id="panel-harmonogram" aria-labelledby="tab-harmonogram">

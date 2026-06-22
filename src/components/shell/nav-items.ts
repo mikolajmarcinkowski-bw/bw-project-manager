@@ -1,4 +1,4 @@
-import { LayoutDashboard, FolderOpen, Archive, User, Users, UserCog } from 'lucide-react'
+import { LayoutDashboard, FolderOpen, Archive, User, Users, UserCog, FolderCog } from 'lucide-react'
 
 export const NAV_ITEMS = [
   {
@@ -26,4 +26,5 @@ export const NAV_ITEMS = [
 export const ADMIN_NAV_ITEMS = [
   { label: 'Konta użytkowników', href: '/admin/users', icon: Users },
   { label: 'Pula specjalistów', href: '/admin/team', icon: UserCog },
+  { label: 'Szablony faz', href: '/admin/templates', icon: FolderCog },
 ] as const

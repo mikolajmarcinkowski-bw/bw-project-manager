@@ -1,6 +1,8 @@
-// Nie 'use client' — komponent prezentacyjny, kompatybilny z server components.
+'use client'
 
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { ChevronDown, ChevronRight, RefreshCw } from 'lucide-react'
 import type { GanttStep, ProjectDetail } from '@/lib/data/projects'
 
 // ─── Typy ─────────────────────────────────────────────────────────────────────
@@ -10,11 +12,11 @@ type Decision = ProjectDetail['decisions'][number]
 export interface ParallelViewProps {
   steps: GanttStep[]
   decisions?: Decision[]
+  onSelectStep?: (stepId: string) => void
 }
 
 // ─── Pomocnicze ───────────────────────────────────────────────────────────────
 
-/** Zlicz zadania w kroku wg statusu (for_quality i na pominięte z „gotowe"). */
 function countTasks(step: GanttStep) {
   let total = 0
   let done = 0
@@ -22,8 +24,8 @@ function countTasks(step: GanttStep) {
   let estSum = 0
 
   for (const task of step.tasks) {
-    if (task.isMilestone) continue // milestony nie liczą się jako zadania
-    if (task.status === 'na') continue // „nie dotyczy" — poza liczbą zadań
+    if (task.isMilestone) continue
+    if (task.status === 'na') continue
     total++
     if (task.status === 'done') done++
     if (task.status === 'in_progress') inProgress++
@@ -33,7 +35,13 @@ function countTasks(step: GanttStep) {
   return { total, done, inProgress, estSum }
 }
 
-/** Etykiety statusu kroku (do pilla). */
+const STEP_STATUS_PILL: Record<GanttStep['status'], string> = {
+  todo: 'bg-muted text-muted-foreground border border-border',
+  in_progress: 'bg-teal/15 text-teal-strong border border-teal/25',
+  done: 'bg-teal/20 text-teal-strong border border-teal/30',
+  skipped: 'bg-muted/50 text-muted-foreground/60 border border-border/50',
+}
+
 const STEP_STATUS_LABEL: Record<GanttStep['status'], string> = {
   todo: 'do zrobienia',
   in_progress: 'w toku',
@@ -41,14 +49,22 @@ const STEP_STATUS_LABEL: Record<GanttStep['status'], string> = {
   skipped: 'pominięty',
 }
 
-const STEP_STATUS_PILL: Record<GanttStep['status'], string> = {
-  todo: 'bg-muted text-muted-foreground border border-border',
-  in_progress: 'bg-status-quality/15 text-status-quality border border-status-quality/30',
-  done: 'bg-teal/15 text-teal-strong border border-teal/25',
-  skipped: 'bg-muted/50 text-muted-foreground/60 border border-border/50',
+const TASK_STATUS_DOT: Record<string, string> = {
+  todo: 'bg-muted-foreground/40',
+  in_progress: 'bg-teal',
+  done: 'bg-teal-strong',
+  for_quality: 'bg-status-quality',
+  na: 'bg-muted-foreground/20',
 }
 
-/** Znak „równolegle" (‖) renderowany jako dwa paski — niezależny od glifu czcionki. */
+const TASK_STATUS_LABEL: Record<string, string> = {
+  todo: 'Plan.',
+  in_progress: 'W toku',
+  done: 'Gotowe',
+  for_quality: 'QA',
+  na: 'N/D',
+}
+
 function ParallelMark() {
   return (
     <span aria-hidden="true" className="inline-flex items-center gap-[2px] align-middle mr-0.5">
@@ -58,156 +74,214 @@ function ParallelMark() {
   )
 }
 
-/** Skróty etykiet decyzji widocznych w kroku. */
-const DECISION_LABELS: Record<Decision['type'], string> = {
-  uat: 'UAT?',
-  change_request: 'CR?',
-  deviation: 'Odchylenie?',
-  other: 'Decyzja?',
-}
-
-// ─── Kolumna równoległej fazy ─────────────────────────────────────────────────
+// ─── Kolumna fazy ─────────────────────────────────────────────────────────────
 
 interface ParallelColumnProps {
   step: GanttStep
   stepDecisions: Decision[]
+  onSelectStep?: (stepId: string) => void
+  totalColumns: number
 }
 
-function ParallelColumn({ step, stepDecisions }: ParallelColumnProps) {
+function ParallelColumn({ step, stepDecisions, onSelectStep, totalColumns }: ParallelColumnProps) {
+  const [expanded, setExpanded] = useState(false)
   const { total, done, inProgress, estSum } = countTasks(step)
   const isActive = step.isActive
-  const isRecurring = step.isRecurring
+  const visibleTasks = step.tasks.filter((t) => !t.hidden && t.status !== 'na')
 
-  // Pill statusu wynika z realnego status kroku (nie zgadujemy „w toku").
-  const statusLabel = STEP_STATUS_LABEL[step.status]
-
-  // Widoczne decyzje dla tego kroku
-  const visibleDecisions = stepDecisions.filter((d) => d.stepId === step.id)
-  const decisionLabels = visibleDecisions.map((d) => DECISION_LABELS[d.type]).join(' · ')
+  const progressPct = total > 0 ? Math.round((done / total) * 100) : 0
 
   return (
-    <div className="rounded-md border border-teal/30 overflow-hidden">
-      {/* Nagłówek kolumny */}
-      <h4
+    <div
+      className={cn(
+        'flex flex-col rounded-xl border overflow-hidden transition-shadow',
+        isActive
+          ? 'border-teal/40 shadow-whisper'
+          : 'border-border/60',
+      )}
+    >
+      {/* Nagłówek — klikalny */}
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
         className={cn(
-          'flex justify-between items-center gap-2',
-          'bg-teal/10 px-3 py-2 font-heading font-semibold text-[12.5px] text-teal-strong'
+          'flex items-center justify-between gap-2 px-3 py-2.5 text-left transition-colors',
+          isActive
+            ? 'bg-teal/10 hover:bg-teal/15'
+            : 'bg-muted/40 hover:bg-muted/60',
         )}
       >
-        <span className="flex items-center truncate min-w-0">
+        <span className="flex items-center gap-1.5 min-w-0">
           {isActive ? (
-            <span aria-hidden="true" className="mr-1 text-[10px]">▶</span>
+            <span aria-hidden="true" className="text-[10px] text-teal shrink-0">▶</span>
           ) : (
             <ParallelMark />
           )}
-          <span className="truncate">F{step.phaseNumber} — {step.phaseName}</span>
-        </span>
-
-        {/* Pille: status + (opcjonalnie) „cyklicznie" */}
-        <span className="flex-shrink-0 inline-flex items-center gap-1">
-          {isRecurring && (
-            <span className="inline-flex items-center rounded-full border border-teal/20 bg-teal/10 px-2 py-0.5 font-heading text-[10px] font-semibold text-teal-strong whitespace-nowrap">
-              cyklicznie
-            </span>
+          {step.isRecurring && (
+            <RefreshCw className="h-2.5 w-2.5 text-teal/60 shrink-0" aria-label="Cykliczny" />
           )}
-          <span
-            className={cn(
-              'inline-flex items-center rounded-full px-2 py-0.5 font-heading text-[10px] font-semibold whitespace-nowrap',
-              STEP_STATUS_PILL[step.status]
-            )}
-          >
-            {statusLabel}
+          <span className="font-heading font-semibold text-[12.5px] text-teal-strong truncate">
+            F{step.phaseNumber} — {step.phaseName}
           </span>
         </span>
-      </h4>
 
-      {/* Ciało kolumny */}
-      <div className="px-3 py-2.5 text-xs text-muted-foreground space-y-1">
+        <span className="flex shrink-0 items-center gap-1.5">
+          <span className={cn(
+            'inline-flex items-center rounded-full px-2 py-0.5 font-heading text-[10px] font-semibold whitespace-nowrap',
+            STEP_STATUS_PILL[step.status]
+          )}>
+            {STEP_STATUS_LABEL[step.status]}
+          </span>
+          {expanded
+            ? <ChevronDown className="h-3.5 w-3.5 text-teal/60" />
+            : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" />
+          }
+        </span>
+      </button>
+
+      {/* Podsumowanie (zawsze widoczne) */}
+      <div className="px-3 py-2 border-t border-border/40 bg-card">
         {total > 0 ? (
-          <>
-            {/* Progress bar: done / total */}
+          <div className="flex flex-col gap-1.5">
             <div className="w-full bg-muted rounded-full overflow-hidden" style={{ height: 3 }}>
               <div
-                className="h-full rounded-full bg-teal transition-all duration-300"
-                style={{ width: `${Math.round((done / total) * 100)}%` }}
+                className="h-full rounded-full bg-teal transition-all duration-500"
+                style={{ width: `${progressPct}%` }}
                 aria-hidden="true"
               />
             </div>
-            <p>
-              <span className="text-foreground/70">{total}</span> zadań
-              {' · '}
-              <span className="text-foreground/70">{done}</span> gotowe
-              {' · '}
-              <span className="text-foreground/70">{inProgress}</span> w toku
-              {estSum > 0 && (
-                <>
-                  {' · '}
-                  <span className="font-mono text-foreground/70">Σ {estSum}h</span>
-                </>
-              )}
+            <p className="font-meta text-[0.65rem] text-muted-foreground">
+              <span className="text-foreground/70">{done}/{total}</span> gotowe
+              {inProgress > 0 && <> · <span className="text-teal">{inProgress} w toku</span></>}
+              {estSum > 0 && <> · <span className="font-mono">Σ {estSum}h</span></>}
             </p>
-          </>
+          </div>
         ) : (
-          <p className="text-muted-foreground/60 italic">Brak zadań w tej fazie.</p>
-        )}
-
-        {visibleDecisions.length > 0 && (
-          <p className="text-spo font-heading font-semibold text-[10px]">
-            Widoczne decyzje: {decisionLabels}
-          </p>
+          <p className="font-meta text-[0.65rem] text-muted-foreground/60 italic">Brak zadań w tej fazie.</p>
         )}
       </div>
+
+      {/* Rozwinięte zadania */}
+      {expanded && visibleTasks.length > 0 && (
+        <div className="border-t border-border/40 divide-y divide-border/30 bg-card">
+          {visibleTasks.map((task) => (
+            <div
+              key={task.id}
+              className="flex items-center gap-2 px-3 py-2 min-w-0"
+            >
+              {/* Status dot */}
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'shrink-0 rounded-full',
+                  TASK_STATUS_DOT[task.status] ?? 'bg-muted-foreground/40'
+                )}
+                style={{ width: 6, height: 6 }}
+              />
+              {/* Tytuł */}
+              <span className={cn(
+                'flex-1 font-heading text-xs leading-snug truncate',
+                task.status === 'done'
+                  ? 'line-through text-muted-foreground/60'
+                  : 'text-foreground'
+              )}>
+                {task.title}
+              </span>
+              {/* Status pill */}
+              <span className="font-meta text-[0.6rem] text-muted-foreground shrink-0 whitespace-nowrap">
+                {TASK_STATUS_LABEL[task.status] ?? task.status}
+              </span>
+              {/* Assignee */}
+              {task.assigneeName && (
+                <span
+                  aria-hidden="true"
+                  className="shrink-0 inline-grid place-items-center rounded-full bg-teal/10 text-teal font-heading font-bold text-[0.45rem]"
+                  style={{ width: 16, height: 16 }}
+                  title={task.assigneeName}
+                >
+                  {task.assigneeName.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase()}
+                </span>
+              )}
+              {/* Est */}
+              {task.est != null && (
+                <span className="font-mono text-[0.6rem] text-muted-foreground/60 shrink-0">
+                  {task.est}h
+                </span>
+              )}
+            </div>
+          ))}
+
+          {/* Link do Checklist */}
+          {onSelectStep && (
+            <button
+              type="button"
+              onClick={() => onSelectStep(step.id)}
+              className="w-full px-3 py-2 font-meta text-[0.65rem] text-teal hover:text-teal-strong hover:bg-teal/5 text-left transition-colors"
+            >
+              Otwórz Checklist fazy →
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Gdy expanded ale brak zadań */}
+      {expanded && visibleTasks.length === 0 && (
+        <div className="border-t border-border/40 px-3 py-3 bg-card">
+          <p className="font-meta text-[0.65rem] text-muted-foreground/60 italic text-center">
+            Brak widocznych zadań.
+          </p>
+          {onSelectStep && (
+            <button
+              type="button"
+              onClick={() => onSelectStep(step.id)}
+              className="mt-1.5 w-full font-meta text-[0.65rem] text-teal hover:text-teal-strong text-left transition-colors"
+            >
+              Otwórz Checklist fazy →
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
 
 // ─── ParallelView ─────────────────────────────────────────────────────────────
 
-/**
- * Widok krocków równoległych (Realizacja ∥ Kontrola, R3).
- * Pokazuje union { isActive } ∪ { isParallel }, aktywne pierwsze, maks 2 widoczne.
- *
- * Props:
- *   steps      — lista kroków GanttStep z @/lib/data/projects
- *   decisions  — (opcjonalne) lista decyzji do wyświetlenia w kolumnach
- */
-export function ParallelView({ steps, decisions = [] }: ParallelViewProps) {
-  // Union aktywnych i równoległych kroków, dedupe po id, aktywne pierwsze.
+export function ParallelView({ steps, decisions = [], onSelectStep }: ParallelViewProps) {
+  // Wszystkie aktywne fazy (isActive) + równoległe (isParallel && in_progress)
   const activeSteps = steps.filter((s) => s.isActive)
-  const parallelSteps = steps.filter((s) => s.isParallel && !s.isActive)
+  const parallelSteps = steps.filter((s) => s.isParallel && !s.isActive && s.status === 'in_progress')
 
-  // Dedupe: aktywne pierwsze, potem równoległe (aktywne już wykluczone z parallelSteps)
   const combined = [...activeSteps, ...parallelSteps]
 
-  // Pokaż maks. 2 kolumny; reszta dostępna przez strip
-  const visible = combined.slice(0, 2)
-
-  if (visible.length === 0) {
+  if (combined.length === 0) {
     return (
-      <div
-        className={cn(
-          'rounded-md border border-border/50 px-4 py-3',
-          'text-xs text-muted-foreground/60 italic text-center'
-        )}
-      >
+      <div className="rounded-xl border border-border/50 px-4 py-3 text-xs text-muted-foreground/60 italic text-center">
         Brak aktywnej fazy.
       </div>
     )
   }
 
+  // Grid: 1 kolumna na mobile, 2 gdy >=2 fazy, 3 gdy >=3 fazy (max 3 per rząd)
+  const cols = combined.length === 1
+    ? 'grid-cols-1'
+    : combined.length === 2
+      ? 'grid-cols-1 md:grid-cols-2'
+      : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+
   return (
     <div
-      className={cn(
-        'grid grid-cols-1 gap-3',
-        visible.length >= 2 && 'md:grid-cols-2'
-      )}
-      aria-label="Równoległe fazy projektu"
+      className={cn('grid gap-3', cols)}
+      aria-label="Aktywne fazy projektu"
     >
-      {visible.map((step) => (
+      {combined.map((step) => (
         <ParallelColumn
           key={step.id}
           step={step}
           stepDecisions={decisions}
+          onSelectStep={onSelectStep}
+          totalColumns={combined.length}
         />
       ))}
     </div>
