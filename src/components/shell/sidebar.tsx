@@ -95,6 +95,7 @@ export function Sidebar({ userRole }: SidebarProps) {
               className={cn(
                 'group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors duration-150',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/60',
+                'active:scale-[0.97] active:opacity-90',
                 isActive
                   ? 'bg-muted text-teal-strong'
                   : 'text-sidebar-foreground hover:bg-muted/60 hover:text-foreground'
@@ -139,6 +140,7 @@ export function Sidebar({ userRole }: SidebarProps) {
                     className={cn(
                       'group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors duration-150',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/60',
+                      'active:scale-[0.97] active:opacity-90',
                       isActive
                         ? 'bg-muted text-teal-strong'
                         : 'text-sidebar-foreground hover:bg-muted/60 hover:text-foreground'
