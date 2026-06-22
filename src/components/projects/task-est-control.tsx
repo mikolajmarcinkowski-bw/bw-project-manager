@@ -178,6 +178,7 @@ export function TaskEstControl({ taskId, est }: TaskEstControlProps) {
           'w-[44px] font-mono text-[0.65rem] text-center leading-none',
           'bg-transparent border border-teal/50 rounded-sm px-0.5 py-0.5',
           'outline-none focus:border-teal focus:ring-1 focus:ring-teal focus:ring-offset-0',
+          'transition-colors motion-reduce:transition-none',
           '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
           isPending && 'opacity-50'
         )}

@@ -74,10 +74,11 @@ export default async function AdminTemplatesPage() {
 
       {/* Fazy */}
       <div className="flex flex-col gap-4">
-        {[...phases.entries()].map(([phaseNum, { phaseName, steps: phaseSteps }]) => (
+        {[...phases.entries()].map(([phaseNum, { phaseName, steps: phaseSteps }], idx) => (
           <div
             key={phaseNum}
-            className="rounded-xl border border-border bg-card shadow-whisper overflow-hidden"
+            className="rounded-xl border border-border bg-card shadow-whisper overflow-hidden motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:fill-mode-both motion-safe:duration-500"
+            style={{ animationDelay: `${idx * 60}ms` }}
           >
             {/* Nagłówek fazy */}
             <div className="flex items-center gap-2 border-b border-border bg-muted/40 px-4 py-2.5">

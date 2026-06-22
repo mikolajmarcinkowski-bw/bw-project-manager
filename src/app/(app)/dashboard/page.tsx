@@ -29,8 +29,6 @@ export default async function DashboardPage() {
 
   const totalActive = clients.reduce((sum, c) => sum + c.activeCount, 0)
   const totalProjects = clients.reduce((sum, c) => sum + c.projectCount, 0)
-  const atRiskCount = briefData.atRiskProjects.length
-  const tasksTodayCount = briefData.tasksDueToday.length
 
   return (
     <div className="flex flex-col gap-6">
@@ -54,8 +52,6 @@ export default async function DashboardPage() {
       {/* Pasek statystyk portfolia (D-R1 v2) */}
       <DashboardPortfolioStrip
         totalActive={totalActive}
-        atRiskCount={atRiskCount}
-        tasksTodayCount={tasksTodayCount}
         upcomingMilestonesCount={milestones.length}
       />
 

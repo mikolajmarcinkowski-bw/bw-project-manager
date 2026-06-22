@@ -102,7 +102,8 @@ export function TaskStatusControl({ taskId, status }: TaskStatusControlProps) {
             'text-[0.6rem] font-semibold font-heading leading-none',
             // Interaktywność
             'cursor-pointer select-none',
-            'transition-colors motion-reduce:transition-none',
+            'transition-all motion-reduce:transition-none',
+            'active:scale-[0.97]',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-1',
             'disabled:cursor-not-allowed',
             // Kolor wg optimistic statusu

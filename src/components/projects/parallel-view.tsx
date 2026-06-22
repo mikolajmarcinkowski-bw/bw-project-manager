@@ -96,7 +96,7 @@ function ParallelColumn({ step, stepDecisions, onSelectStep, totalColumns }: Par
       className={cn(
         'flex flex-col rounded-xl border overflow-hidden transition-shadow',
         isActive
-          ? 'border-teal/40 shadow-whisper'
+          ? 'border-2 border-teal ring-1 ring-teal/20'
           : 'border-border/60',
       )}
     >
@@ -106,7 +106,8 @@ function ParallelColumn({ step, stepDecisions, onSelectStep, totalColumns }: Par
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
         className={cn(
-          'flex items-center justify-between gap-2 px-3 py-2.5 text-left transition-colors',
+          'flex items-center justify-between gap-2 px-3 py-2.5 text-left transition-all duration-200',
+          'active:scale-[0.97]',
           isActive
             ? 'bg-teal/10 hover:bg-teal/15'
             : 'bg-muted/40 hover:bg-muted/60',
@@ -164,11 +165,12 @@ function ParallelColumn({ step, stepDecisions, onSelectStep, totalColumns }: Par
 
       {/* Rozwinięte zadania */}
       {expanded && visibleTasks.length > 0 && (
-        <div className="border-t border-border/40 divide-y divide-border/30 bg-card">
-          {visibleTasks.map((task) => (
+        <div className="border-t border-border/40 divide-y divide-border/30 bg-card motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-200">
+          {visibleTasks.map((task, i) => (
             <div
               key={task.id}
-              className="flex items-center gap-2 px-3 py-2 min-w-0"
+              className="flex items-center gap-2 px-3 py-2 min-w-0 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300 motion-safe:fill-mode-both"
+              style={{ animationDelay: `${i * 30}ms` }}
             >
               {/* Status dot */}
               <span
@@ -227,7 +229,7 @@ function ParallelColumn({ step, stepDecisions, onSelectStep, totalColumns }: Par
 
       {/* Gdy expanded ale brak zadań */}
       {expanded && visibleTasks.length === 0 && (
-        <div className="border-t border-border/40 px-3 py-3 bg-card">
+        <div className="border-t border-border/40 px-3 py-3 bg-card motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200">
           <p className="font-meta text-[0.65rem] text-muted-foreground/60 italic text-center">
             Brak widocznych zadań.
           </p>

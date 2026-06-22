@@ -390,7 +390,7 @@ function CrFormDialog({
                   isPending={isPending}
                 />
               </div>
-              <p className="mt-3 px-3 py-2 bg-muted/30 border-l-4 border-teal text-[11px] text-muted-foreground leading-snug rounded-r">
+              <p className="mt-3 px-3 py-2 bg-teal/5 border border-teal/20 rounded-lg text-[11px] text-muted-foreground leading-snug">
                 CR jest ważny dopiero po akceptacji obu stron.
               </p>
             </section>

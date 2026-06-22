@@ -112,7 +112,7 @@ function PhaseBlock({ step, onClick }: PhaseBlockProps) {
         {step.isRecurring && (
           <span
             aria-label="Klocek cykliczny"
-            title="Klocek cykliczny — pojawia sie wielokrotnie"
+            title="Klocek cykliczny — pojawia się wielokrotnie"
             className="inline-flex items-center"
           >
             <RefreshCw className="h-2.5 w-2.5 text-muted-foreground/60" aria-hidden="true" />
@@ -276,7 +276,8 @@ export function PhaseStrip({ steps, decisions, onSelectStep, onRequestNewCr, spe
     const activeStep = steps.find(s => s.isActive)
     if (activeStep && scrollRef.current) {
       const el = scrollRef.current.querySelector(`[data-step-id="${activeStep.id}"]`)
-      el?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+      const prefersReduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      el?.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'nearest', inline: 'center' })
     }
   }, [steps])
 
@@ -361,7 +362,7 @@ export function PhaseStrip({ steps, decisions, onSelectStep, onRequestNewCr, spe
       const visibleTasks = step.tasks.filter(t => !t.hidden)
       const done = visibleTasks.filter(t => t.status === 'done').length
       return (
-        <div className="mt-2 rounded-xl border border-teal/20 bg-card shadow-whisper overflow-hidden">
+        <div className="mt-2 rounded-xl border border-teal/20 bg-card shadow-whisper overflow-hidden motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-[250ms]">
           {/* Nagłówek panelu */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-muted/30">
             <div className="flex items-center gap-2">
@@ -396,12 +397,12 @@ export function PhaseStrip({ steps, decisions, onSelectStep, onRequestNewCr, spe
             </p>
           ) : (
             <div className="divide-y divide-border/50">
-              {visibleTasks.map(task => (
+              {visibleTasks.map((task, i) => (
                 <div key={task.id} className={cn(
-                  'flex items-center gap-2 px-3 py-2',
+                  'flex items-center gap-2 px-3 py-2 motion-safe:animate-in motion-safe:fade-in motion-safe:fill-mode-both motion-safe:duration-300',
                   task.status === 'done' && 'opacity-60',
                   task.status === 'na' && 'opacity-40'
-                )}>
+                )} style={{ animationDelay: `${i * 25}ms` }}>
                   {/* Status */}
                   <div className="shrink-0">
                     <TaskStatusControl taskId={task.id} status={task.status} />
