@@ -220,21 +220,27 @@ export function DashboardBriefing({ data, milestones = [] }: DashboardBriefingPr
             </h3>
             <ul className="flex flex-col gap-1.5" role="list">
               {tasksDueSoon.slice(0, MAX_ITEMS).map((t, i) => (
-                <li key={i} className="flex items-center gap-3 min-w-0">
-                  <span className="font-heading text-sm text-foreground flex-1 truncate leading-snug">
-                    {t.title}
-                  </span>
-                  <span className="font-meta text-xs text-muted-foreground shrink-0 hidden sm:block truncate max-w-[140px]">
-                    {t.projectName}
-                  </span>
-                  {t.assigneeName && (
-                    <span className="font-meta text-xs text-muted-foreground shrink-0 hidden md:block">
-                      {t.assigneeName}
+                <li key={i}>
+                  <Link
+                    href={`/projects/${t.projectId}`}
+                    className="flex items-center gap-3 min-w-0 px-3 py-1.5 -mx-3 rounded-lg hover:bg-muted/40 transition-colors group"
+                  >
+                    <span className="font-heading text-sm text-foreground flex-1 truncate leading-snug">
+                      {t.title}
                     </span>
-                  )}
-                  <span className="font-meta text-xs text-muted-foreground shrink-0">
-                    {formatDate(t.dueDate)}
-                  </span>
+                    <span className="font-meta text-xs text-muted-foreground shrink-0 hidden sm:block truncate max-w-[140px]">
+                      {t.projectName}
+                    </span>
+                    {t.assigneeName && (
+                      <span className="font-meta text-xs text-muted-foreground shrink-0 hidden md:block">
+                        {t.assigneeName}
+                      </span>
+                    )}
+                    <span className="font-meta text-xs text-muted-foreground shrink-0">
+                      {formatDate(t.dueDate)}
+                    </span>
+                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/30 group-hover:text-muted-foreground shrink-0 transition-colors" />
+                  </Link>
                 </li>
               ))}
               {tasksDueSoon.length > MAX_ITEMS && (
