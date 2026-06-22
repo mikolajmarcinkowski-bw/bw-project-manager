@@ -804,23 +804,32 @@ interface KpiCardProps {
   valueClass?: string
 }
 
-const ACCENT_BORDER: Record<string, string> = {
-  teal: 'border-l-teal',
-  amber: 'border-l-[#EF9F27]',
-  red: 'border-l-[#E24B4A]',
-  blue: 'border-l-[#185FA5]',
+const ACCENT_VALUE_CLASS: Record<string, string> = {
+  teal: 'text-teal font-bold',
+  amber: 'text-status-at font-bold',
+  red: 'text-status-off font-bold',
+  blue: 'text-[#378ADD] font-bold',
+}
+
+const ACCENT_HEX: Record<string, string> = {
+  teal: '#28B39B',
+  amber: '#EF9F27',
+  red: '#E24B4A',
+  blue: '#378ADD',
 }
 
 function KpiCard({ label, value, sub, accent, progress, valueClass }: KpiCardProps) {
   return (
-    <div className={cn(
-      'bg-background border border-border rounded-lg p-3 border-l-4 relative overflow-hidden',
-      ACCENT_BORDER[accent]
-    )}>
+    <div className="bg-background border border-border rounded-lg p-3 relative overflow-hidden">
+      <span
+        className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full"
+        style={{ backgroundColor: ACCENT_HEX[accent] }}
+        aria-hidden="true"
+      />
       <div className="font-meta text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
         {label}
       </div>
-      <div className={cn('font-heading text-xl font-bold text-foreground leading-none', valueClass)}>
+      <div className={cn('font-heading text-xl leading-none', ACCENT_VALUE_CLASS[accent], valueClass)}>
         {value}
       </div>
       {progress && (

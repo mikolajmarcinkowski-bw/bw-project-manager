@@ -41,7 +41,7 @@ export function DashboardBriefing({ data, milestones = [] }: DashboardBriefingPr
   if (!hasItems) {
     return (
       <div
-        className="flex items-center gap-2.5 bg-teal/5 border border-teal/20 rounded-xl px-4 py-3"
+        className="flex items-center gap-2.5 bg-teal/5 border border-teal/20 rounded-xl px-4 py-3 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500"
         role="status"
         aria-label="Brak pilnych spraw"
       >
@@ -126,7 +126,7 @@ export function DashboardBriefing({ data, milestones = [] }: DashboardBriefingPr
 
         {/* Zagrożone projekty */}
         {atRiskProjects.length > 0 && (
-          <section className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2" aria-labelledby="section-risk">
+          <section className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500" aria-labelledby="section-risk">
             <h3
               id="section-risk"
               className="font-meta text-xs font-semibold text-status-off flex items-center gap-1.5"
@@ -139,7 +139,7 @@ export function DashboardBriefing({ data, milestones = [] }: DashboardBriefingPr
                 <li key={i}>
                   <Link
                     href={`/projects/${p.projectId}`}
-                    className="flex items-center gap-3 px-3 py-2 -mx-3 rounded-lg hover:bg-muted/40 transition-colors group min-w-0"
+                    className="flex items-center gap-3 px-3 py-2 -mx-3 rounded-lg hover:bg-muted/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] active:opacity-90 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-1 group min-w-0"
                   >
                     <span className="font-meta text-sm text-foreground leading-snug flex items-center gap-1 flex-1 min-w-0">
                       <span className="text-muted-foreground/50 shrink-0" aria-hidden="true">·</span>
@@ -166,7 +166,7 @@ export function DashboardBriefing({ data, milestones = [] }: DashboardBriefingPr
 
         {/* Zadania na dziś */}
         {tasksDueToday.length > 0 && (
-          <section className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2" aria-labelledby="section-today">
+          <section className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500" aria-labelledby="section-today">
             <h3
               id="section-today"
               className="font-meta text-xs font-semibold text-status-at flex items-center gap-1.5"
@@ -179,7 +179,7 @@ export function DashboardBriefing({ data, milestones = [] }: DashboardBriefingPr
                 <li key={i}>
                   <Link
                     href={`/projects/${t.projectId}`}
-                    className="flex items-center gap-3 px-3 py-2 -mx-3 rounded-lg hover:bg-muted/40 transition-colors group min-w-0"
+                    className="flex items-center gap-3 px-3 py-2 -mx-3 rounded-lg hover:bg-muted/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] active:opacity-90 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-1 group min-w-0"
                   >
                     <span className="font-heading text-sm text-foreground flex-1 truncate leading-snug">
                       {t.title}
@@ -210,7 +210,7 @@ export function DashboardBriefing({ data, milestones = [] }: DashboardBriefingPr
 
         {/* Zadania wkrótce */}
         {tasksDueSoon.length > 0 && (
-          <section className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2" aria-labelledby="section-soon">
+          <section className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500" aria-labelledby="section-soon">
             <h3
               id="section-soon"
               className="font-meta text-xs font-semibold text-muted-foreground flex items-center gap-1.5"
@@ -223,7 +223,7 @@ export function DashboardBriefing({ data, milestones = [] }: DashboardBriefingPr
                 <li key={i}>
                   <Link
                     href={`/projects/${t.projectId}`}
-                    className="flex items-center gap-3 min-w-0 px-3 py-1.5 -mx-3 rounded-lg hover:bg-muted/40 transition-colors group"
+                    className="flex items-center gap-3 min-w-0 px-3 py-1.5 -mx-3 rounded-lg hover:bg-muted/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] active:opacity-90 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-1 group"
                   >
                     <span className="font-heading text-sm text-foreground flex-1 truncate leading-snug">
                       {t.title}
@@ -254,7 +254,7 @@ export function DashboardBriefing({ data, milestones = [] }: DashboardBriefingPr
 
         {/* Wysokie burn rate */}
         {burnAlerts.length > 0 && (
-          <section className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2" aria-labelledby="section-burn">
+          <section className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500" aria-labelledby="section-burn">
             <h3
               id="section-burn"
               className="font-meta text-xs font-semibold text-status-off flex items-center gap-1.5"
@@ -267,7 +267,7 @@ export function DashboardBriefing({ data, milestones = [] }: DashboardBriefingPr
                 <li key={i}>
                   <Link
                     href={`/projects/${p.projectId}`}
-                    className="flex items-center gap-3 px-3 py-2 -mx-3 rounded-lg hover:bg-muted/40 transition-colors group min-w-0"
+                    className="flex items-center gap-3 px-3 py-2 -mx-3 rounded-lg hover:bg-muted/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] active:opacity-90 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-1 group min-w-0"
                   >
                     <span className="font-meta text-sm text-foreground leading-snug flex items-center gap-2 flex-1 min-w-0">
                       <span
@@ -300,7 +300,7 @@ export function DashboardBriefing({ data, milestones = [] }: DashboardBriefingPr
 
         {/* Kamienie milowe — 14 dni */}
         {milestones.length > 0 && (
-          <section className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2" aria-labelledby="section-milestones">
+          <section className="py-3 first:pt-0 last:pb-0 flex flex-col gap-2 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500" aria-labelledby="section-milestones">
             <h3
               id="section-milestones"
               className="font-meta text-xs font-semibold text-teal flex items-center gap-1.5"
@@ -313,7 +313,7 @@ export function DashboardBriefing({ data, milestones = [] }: DashboardBriefingPr
                 <li key={ms.id}>
                   <Link
                     href={`/projects/${ms.projectId}`}
-                    className="flex items-center gap-3 px-3 py-2 -mx-3 rounded-lg hover:bg-muted/40 transition-colors group min-w-0"
+                    className="flex items-center gap-3 px-3 py-2 -mx-3 rounded-lg hover:bg-muted/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] active:opacity-90 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-1 group min-w-0"
                   >
                     <span className="font-meta text-sm text-foreground leading-snug flex-1 min-w-0 truncate">
                       {ms.msCode && (

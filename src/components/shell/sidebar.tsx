@@ -47,7 +47,7 @@ function RecentProjects() {
         <Link
           key={project.id}
           href={`/projects/${project.id}`}
-          className="group flex flex-col gap-0 rounded-md px-2.5 py-1.5 transition-colors duration-150 text-sidebar-foreground hover:bg-muted/60 hover:text-foreground"
+          className="group flex flex-col gap-0 rounded-md px-2.5 py-1.5 transition-colors duration-150 text-sidebar-foreground hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/60"
         >
           <span className="text-xs font-medium truncate leading-tight">
             {project.name}
@@ -94,6 +94,7 @@ export function Sidebar({ userRole }: SidebarProps) {
               href={item.href}
               className={cn(
                 'group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors duration-150',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/60',
                 isActive
                   ? 'bg-muted text-teal-strong'
                   : 'text-sidebar-foreground hover:bg-muted/60 hover:text-foreground'
@@ -137,6 +138,7 @@ export function Sidebar({ userRole }: SidebarProps) {
                     href={item.href}
                     className={cn(
                       'group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors duration-150',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/60',
                       isActive
                         ? 'bg-muted text-teal-strong'
                         : 'text-sidebar-foreground hover:bg-muted/60 hover:text-foreground'

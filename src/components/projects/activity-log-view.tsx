@@ -139,7 +139,7 @@ interface ActivityLogViewProps {
 export function ActivityLogView({ entries }: ActivityLogViewProps) {
   if (entries.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 py-16 text-center">
+      <div className="flex flex-col items-center gap-3 py-16 text-center motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500">
         <Clock className="h-10 w-10 text-muted-foreground/20" />
         <p className="font-meta text-sm text-muted-foreground">
           Brak zapisanych zmian dla tego projektu.
@@ -156,9 +156,10 @@ export function ActivityLogView({ entries }: ActivityLogViewProps) {
           <div
             key={entry.id}
             className={cn(
-              'flex items-start gap-3 px-1 py-3',
+              'flex items-start gap-3 px-1 py-3 motion-safe:animate-in motion-safe:fade-in motion-safe:fill-mode-both motion-safe:duration-500',
               index !== entries.length - 1 && 'border-b border-border/50'
             )}
+            style={{ animationDelay: `${index * 40}ms` }}
           >
             {/* Icon */}
             <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted border border-border">
