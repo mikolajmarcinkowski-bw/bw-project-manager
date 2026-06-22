@@ -10,6 +10,7 @@ export interface ProjectRowData {
   clientId?: string
   clientName?: string
   status: 'active' | 'completed' | 'archived'
+  variant?: string | null
   types: ImplType[]
   startDate: string | null
   endDate?: string | null
@@ -59,6 +60,11 @@ export function ProjectRow({ project, showClient = false, linkDisabled = false, 
           )}>
             {project.name}
           </span>
+          {project.variant === 'dev' && (
+            <span className="inline-flex items-center rounded-full px-1.5 py-0.5 font-meta text-[0.6rem] font-semibold bg-spo/10 text-spo border border-spo/30 shrink-0">
+              DEV
+            </span>
+          )}
           {project.atRisk && (
             <AlertTriangle
               className="h-3.5 w-3.5 shrink-0 text-status-off"

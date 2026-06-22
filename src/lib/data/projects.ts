@@ -150,6 +150,7 @@ export async function getAllProjects(filters?: {
     clientId: string
     clientName: string
     status: string
+    variant: string | null
     types: ImplType[]
     startDate: string | null
     endDate: string | null
@@ -160,7 +161,7 @@ export async function getAllProjects(filters?: {
 
   let projectsQuery = supabase
     .from('projects')
-    .select('id, name, client_id, status, start_date, end_date, clients(name)')
+    .select('id, name, client_id, status, variant, start_date, end_date, clients(name)')
 
   if (filters?.status) {
     projectsQuery = projectsQuery.eq('status', filters.status)
@@ -221,6 +222,7 @@ export async function getAllProjects(filters?: {
         clientId: p.client_id,
         clientName: clientRow?.name ?? '',
         status: p.status,
+        variant: (p as unknown as { variant: string | null }).variant ?? null,
         types: typesByProject.get(p.id) ?? [],
         startDate: p.start_date ?? null,
         endDate: p.end_date ?? null,
@@ -309,6 +311,7 @@ export interface ProjectDetail {
   name: string
   description: string | null
   status: string
+  variant: string | null
   startDate: string | null
   endDate: string | null
   /** Data startu tylko jeśli sensowna (≥ rok 2000) — inaczej oś = tygodnie względne. */
@@ -340,7 +343,7 @@ export const getProjectDetail = cache(async (projectId: string): Promise<Project
 
   const { data: project, error: projErr } = await supabase
     .from('projects')
-    .select('id, name, description, status, start_date, end_date, client_id, clients(id, name)')
+    .select('id, name, description, status, variant, start_date, end_date, client_id, clients(id, name)')
     .eq('id', projectId)
     .single()
 
@@ -483,6 +486,7 @@ export const getProjectDetail = cache(async (projectId: string): Promise<Project
     name: project.name,
     description: project.description ?? null,
     status: project.status,
+    variant: (project as unknown as { variant: string | null }).variant ?? null,
     startDate: project.start_date ?? null,
     endDate: project.end_date ?? null,
     calendarStart,
@@ -1388,6 +1392,66 @@ export async function getUpcomingMilestones(daysAhead = 14): Promise<UpcomingMil
   }
 
   return result.slice(0, 10) // max 10 nadchodzących
+}
+
+// ─── getProjectActivityLog (A4 — Historia zmian) ──────────────────────────────
+
+export interface ActivityLogEntry {
+  id: string
+  entity: string
+  entityId: string
+  action: string
+  actorName: string | null
+  before: Record<string, unknown> | null
+  after: Record<string, unknown> | null
+  createdAt: string
+}
+
+export async function getProjectActivityLog(
+  projectId: string,
+  limit = 100
+): Promise<ActivityLogEntry[]> {
+  const supabase = createAdminClient()
+
+  // First get all task IDs belonging to this project
+  const { data: taskRows } = await supabase
+    .from('tasks')
+    .select('id')
+    .eq('project_id', projectId)
+
+  const taskIds = (taskRows ?? []).map((t) => t.id)
+
+  // Fetch activity log entries for the project OR any of its tasks
+  const allEntityIds = [projectId, ...taskIds]
+
+  const { data, error } = await supabase
+    .from('activity_log')
+    .select('id, entity, entity_id, action, actor_id, before, after, created_at, profiles(full_name)')
+    .in('entity_id', allEntityIds)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error || !data) {
+    console.error('[getProjectActivityLog] failed:', error)
+    return []
+  }
+
+  return data.map((row) => {
+    const profilesField = row.profiles
+    const profile = Array.isArray(profilesField)
+      ? (profilesField[0] as { full_name: string | null } | undefined) ?? null
+      : (profilesField as { full_name: string | null } | null)
+    return {
+      id: row.id,
+      entity: row.entity,
+      entityId: row.entity_id ?? '',
+      action: row.action,
+      actorName: profile?.full_name ?? null,
+      before: row.before as Record<string, unknown> | null,
+      after: row.after as Record<string, unknown> | null,
+      createdAt: row.created_at,
+    }
+  })
 }
 
 // ─── getArchivedProjects (P20 — widok archiwum) ───────────────────────────────

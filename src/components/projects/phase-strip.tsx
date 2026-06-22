@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { ChevronUp, ExternalLink } from 'lucide-react'
+import { ChevronUp, ExternalLink, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { GanttStep, ProjectDetail } from '@/lib/data/projects'
 import { DecisionDialog } from '@/components/projects/decision-dialog'
@@ -103,12 +103,21 @@ function PhaseBlock({ step, onClick }: PhaseBlockProps) {
       {/* Numer fazy — F{n} */}
       <span
         className={cn(
-          'font-mono text-[8.5px] leading-none mb-0.5',
+          'font-mono text-[8.5px] leading-none mb-0.5 flex items-center gap-0.5',
           isDone ? 'text-muted-foreground/60' : 'text-muted-foreground'
         )}
       >
         F{step.phaseNumber}
         {sprintHint(step) && <span className="text-teal"> · {sprintHint(step)}</span>}
+        {step.isRecurring && (
+          <span
+            aria-label="Klocek cykliczny"
+            title="Klocek cykliczny — pojawia sie wielokrotnie"
+            className="inline-flex items-center"
+          >
+            <RefreshCw className="h-2.5 w-2.5 text-muted-foreground/60" aria-hidden="true" />
+          </span>
+        )}
       </span>
 
       {/* Nazwa fazy */}

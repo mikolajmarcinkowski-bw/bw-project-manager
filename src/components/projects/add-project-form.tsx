@@ -46,6 +46,7 @@ type Step = 1 | 2
 type Step1Data = {
   client_id: string
   name: string
+  variant: 'dev' | 'standard'
   types: ImplType[]
   pm_ids: string[]
   start_date: string
@@ -138,6 +139,7 @@ function Step1Form({ clients, profiles, defaultClientId, onNext, initialData }: 
 
     const client_id = (fd.get('client_id') as string | null) ?? ''
     const name = ((fd.get('name') as string | null) ?? '').trim()
+    const variant = (fd.get('variant') as string | null) === 'dev' ? 'dev' as const : 'standard' as const
     const types = fd.getAll('types') as ImplType[]
     const pmRaw = fd.getAll('pm_ids') as string[]
     const pm_ids = pmRaw.filter((v) => v && v !== 'none')
@@ -174,6 +176,7 @@ function Step1Form({ clients, profiles, defaultClientId, onNext, initialData }: 
     onNext({
       client_id,
       name,
+      variant,
       types,
       pm_ids,
       start_date,
@@ -234,6 +237,33 @@ function Step1Form({ clients, profiles, defaultClientId, onNext, initialData }: 
             }
           }}
         />
+      </div>
+
+      {/* Wariant projektu */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-medium text-foreground">Wariant projektu</label>
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="variant"
+              value="standard"
+              defaultChecked={initialData?.variant !== 'dev'}
+              className="accent-teal"
+            />
+            <span className="font-meta text-sm text-foreground">Standard (HubSpot / integracje)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="variant"
+              value="dev"
+              defaultChecked={initialData?.variant === 'dev'}
+              className="accent-teal"
+            />
+            <span className="font-meta text-sm text-foreground">Deweloperski</span>
+          </label>
+        </div>
       </div>
 
       {/* Typy wdrożenia */}
