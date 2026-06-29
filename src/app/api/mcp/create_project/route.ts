@@ -243,6 +243,7 @@ export async function POST(request: NextRequest) {
 
     const selectedTypesSet = new Set<string>(types)
     const naSet = new Set<string>(na_template_ids_arr)
+    let maxWEnd = 0
 
     // Petla R15: dla kazdego szablonu kroku → INSERT krok → batch INSERT zadania
     for (const st of stepTemplates) {
@@ -285,6 +286,10 @@ export async function POST(request: NextRequest) {
 
       if (filteredTasks.length === 0) continue
 
+      for (const tt of filteredTasks) {
+        if (tt.w_end !== null && tt.w_end !== undefined && tt.w_end > maxWEnd) maxWEnd = tt.w_end
+      }
+
       const { error: tasksInsertError } = await supabase.from('tasks').insert(
         filteredTasks.map((tt) => {
           const isNa = naSet.has(tt.id)
@@ -315,7 +320,106 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 5. Activity log (nieblokujace)
+    // 5. P12: Klocki cykliczne — spread instancji po osi czasu projektu (D-038, D-043)
+    const projectDurationWeeks = maxWEnd > 0 ? maxWEnd : 12
+
+    type RecurringTemplate = {
+      id: string; phase_number: number; phase_name: string; step_order: number
+      step_title: string; kind: string | null
+      recurring_period: string | null; recurring_anchor_day: number | null
+    }
+
+    const { data: recurringTemplates } = await supabase
+      .from('step_templates')
+      .select('id, phase_number, phase_name, step_order, step_title, kind, recurring_period, recurring_anchor_day')
+      .eq('is_recurring', true) as { data: RecurringTemplate[] | null }
+
+    if (recurringTemplates && recurringTemplates.length > 0) {
+      const startDateObj = new Date(start_date)
+      const rangeEnd = new Date(startDateObj.getTime() + (projectDurationWeeks + 4) * 7 * 864e5)
+
+      const { data: calRows } = await supabase
+        .from('working_calendar')
+        .select('day')
+        .gte('day', start_date)
+        .lte('day', rangeEnd.toISOString().slice(0, 10))
+        .eq('is_working_day', false)
+
+      const nonWorkingDays = new Set<string>((calRows ?? []).map(r => r.day as string))
+
+      const isNonWorking = (d: Date): boolean => {
+        const dow = d.getDay()
+        if (dow === 0 || dow === 6) return true
+        return nonWorkingDays.has(d.toISOString().slice(0, 10))
+      }
+
+      const getOccurrenceWeek = (baseWeek: number, anchorDay: number): number | null => {
+        const weekStartMs = startDateObj.getTime() + (baseWeek - 1) * 7 * 864e5
+        const weekStart = new Date(weekStartMs)
+        const wsISO = weekStart.getDay() === 0 ? 7 : weekStart.getDay()
+        const dayOffset = (anchorDay - wsISO + 7) % 7
+        let target = new Date(weekStartMs + dayOffset * 864e5)
+        for (let i = 0; isNonWorking(target) && i < 4; i++) {
+          target = new Date(target.getTime() + 864e5)
+        }
+        const resultWeek = Math.floor((target.getTime() - startDateObj.getTime()) / (7 * 864e5)) + 1
+        return resultWeek >= 1 && resultWeek <= projectDurationWeeks ? resultWeek : null
+      }
+
+      for (const rt of recurringTemplates) {
+        if (!rt.recurring_period) continue
+        const periodWeeks = rt.recurring_period === 'biweekly' ? 2 : 1
+        const anchorDay = rt.recurring_anchor_day ?? 4
+        let occIdx = 0
+
+        for (let w = 1; w <= projectDurationWeeks; w += periodWeeks) {
+          const targetWeek = getOccurrenceWeek(w, anchorDay)
+          occIdx++
+          if (targetWeek === null) continue
+
+          const { data: rsStep, error: rsErr } = await supabase
+            .from('project_steps')
+            .insert({
+              project_id: projectId,
+              step_template_id: rt.id,
+              phase_number: 99,
+              phase_name: 'Klocki cykliczne',
+              step_order: rt.step_order * 1000 + occIdx,
+              step_title: rt.step_title,
+              kind: rt.kind ?? 'pm',
+              is_recurring: true,
+              is_parallel: false,
+              is_decision: false,
+              status: 'todo',
+              is_active: false,
+            } as never)
+            .select('id')
+            .single()
+
+          if (rsErr || !rsStep) {
+            console.error('[create_project] recurring step insert failed:', rsErr)
+            continue
+          }
+
+          await supabase.from('tasks').insert({
+            step_id: (rsStep as { id: string }).id,
+            project_id: projectId,
+            task_order: 1,
+            title: rt.step_title,
+            kind: 'pm',
+            type: [],
+            w_start: targetWeek,
+            w_end: targetWeek,
+            est: null,
+            is_milestone: false,
+            status: 'todo',
+            hidden: false,
+          })
+        }
+      }
+    }
+
+    // 6. Activity log (nieblokujace)
     const { error: logError } = await supabase.from('activity_log').insert({
       entity: 'project',
       entity_id: projectId,
