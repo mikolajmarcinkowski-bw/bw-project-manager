@@ -847,6 +847,9 @@ export type Database = {
           phase_name: string
           phase_number: number
           project_id: string
+          recurring_anchor_day: number | null
+          recurring_occurrence_index: number | null
+          recurring_period: string | null
           status: Database["public"]["Enums"]["step_status"]
           step_order: number
           step_template_id: string | null
@@ -867,6 +870,9 @@ export type Database = {
           phase_name: string
           phase_number: number
           project_id: string
+          recurring_anchor_day?: number | null
+          recurring_occurrence_index?: number | null
+          recurring_period?: string | null
           status?: Database["public"]["Enums"]["step_status"]
           step_order: number
           step_template_id?: string | null
@@ -887,6 +893,9 @@ export type Database = {
           phase_name?: string
           phase_number?: number
           project_id?: string
+          recurring_anchor_day?: number | null
+          recurring_occurrence_index?: number | null
+          recurring_period?: string | null
           status?: Database["public"]["Enums"]["step_status"]
           step_order?: number
           step_template_id?: string | null
@@ -1202,6 +1211,8 @@ export type Database = {
           owner_role: string | null
           phase_name: string
           phase_number: number
+          recurring_anchor_day: number | null
+          recurring_period: string | null
           step_order: number
           step_title: string
           tags: string[]
@@ -1217,6 +1228,8 @@ export type Database = {
           owner_role?: string | null
           phase_name: string
           phase_number: number
+          recurring_anchor_day?: number | null
+          recurring_period?: string | null
           step_order: number
           step_title: string
           tags?: string[]
@@ -1232,6 +1245,8 @@ export type Database = {
           owner_role?: string | null
           phase_name?: string
           phase_number?: number
+          recurring_anchor_day?: number | null
+          recurring_period?: string | null
           step_order?: number
           step_title?: string
           tags?: string[]
