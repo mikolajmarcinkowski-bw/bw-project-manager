@@ -5,6 +5,19 @@
 
 ---
 
+## [2026-06-30] fix | Pełna synchronizacja widoków — `af5a686` (v3.7.0)
+
+**Źródło:** audyt synchronizacji (3 równoległe agenci — revalidatePath, kalkulacje pochodne, UI propagacja)
+
+- **`tasks.ts`** — 6 akcji (updateTaskStatus, updateTaskAssignee, updateTaskPmAssignee, updateTaskEst, updateTaskDueDate, muteTaskWarning) → dodano `revalidateTaskDependents()` helper: `/dashboard` + `/projekty` + `/clients/*`. Wcześniej: zamknięcie zadania → czerwony trójkąt na dashboardzie zostawał.
+- **`mark_project_completed/route.ts`** — dodano revalidatePath dla `/dashboard`, `/projekty`, `/clients/{id}`. MCP route nie miało revalidacji mimo że UI action miało — projekt zamknięty przez Claude nie znikał z dashboardu.
+- **`phase-strip.tsx`** — filter `phaseNumber !== 99`: 35 cyklicznych bloków nie pojawiają się w sekwencji procesu.
+- **`parallel-view.tsx`** — analogiczny filter dla ParallelView.
+
+**Co poprawne by design:** `warning_muted` ≠ `atRisk` — wyciszenie alertu nie usuwa trójkąta (projekt nadal zagrożony).
+
+---
+
 ## [2026-06-30] fix | Naprawy po audycie PM — `0220cbc` (v3.6.0)
 
 **Źródło:** audyt 3 PM-ów personas (87 callów API) → `wiki/product/pm-audit-2026-06-30.md`
