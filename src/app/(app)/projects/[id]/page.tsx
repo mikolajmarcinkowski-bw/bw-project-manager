@@ -14,6 +14,7 @@ import {
   getProjectActivityLog,
 } from '@/lib/data/projects'
 import { getSpecialists } from '@/lib/data/specialists'
+import { getProjectDocuments } from '@/lib/data/documents'
 
 export async function generateMetadata({
   params,
@@ -32,7 +33,7 @@ interface ProjectPageProps {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { id } = await params
-  const [project, profiles, specialists, risks, kpis, budget, changeRequests, raci, health, activityLog] = await Promise.all([
+  const [project, profiles, specialists, risks, kpis, budget, changeRequests, raci, health, activityLog, documents] = await Promise.all([
     getProjectDetail(id),
     getProfiles(),
     getSpecialists(),
@@ -43,6 +44,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     getProjectRaci(id),
     getProjectHealthMetrics(id),
     getProjectActivityLog(id),
+    getProjectDocuments(id),
   ])
 
   if (!project) {
@@ -67,6 +69,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         budget={budget}
         changeRequests={changeRequests}
         raci={raci}
+        documents={documents}
         activityLog={activityLog}
       />
     </div>

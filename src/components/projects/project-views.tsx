@@ -22,11 +22,12 @@ import { BudgetView } from './budget-view'
 import { CrView } from './cr-view'
 import { RaciView } from './raci-view'
 import { ActivityLogView } from './activity-log-view'
+import { DocumentsView } from './documents-view'
 import type { Specialist } from './task-assignee-control'
 import type { Profile as PmProfile } from './task-pm-control'
+import type { ProjectDocument } from '@/lib/data/documents'
 
-// Wszystkie zakładki dokumentów projektowych aktywne.
-type Tab = 'mapa' | 'harmonogram' | 'checklist' | 'RAID' | 'KPI' | 'Budżet' | 'CR' | 'RACI' | 'Historia'
+type Tab = 'mapa' | 'harmonogram' | 'checklist' | 'RAID' | 'KPI' | 'Budżet' | 'CR' | 'RACI' | 'Dokumenty' | 'Historia'
 
 export function ProjectViews({
   project,
@@ -37,6 +38,7 @@ export function ProjectViews({
   budget = { settings: null, lines: [] },
   changeRequests = [],
   raci = [],
+  documents = [],
   activityLog = [],
 }: {
   project: ProjectDetail
@@ -47,6 +49,7 @@ export function ProjectViews({
   budget?: { settings: BudgetSettings | null; lines: BudgetLine[] }
   changeRequests?: ChangeRequest[]
   raci?: RaciTask[]
+  documents?: ProjectDocument[]
   activityLog?: ActivityLogEntry[]
 }) {
   const [tab, setTab] = useState<Tab>('mapa')
@@ -95,6 +98,9 @@ export function ProjectViews({
         </TabPill>
         <TabPill id="tab-raci" controls="panel-raci" active={tab === 'RACI'} onClick={() => setTab('RACI')}>
           RACI
+        </TabPill>
+        <TabPill id="tab-dokumenty" controls="panel-dokumenty" active={tab === 'Dokumenty'} onClick={() => setTab('Dokumenty')}>
+          Dokumenty
         </TabPill>
         <TabPill id="tab-historia" controls="panel-historia" active={tab === 'Historia'} onClick={() => setTab('Historia')}>
           Historia
@@ -172,6 +178,10 @@ export function ProjectViews({
       ) : tab === 'RACI' ? (
         <div role="tabpanel" id="panel-raci" aria-labelledby="tab-raci">
           <RaciView projectId={project.id} initialRaci={raci} />
+        </div>
+      ) : tab === 'Dokumenty' ? (
+        <div role="tabpanel" id="panel-dokumenty" aria-labelledby="tab-dokumenty">
+          <DocumentsView projectId={project.id} initialDocuments={documents} />
         </div>
       ) : tab === 'Historia' ? (
         <div role="tabpanel" id="panel-historia" aria-labelledby="tab-historia">
