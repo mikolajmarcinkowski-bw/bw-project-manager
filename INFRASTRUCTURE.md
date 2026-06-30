@@ -7,22 +7,37 @@
 
 ## Aktualny stan (aktualizuj przy każdej zmianie)
 
+> Ostatnia aktualizacja: 2026-06-30 · v3.5.0 · commit `64b8190`
+
 | Serwis | Status | URL/ID | Ostatnia zmiana |
 |--------|--------|--------|-----------------|
-| GitHub repo | ✅ GOTOWE | github.com/mikolajmarcinkowski-bw/bw-project-manager | 2026-06-15 |
-| Vercel projekt | ✅ GOTOWE | bw-project-manager.vercel.app (team: mikolaj-marcinkowski-s-projects) | 2026-06-15 |
-| Vercel→GitHub sync | ✅ DZIAŁA | push → preview; merge do `main` → auto-deploy Production. Zweryfikowane 2026-06-15 (merge f6e0915 → Production success) | 2026-06-15 |
-| Supabase projekt | ✅ GOTOWE | https://ipptnszwnjtoqpixhefd.supabase.co (West EU London, PG17) | 2026-06-15 |
-| Schemat DB (migracje) | ✅ WDROŻONE | 29 tabel + RLS + trigger profiles + seed (13 szablonów / 86 zadań) | 2026-06-15 |
-| Supabase CLI | ✅ ZALOGOWANE | token (login --token); link `ipptnszwnjtoqpixhefd` | 2026-06-15 |
-| Auth / konta | ✅ DZIAŁA | rejestracja WYŁĄCZONA; konto Mikołaja: dev_admin+tester (hasło **zrotowane** 2026-06-16 po leaku). Konta zakłada admin przez Auth Admin API | 2026-06-16 |
-| Konta dev (lokalne) | ✅ DZIAŁA | `dev-admin`/`dev-user@bwmanager.pl` (admin/user) do obejścia logowania — creds tylko w `.env.local`, NIE w Vercel. Obejście aktywne wyłącznie w dev (gate `NODE_ENV`) | 2026-06-16 |
-| Aplikacja (Faza 1+2a+2b) | ✅ NA PRODUKCJI | login + shell + inspekcja + dashboard teczkowy + klient/projekt (R15) + /projekty + delight + **widok projektu (Mapa klocków + phase strip + Harmonogram Gantt)**; `main` (merge `6dcd79e`) → `bw-project-manager.vercel.app` | 2026-06-16 |
-| Faza 2c (interaktywne zadania) | 🔶 W TOKU (branch) | plasterek 1 = odhaczanie/status zadania (`updateTaskStatus`) na `feat/faza-2c-zadania`, niezmergowane. Dalej: P8/P9/P18/P19 + ekran „Checklist fazy" | 2026-06-16 |
-| Warstwa API / MCP | ❌ NIE ISTNIEJE | brak `src/app/api` — 0/40 operacji MCP (Faza 3). Tworzenie projektu = formularz `createProjectAction` | 2026-06-16 |
-| Daily brief (Resend kod) | ✅ ZAIMPLEMENTOWANE | `src/app/api/cron/daily-brief/route.ts` + Vercel Cron 04:30 UTC pon-pt (`vercel.json`). **CRON_SECRET musi być dodany do Vercel env vars** (production + preview). Lokalnie: `.env.local`. | 2026-06-17 |
-| Resend (konto/klucz) | ✅ GOTOWE | brief@bwmanager.pl (1000 maili/mc free) | 2026-06-15 |
-| Domena własna | ⏳ TBD | — | — |
+| GitHub repo | ✅ DZIAŁA | github.com/mikolajmarcinkowski-bw/bw-project-manager (private) | 2026-06-15 |
+| Vercel projekt | ✅ DZIAŁA | bw-project-manager.vercel.app · auto-deploy na każdy push do `main` | 2026-06-15 |
+| Supabase projekt | ✅ DZIAŁA | ipptnszwnjtoqpixhefd.supabase.co (West EU London, PG17) | 2026-06-15 |
+| Schemat DB (migracje) | ✅ AKTUALNE | **7 migracji wdrożonych** — pełna lista poniżej | 2026-06-30 |
+| Supabase CLI | ✅ ZALOGOWANE | Token w pamięci podręcznej CLI; `db push` działa bez hasła | 2026-06-29 |
+| Supabase Storage | ✅ SKONFIGUROWANE | Bucket `project-documents` (private, 50MB, PDF/DOCX/XLSX/PNG/JPG) + 4 RLS policies | 2026-06-30 |
+| Auth / konta | ✅ DZIAŁA | Rejestracja WYŁĄCZONA; Mikołaj: dev_admin+tester. Konta zakłada admin przez Auth Admin API | 2026-06-16 |
+| Konta dev (lokalne) | ✅ DZIAŁA | `dev-admin`/`dev-user@bwmanager.pl` — creds tylko w `.env.local`, NIE w Vercel. Gate `NODE_ENV`. | 2026-06-16 |
+| Aplikacja | ✅ NA PRODUKCJI | **v3.5.0** — MVP P0+P1 kompletne. Commit `64b8190`. | 2026-06-30 |
+| MCP Server | ✅ KOMPLETNY | 47/47 toolsów; `~/.claude/bw-mcp/server.mjs`; token Mikołaja: `ea127ca5-...` | 2026-06-29 |
+| Daily brief (Resend) | 🟡 KOD OK, DNS BLOKUJE | Kod ✅; cron 04:30 UTC; `CRON_SECRET` w `.env.local`; DNS bwmanager.pl odłożony | 2026-06-17 |
+| Resend | ✅ GOTOWE | brief@bwmanager.pl (1000 maili/mc free) | 2026-06-15 |
+| Domena własna | ⏳ ODŁOŻONE | bwmanager.pl — po DNS skonfigurujemy Resend email | — |
+
+### Migracje Supabase (chronologicznie)
+
+| Plik | Data | Co robi |
+|------|------|---------|
+| `20260615120000_init_schema.sql` | 2026-06-15 | Schemat bazowy (29 tabel) |
+| `20260615120100_rls_and_triggers.sql` | 2026-06-15 | RLS + triggery |
+| `20260615120200_seed_templates.sql` | 2026-06-15 | Seed: 10 klocków faz + 3 cykliczne + 86 zadań |
+| `20260615120300_inspection_feedback.sql` | 2026-06-15 | `profiles.is_tester` (A1) |
+| `20260615120400_security_hardening.sql` | 2026-06-15 | Trigger ochrony ról |
+| `20260618100000_task_pm_assignee.sql` | 2026-06-18 | `tasks.pm_assignee_id` (D-057) |
+| `20260620000000_api_tokens.sql` | 2026-06-20 | MCP API tokens |
+| `20260629000000_recurring_logic.sql` | 2026-06-29 | P12: `recurring_period`/`anchor_day`/`occurrence_index` + working_calendar święta 2025–2027 |
+| `20260630000000_storage_rls.sql` | 2026-06-30 | D1: 4 RLS policies dla `storage.objects` (bucket project-documents) |
 
 ---
 

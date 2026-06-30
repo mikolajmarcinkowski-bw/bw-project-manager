@@ -5,6 +5,46 @@
 
 ---
 
+## [2026-06-30] feat | D1 — Upload dokumentów — `64b8190` (v3.5.0)
+
+- **Storage:** bucket `project-documents` (private, 50MB, PDF/DOCX/XLSX/PNG/JPG) + 4 RLS policies dla authenticated
+- **Data layer:** `getProjectDocuments()` z signed URLs (1h TTL)
+- **Actions:** `uploadDocument()` (walidacja MIME+size, upload, insert metadata + rollback przy błędzie DB), `deleteDocument()`
+- **UI:** zakładka „Dokumenty" w widoku projektu; lista z ikonami per typ; upload button → file input; dwuetapowy delete; empty state z CTA; optimistic update po upload
+- **P1: ✅ 12/12** — wszystkie P1 stories zakończone
+
+---
+
+## [2026-06-29] feat+mcp+db | MCP 47 toolsów (z ~26) + P12 pełna logika — `5281039` (v3.4.0)
+
+**MCP — 7 nowych route'ów (spec 46/47):**
+- READ: `get_project_types`, `get_milestones`, `get_questions`, `get_documents`
+- WRITE: `update_project_types`, `add_steps_to_project`, `generate_document_content` (R11: deterministyczna agregacja danych, zero AI)
+
+**Bug fix — server.mjs był niekompletny:** ~26 toolsów rejestrowanych zamiast 41 istniejących. 14 route'ów miało backend ale Claude nie mógł ich wywołać (nie było ich w `TOOLS[]`). Naprawione: `server.mjs` teraz rejestruje wszystkie 47 toolsów.
+
+**P12 — pełna logika klocków cyklicznych (D-038, D-043):**
+- **Migracja** `20260629000000_recurring_logic.sql`: kolumny `recurring_period`/`recurring_anchor_day`/`recurring_occurrence_index` na `step_templates`/`project_steps` + kadencje 3 szablonów (raport czw/podsumowanie pt/spotkanie pon-co2tyg) + working_calendar z polskimi świętami 2025–2027 (stałe + ruchome: Poniedziałek Wielkanocny + Boże Ciało)
+- **create_project** spreaduje instancje cyklicznych klocków po osi czasu projektu (weekly/biweekly) z shiftem przy dniach wolnych (D-043); syntetyczne zadanie per instancja → wStart/wEnd widoczne na Gantcie
+- ⚠️ **Wymagana akcja**: `npx supabase db push` przed production deploy!
+
+**Następne:** wdrożyć migrację → `npx supabase db push` + `npx supabase gen types` → deploy automatyczny
+
+---
+
+## [2026-06-22] fix | Naprawa 5 feedbacków z narzędzia inspekcji — `9d67803` (v3.3.1)
+
+- **sidebar:** `active:scale-[0.97] active:opacity-90` na linkach NAV i ADMIN — podświetlanie przy kliknięciu
+- **parallel-view:** `items-start` na grid — rozwinięcie jednej kolumny nie rozciąga przestrzeni pod pozostałymi
+- **project-header:** ujednolicony rząd metadanych — `inline-flex` z separatorem `·`, `font-mono` na datach; eliminuje nierówne wyrównanie napisów
+- **gantt:** `COL.st` 72→84px — `TaskDateControl` nie jest ucinany przez `overflow-hidden`
+- **gantt:** `COL.task` `max-w-[300px]`→`max-w-[240px]` — mniejsze marnowanie przestrzeni między treścią a kolumną Typ
+- **gantt:** prefix `FAZA N — ` usunięty z nagłówka fazy (numer jest w kolumnie `#`, prefix był redundantny)
+- **gantt:** `border-l-2 border-l-status-at/60` usunięty z wierszy milestonów (forbidden pattern wg design system)
+- **db:** wyczyszczone wszystkie 9 feedbacków z `ui_feedback` (4 już wcześniej naprawione, 5 naprawione w tej sesji)
+
+---
+
 ## [2026-06-22] feat | Impeccable polish sprint — `4b57502` (v3.3.0)
 
 **Brand violations:** KpiCard border-l-4 → dot indicator + kolorowa wartość; CR info-box → bg-teal/5 pełny border; portfolio strip → 2 chipy (Aktywne + Kamienie); ASCII "sie" → "się".
