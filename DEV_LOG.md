@@ -5,6 +5,34 @@
 
 ---
 
+## [2026-06-30] fix | Naprawy po audycie PM — `0220cbc` (v3.6.0)
+
+**Źródło:** audyt 3 PM-ów personas (87 callów API) → `wiki/product/pm-audit-2026-06-30.md`
+
+**P0 — 4 naprawy (blokery):**
+- `get_activity_log`: aggreguje teraz eventy zadań/ryzyk/milestones per projekt (nie tylko `entity_id=project_id`)
+- `update_risk` + `update_milestone`: `before` state w activity_log (wcześniej `null`)
+- `set_task_owner` + `update_task`: walidacja `assignee_name` względem `team_members` (nie tylko max 120)
+- `create_project`: seeduje MS0–MS7 z opisowymi nazwami; `setup_project_full`: lepsze nazwy z mapy
+- Nowy route `get_document_content`: odczyt treści wygenerowanego dokumentu przez MCP
+
+**P1 — 7 napraw:**
+- `update_task_status`: ostrzeżenie gdy cofnięcie z `done` kasuje `completionDate`
+- `get_project_detail`: rozdzielenie `steps` (regularne) + `recurring` (phase 99) + `summary` (todo/done/overdue/unassigned)
+- `add_change_request`: `impact_level` dodano 'critical' (enum DB + migracja), response z status+note
+- `get_budget`: zwraca `burnRatePct`, `totalEstH`, `totalActualH`
+- `update_change_request`: zwraca `updated: [...]` (nie tylko id)
+- `server.mjs`: opisy K/W/D dla budget settings; cr_type enum z opisami
+
+**P2 — 5 nowych routes:**
+- `bulk_update_assignee`: przepisanie zadań konsultanta z walidacją
+- `get_project_tasks`: filtry po status/assignee/overdue
+- `escalate_risk_to_cr`: R→CR w jednym wywołaniu
+- `get_client_detail`: NIP, hubspot_url, projekty klienta
+- `generate_document_content(raid)`: rozszerzony o A (questions_doubts) + D (decision_points)
+
+---
+
 ## [2026-06-30] feat | D1 — Upload dokumentów — `64b8190` (v3.5.0)
 
 - **Storage:** bucket `project-documents` (private, 50MB, PDF/DOCX/XLSX/PNG/JPG) + 4 RLS policies dla authenticated
