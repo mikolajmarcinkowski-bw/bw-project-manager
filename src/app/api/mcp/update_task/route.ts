@@ -45,6 +45,22 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+    // Walidacja względem team_members — tylko gdy podany (nie null)
+    if (trimmed !== null) {
+      const sbValidate = createAdminClient()
+      const { data: members } = await sbValidate
+        .from('team_members')
+        .select('full_name')
+        .eq('is_active', true)
+      const normalizedNames = (members ?? []).map((m) => m.full_name.toLowerCase())
+      if (!normalizedNames.includes(trimmed.toLowerCase())) {
+        const available = (members ?? []).map((m) => m.full_name).join(', ')
+        return NextResponse.json({
+          ok: false,
+          error: `Nieznany konsultant: "${trimmed}". Dostępni: ${available || 'brak aktywnych konsultantów'}`,
+        }, { status: 400 })
+      }
+    }
     updatePayload.assignee_name = trimmed
     afterLog.assignee_name = trimmed
     changesFound.push('assignee_name')

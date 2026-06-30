@@ -56,7 +56,14 @@ export async function POST(request: NextRequest) {
 
   const supabase = createAdminClient()
 
-  // TODO: risks not in generated types/supabase.ts yet
+  // Pobierz stan przed zmianą (dla activity_log before)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: beforeRow } = await (supabase as any)
+    .from('risks')
+    .select('rag, status, mitigation, owner')
+    .eq('id', risk_id)
+    .single()
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('risks')
@@ -72,16 +79,21 @@ export async function POST(request: NextRequest) {
 
   const row = data as { id: string; project_id: string }
 
+  const beforeLog: Record<string, unknown> = {}
+  for (const key of Object.keys(updates)) {
+    beforeLog[key] = (beforeRow as Record<string, unknown> | null)?.[key] ?? null
+  }
+
   try {
     await supabase.from('activity_log').insert({
       entity: 'risk',
       entity_id: row.id,
       action: 'update_risk',
       actor_id: user.userId,
-      before: null,
+      before: beforeLog,
       after: updates,
     })
   } catch { /* ignore log failures */ }
 
-  return NextResponse.json({ ok: true, data: { id: row.id } })
+  return NextResponse.json({ ok: true, data: { id: row.id, updated: Object.keys(updates) } })
 }

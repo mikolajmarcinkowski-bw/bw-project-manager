@@ -419,7 +419,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 6. Activity log (nieblokujace)
+    // 6. Seed standardowych milestones MS0–MS7 (best-effort, nie blokuje)
+    const STANDARD_MILESTONES = [
+      { ms_code: 'MS0', name: 'Kick-off zakończony',                       week: 1  },
+      { ms_code: 'MS1', name: 'Discovery i audyt zakończony',              week: 3  },
+      { ms_code: 'MS2', name: 'Architektura i projekt zatwierdzone',       week: 5  },
+      { ms_code: 'MS3', name: 'Sprint 1 — konfiguracja zakończona',        week: 7  },
+      { ms_code: 'MS4', name: 'Sprint 2 — konfiguracja zakończona',        week: 9  },
+      { ms_code: 'MS5', name: 'UAT passed — odbiór klienta',               week: 11 },
+      { ms_code: 'MS6', name: 'Go-live',                                   week: 13 },
+      { ms_code: 'MS7', name: 'Hypercare zakończony — projekt zamknięty',  week: 14 },
+    ]
+    try {
+      await supabase.from('milestones' as never).insert(
+        STANDARD_MILESTONES.map(m => ({ ...m, project_id: projectId, status: 'on' }))
+      )
+    } catch { /* non-blocking — nie blokuje create_project */ }
+
+    // 7. Activity log (nieblokujace)
     const { error: logError } = await supabase.from('activity_log').insert({
       entity: 'project',
       entity_id: projectId,

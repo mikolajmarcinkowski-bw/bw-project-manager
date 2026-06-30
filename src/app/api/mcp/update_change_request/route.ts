@@ -86,5 +86,5 @@ export async function POST(request: NextRequest) {
     })
   } catch { /* ignore log failures */ }
 
-  return NextResponse.json({ ok: true, data: { id: row.id } })
+  return NextResponse.json({ ok: true, data: { id: row.id, updated: Object.keys(updates) } })
 }

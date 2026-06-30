@@ -94,12 +94,34 @@ export async function POST(request: NextRequest) {
       }
 
       case 'raid': {
-        const { data: risks } = await supabase
-          .from('risks')
-          .select('id, description, category, phase, probability, impact, rag, owner, mitigation, status, created_at')
-          .eq('project_id', body.project_id)
-          .order('created_at')
-        content = { risks: risks ?? [] }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const [{ data: risks }, { data: questions }, { data: decisions }] = await Promise.all([
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (supabase as any)
+            .from('risks')
+            .select('id, description, category, phase, probability, impact, score, rag, owner, mitigation, status, created_at')
+            .eq('project_id', body.project_id),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (supabase as any)
+            .from('questions_doubts')
+            .select('id, question, answer, rag, status, asked_date, created_at')
+            .eq('project_id', body.project_id)
+            .order('created_at'),
+          supabase
+            .from('decision_points')
+            .select('id, type, title, status, decided_by, decided_at, notes')
+            .eq('project_id', body.project_id)
+            .order('created_at' as never),
+        ])
+        // Sortuj ryzyka wg score malejąco (najgroźniejsze pierwsze)
+        const sortedRisks = ((risks ?? []) as Record<string, unknown>[])
+          .sort((a, b) => ((b.score as number) ?? 0) - ((a.score as number) ?? 0))
+        content = {
+          risks: sortedRisks,
+          assumptions: questions ?? [],    // A — pytania/wątpliwości
+          decisions: decisions ?? [],       // D — diamenciki decyzyjne
+          // I (Issues) = brak dedykowanej tabeli — PM może dodać ręcznie
+        }
         break
       }
 

@@ -30,7 +30,22 @@ export async function POST(request: NextRequest) {
     if (body.task_id) {
       query = query.eq('entity_id', body.task_id)
     } else {
-      query = query.eq('entity_id', body.project_id)
+      // Agreguj eventy projektu + encji podrzędnych (tasks, risks, milestones)
+      // Dzięki temu update_risk/update_milestone/update_task są widoczne w logu projektu
+      const [{ data: riskRows }, { data: msRows }, { data: taskRows }] = await Promise.all([
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any).from('risks').select('id').eq('project_id', body.project_id),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any).from('milestones').select('id').eq('project_id', body.project_id),
+        supabase.from('tasks').select('id').eq('project_id', body.project_id),
+      ])
+      const allEntityIds = [
+        body.project_id!,
+        ...((riskRows ?? []) as { id: string }[]).map(r => r.id),
+        ...((msRows ?? []) as { id: string }[]).map(m => m.id),
+        ...((taskRows ?? []) as { id: string }[]).map(t => t.id),
+      ]
+      query = query.in('entity_id', allEntityIds)
     }
 
     const { data: logs, error } = await query

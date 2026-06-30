@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyMcpToken } from '@/lib/mcp/auth'
 
 const VALID_CR_TYPE = ['scope', 'timeline', 'budget', 'arch', 'resource', 'other'] as const
-const VALID_IMPACT = ['low', 'medium', 'high'] as const
+const VALID_IMPACT = ['low', 'medium', 'high', 'critical'] as const
 
 export async function POST(request: NextRequest) {
   const user = await verifyMcpToken(request.headers.get('authorization'))
@@ -85,5 +85,14 @@ export async function POST(request: NextRequest) {
     })
   } catch { /* ignore log failures */ }
 
-  return NextResponse.json({ ok: true, data: { id: crId } }, { status: 201 })
+  return NextResponse.json({
+    ok: true,
+    data: {
+      id: crId,
+      status: 'draft',
+      title: (title as string).trim(),
+      cr_type: cr_type ?? 'other',
+      note: "Status 'draft' — zmień na 'pending' przez update_change_request gdy gotowe do zatwierdzenia.",
+    },
+  }, { status: 201 })
 }

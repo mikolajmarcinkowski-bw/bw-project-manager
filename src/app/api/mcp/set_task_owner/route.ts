@@ -38,6 +38,24 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Walidacja względem team_members — tylko gdy assignee jest podany (nie null)
+  if (trimmedAssignee !== null) {
+    const supabaseForValidation = createAdminClient()
+    const { data: members } = await supabaseForValidation
+      .from('team_members')
+      .select('full_name')
+      .eq('is_active', true)
+
+    const normalizedNames = (members ?? []).map((m) => m.full_name.toLowerCase())
+    if (!normalizedNames.includes(trimmedAssignee.toLowerCase())) {
+      const available = (members ?? []).map((m) => m.full_name).join(', ')
+      return NextResponse.json({
+        ok: false,
+        error: `Nieznany konsultant: "${trimmedAssignee}". Dostępni: ${available || 'brak aktywnych konsultantów'}`,
+      }, { status: 400 })
+    }
+  }
+
   // completion_date: opcjonalne, format YYYY-MM-DD lub null
   let completionDateVal: string | null | undefined = undefined
   if ('completion_date' in (body as object)) {

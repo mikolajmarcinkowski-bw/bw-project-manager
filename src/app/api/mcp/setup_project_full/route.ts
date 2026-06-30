@@ -285,11 +285,17 @@ export async function POST(request: NextRequest) {
       }
 
       // Insert new
+      const MS_NAMES: Record<string, string> = {
+        MS0: 'Kick-off zakończony', MS1: 'Discovery i audyt zakończony',
+        MS2: 'Architektura i projekt zatwierdzone', MS3: 'Sprint 1 — konfiguracja zakończona',
+        MS4: 'Sprint 2 — konfiguracja zakończona', MS5: 'UAT passed — odbiór klienta',
+        MS6: 'Go-live', MS7: 'Hypercare zakończony — projekt zamknięty',
+      }
       if (toInsert.length > 0) {
         const insertRows = toInsert.map((m) => ({
           project_id,
           ms_code: m.ms_code.trim(),
-          name: m.ms_code.trim(), // required field — use ms_code as label
+          name: ((m as unknown) as Record<string, unknown>).name as string ?? MS_NAMES[m.ms_code.trim()] ?? m.ms_code.trim(),
           target_date: m.target_date ?? null,
           status: (m.status as string) ?? 'on',
         }))

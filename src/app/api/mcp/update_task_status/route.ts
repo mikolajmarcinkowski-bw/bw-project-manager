@@ -84,12 +84,25 @@ export async function POST(request: NextRequest) {
       entity_id: task_id,
       action: 'update_task_status',
       actor_id: userId,
-      before: { status: beforeTyped.status },
+      before: { status: beforeTyped.status, completion_date: beforeTyped.completion_date },
       after: { status: newStatus, completion_date },
     })
     if (logErr) console.error('[update_task_status] activity_log failed:', logErr)
 
-    return NextResponse.json({ ok: true, changed: true })
+    // Ostrzeż PM-a gdy cofnięcie z done kasuje completion_date
+    const wasCleared =
+      beforeTyped.status === 'done' &&
+      newStatus !== 'done' &&
+      beforeTyped.completion_date !== null
+
+    return NextResponse.json({
+      ok: true,
+      changed: true,
+      completionDate: completion_date ?? null,
+      warning: wasCleared
+        ? `completionDate ${beforeTyped.completion_date} została usunięta przy zmianie statusu z 'done'.`
+        : null,
+    })
   } catch (err) {
     console.error('[update_task_status] Unexpected error:', err)
     return NextResponse.json(

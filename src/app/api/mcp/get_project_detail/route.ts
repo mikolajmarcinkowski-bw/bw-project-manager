@@ -168,6 +168,23 @@ export async function POST(request: NextRequest) {
       })
       .filter((x): x is { id: string; fullName: string | null } => x != null)
 
+    // Rozdziel kroki merytoryczne (fazy 0–8) od cyklicznych (faza 99)
+    const regularSteps = steps.filter(s => s.phaseNumber !== 99)
+    const recurringSteps = steps
+      .filter(s => s.phaseNumber === 99)
+      .map((s, idx) => ({ ...s, recurringIndex: idx + 1 }))
+
+    // Podsumowanie zadań projektu (tylko regularne fazy, bez ukrytych)
+    const allTasks = regularSteps.flatMap(s => s.tasks)
+    const summary = {
+      totalTasks:      allTasks.filter(t => !t.hidden).length,
+      doneTasks:       allTasks.filter(t => t.status === 'done').length,
+      inProgressTasks: allTasks.filter(t => t.status === 'in_progress' || t.status === 'for_quality').length,
+      todoTasks:       allTasks.filter(t => t.status === 'todo').length,
+      overdueTasks:    allTasks.filter(t => t.dueDate && t.dueDate < today && !['done', 'na'].includes(t.status)).length,
+      unassignedTasks: allTasks.filter(t => !t.assigneeName && t.status !== 'na' && !t.hidden).length,
+    }
+
     const data = {
       id: project.id,
       name: project.name,
@@ -179,7 +196,9 @@ export async function POST(request: NextRequest) {
       client: { id: clientField?.id ?? '', name: clientField?.name ?? '' },
       pms,
       atRisk,
-      steps,
+      summary,
+      steps: regularSteps,
+      recurring: recurringSteps,
       milestones,
       decisions: (decRows ?? []).map((d) => ({
         id: d.id,

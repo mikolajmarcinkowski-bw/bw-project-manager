@@ -39,11 +39,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Database error' }, { status: 500 })
     }
 
+    const lines = linesResult.data ?? []
+    const totalEstH    = lines.reduce((sum, l) => sum + ((l as Record<string, unknown>).est_h    as number ?? 0), 0)
+    const totalActualH = lines.reduce((sum, l) => sum + ((l as Record<string, unknown>).actual_h as number ?? 0), 0)
+    const burnRatePct  = totalEstH > 0 ? Math.round(totalActualH / totalEstH * 100) : null
+
     return NextResponse.json({
       ok: true,
       data: {
         settings: settingsResult.data ?? null,
-        lines: linesResult.data ?? [],
+        lines,
+        totalEstH,
+        totalActualH,
+        burnRatePct,
       },
     })
   } catch (err) {
