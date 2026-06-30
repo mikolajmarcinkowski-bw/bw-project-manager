@@ -272,6 +272,10 @@ export function TemplateTaskEditor({
           aria-label="Estymacja godzin"
           disabled={isPending}
           placeholder="h"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSave()
+            if (e.key === 'Escape') handleCancel()
+          }}
         />
         <Button
           variant="ghost"

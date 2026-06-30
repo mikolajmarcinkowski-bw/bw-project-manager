@@ -7,20 +7,20 @@
 
 ## Aktualny stan (aktualizuj przy każdej zmianie)
 
-> Ostatnia aktualizacja: 2026-06-30 · v3.5.0 · commit `64b8190`
+> Ostatnia aktualizacja: 2026-06-30 · v3.7.0 · commit `af5a686`
 
 | Serwis | Status | URL/ID | Ostatnia zmiana |
 |--------|--------|--------|-----------------|
 | GitHub repo | ✅ DZIAŁA | github.com/mikolajmarcinkowski-bw/bw-project-manager (private) | 2026-06-15 |
 | Vercel projekt | ✅ DZIAŁA | bw-project-manager.vercel.app · auto-deploy na każdy push do `main` | 2026-06-15 |
 | Supabase projekt | ✅ DZIAŁA | ipptnszwnjtoqpixhefd.supabase.co (West EU London, PG17) | 2026-06-15 |
-| Schemat DB (migracje) | ✅ AKTUALNE | **7 migracji wdrożonych** — pełna lista poniżej | 2026-06-30 |
+| Schemat DB (migracje) | ✅ AKTUALNE | **10 migracji wdrożonych** — pełna lista poniżej | 2026-06-30 |
 | Supabase CLI | ✅ ZALOGOWANE | Token w pamięci podręcznej CLI; `db push` działa bez hasła | 2026-06-29 |
 | Supabase Storage | ✅ SKONFIGUROWANE | Bucket `project-documents` (private, 50MB, PDF/DOCX/XLSX/PNG/JPG) + 4 RLS policies | 2026-06-30 |
 | Auth / konta | ✅ DZIAŁA | Rejestracja WYŁĄCZONA; Mikołaj: dev_admin+tester. Konta zakłada admin przez Auth Admin API | 2026-06-16 |
 | Konta dev (lokalne) | ✅ DZIAŁA | `dev-admin`/`dev-user@bwmanager.pl` — creds tylko w `.env.local`, NIE w Vercel. Gate `NODE_ENV`. | 2026-06-16 |
-| Aplikacja | ✅ NA PRODUKCJI | **v3.5.0** — MVP P0+P1 kompletne. Commit `64b8190`. | 2026-06-30 |
-| MCP Server | ✅ KOMPLETNY | 47/47 toolsów; `~/.claude/bw-mcp/server.mjs`; token Mikołaja: `ea127ca5-...` | 2026-06-29 |
+| Aplikacja | ✅ NA PRODUKCJI | **v3.7.0** — pełna synchronizacja widoków + naprawy audytu PM. Commit `af5a686`. | 2026-06-30 |
+| MCP Server | ✅ KOMPLETNY | **52/52 toolsów** (5 nowych w v3.6.0); `~/.claude/bw-mcp/server.mjs`; token Mikołaja: `ea127ca5-...` | 2026-06-30 |
 | Daily brief (Resend) | 🟡 KOD OK, DNS BLOKUJE | Kod ✅; cron 04:30 UTC; `CRON_SECRET` w `.env.local`; DNS bwmanager.pl odłożony | 2026-06-17 |
 | Resend | ✅ GOTOWE | brief@bwmanager.pl (1000 maili/mc free) | 2026-06-15 |
 | Domena własna | ⏳ ODŁOŻONE | bwmanager.pl — po DNS skonfigurujemy Resend email | — |
@@ -38,6 +38,7 @@
 | `20260620000000_api_tokens.sql` | 2026-06-20 | MCP API tokens |
 | `20260629000000_recurring_logic.sql` | 2026-06-29 | P12: `recurring_period`/`anchor_day`/`occurrence_index` + working_calendar święta 2025–2027 |
 | `20260630000000_storage_rls.sql` | 2026-06-30 | D1: 4 RLS policies dla `storage.objects` (bucket project-documents) |
+| `20260630100000_cr_impact_critical.sql` | 2026-06-30 | Audyt PM: dodaje 'critical' do enum `cr_impact` |
 
 ---
 

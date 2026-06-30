@@ -403,14 +403,23 @@ export function RaidView({ projectId, initialRisks, onEscalateRisk }: RaidViewPr
 
       {/* Table or empty state */}
       {risks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-          <ShieldAlert className="h-8 w-8 text-muted-foreground/30" aria-hidden="true" />
-          <p className="font-heading font-semibold text-sm text-foreground">Brak ryzyk</p>
-          <p className="font-meta text-xs text-muted-foreground max-w-[32ch]">
-            Dodaj ręcznie lub przez Claude: add_risk
-          </p>
-          <Button size="sm" onClick={openAdd} variant="outline" className="gap-1.5">
-            <Plus className="size-3.5" aria-hidden="true" />
+        <div className="flex flex-col items-center justify-center gap-3 py-14 text-center">
+          <div className="rounded-xl border border-border bg-card p-4 text-muted-foreground">
+            <ShieldAlert className="w-7 h-7" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="font-heading font-semibold text-sm text-foreground">Brak zidentyfikowanych ryzyk</p>
+            <p className="font-meta text-xs text-muted-foreground mt-1">
+              Dodaj ryzyko aby śledzić zagrożenia projektu
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={openAdd}
+            className="mt-1 active:scale-[0.97] active:opacity-90"
+          >
+            <Plus className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
             Dodaj pierwsze ryzyko
           </Button>
         </div>

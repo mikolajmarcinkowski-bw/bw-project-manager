@@ -88,6 +88,7 @@ export function ToggleActiveButton({ userId, isActive, isSelf }: {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [confirmActivateOpen, setConfirmActivateOpen] = useState(false)
 
   async function executeToggle() {
     setError(null)
@@ -106,8 +107,8 @@ export function ToggleActiveButton({ userId, isActive, isSelf }: {
       // Dezaktywacja — pokaż dialog potwierdzenia
       setConfirmOpen(true)
     } else {
-      // Aktywacja — bezpośrednio
-      executeToggle()
+      // Aktywacja — pokaż dialog potwierdzenia
+      setConfirmActivateOpen(true)
     }
   }
 
@@ -166,6 +167,35 @@ export function ToggleActiveButton({ userId, isActive, isSelf }: {
               disabled={isPending}
             >
               Dezaktywuj
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog potwierdzenia aktywacji */}
+      <Dialog open={confirmActivateOpen} onOpenChange={setConfirmActivateOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Aktywować konto?</DialogTitle>
+            <DialogDescription>
+              Użytkownik odzyska dostęp do aplikacji.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setConfirmActivateOpen(false)}
+              disabled={isPending}
+            >
+              Anuluj
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => { setConfirmActivateOpen(false); executeToggle() }}
+              disabled={isPending}
+            >
+              Aktywuj
             </Button>
           </DialogFooter>
         </DialogContent>

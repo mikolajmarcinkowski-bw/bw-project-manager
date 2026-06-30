@@ -5,7 +5,7 @@ import {
   ToggleSpecialistButton,
   AddSpecialistDialog,
 } from '@/components/admin/specialist-actions'
-import { UserCog, ChevronLeft, UserPlus } from 'lucide-react'
+import { UserCog, ChevronLeft, UserPlus, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
@@ -186,10 +186,20 @@ export default async function AdminTeamPage() {
 
                     {/* Akcje */}
                     <td className="px-4 py-3">
-                      <ToggleSpecialistButton
-                        specialistId={specialist.id}
-                        isActive={specialist.is_active}
-                      />
+                      <div className="flex items-center gap-3">
+                        <ToggleSpecialistButton
+                          specialistId={specialist.id}
+                          isActive={specialist.is_active}
+                        />
+                        <Link
+                          href={`/team/${specialist.id}`}
+                          className="flex items-center gap-1 font-meta text-xs text-muted-foreground hover:text-teal transition-colors active:scale-[0.97] active:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal rounded"
+                          aria-label={`Szczegóły konsultanta ${specialist.full_name}`}
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                          Szczegóły
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

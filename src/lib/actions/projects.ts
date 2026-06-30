@@ -554,3 +554,70 @@ export async function updateDecisionPoint(
 
   return { ok: true }
 }
+
+// ─── updateProjectPms (P17 — edycja PM per projekt) ──────────────────────────
+
+export async function updateProjectPms(
+  projectId: string,
+  pmIds: string[]
+): Promise<{ ok: true } | { error: string }> {
+  const user = await requireUser()
+  const supabase = await createClient()
+
+  // Pobierz stary stan przed DELETE (do activity_log)
+  const { data: existing, error: fetchErr } = await supabase
+    .from('project_pms')
+    .select('profile_id')
+    .eq('project_id', projectId)
+
+  if (fetchErr) {
+    console.error('[updateProjectPms] fetch existing failed:', fetchErr)
+    return { error: 'Nie udało się odczytać obecnych PM-ów projektu.' }
+  }
+
+  const oldPmIds: string[] = (existing ?? []).map((r) => r.profile_id)
+  const newPmIds: string[] = Array.isArray(pmIds) ? pmIds.filter(Boolean) : []
+
+  // DELETE wszystkich istniejących PM-ów projektu
+  const { error: deleteErr } = await supabase
+    .from('project_pms')
+    .delete()
+    .eq('project_id', projectId)
+
+  if (deleteErr) {
+    console.error('[updateProjectPms] delete failed:', deleteErr)
+    return { error: 'Nie udało się zaktualizować PM-ów projektu. Spróbuj ponownie.' }
+  }
+
+  // INSERT nowych PM-ów (pusta lista = projekt bez PM — OK)
+  if (newPmIds.length > 0) {
+    const { error: insertErr } = await supabase
+      .from('project_pms')
+      .insert(newPmIds.map((profile_id) => ({ project_id: projectId, profile_id })))
+
+    if (insertErr) {
+      console.error('[updateProjectPms] insert failed:', insertErr)
+      return { error: 'Nie udało się przypisać PM-ów projektu. Spróbuj ponownie.' }
+    }
+  }
+
+  // Activity log (nieblokujące)
+  const { error: logErr } = await supabase.from('activity_log').insert({
+    entity: 'project',
+    entity_id: projectId,
+    action: 'update_project_pms',
+    actor_id: user.id,
+    before: { pm_ids: oldPmIds },
+    after: { pm_ids: newPmIds },
+  })
+  if (logErr) {
+    console.error('[updateProjectPms] activity_log failed:', logErr)
+  }
+
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath('/dashboard')
+  revalidatePath('/projekty')
+  revalidatePath('/clients', 'layout')
+
+  return { ok: true }
+}

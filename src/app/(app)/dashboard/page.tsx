@@ -8,6 +8,7 @@ import {
 } from '@/lib/data/projects'
 import { DashboardBriefing } from '@/components/dashboard/dashboard-briefing'
 import { DashboardPortfolioStrip } from '@/components/dashboard/dashboard-portfolio-strip'
+import { DashboardAiWidget } from '@/components/dashboard/dashboard-ai-widget'
 
 export const metadata = {
   title: 'Dashboard · BW Project Manager',
@@ -57,6 +58,9 @@ export default async function DashboardPage() {
 
       {/* Dzienny briefing PM-a (D-R1) */}
       <DashboardBriefing data={briefData} milestones={milestones} />
+
+      {/* Analiza AI portfela (D-R2) — on-demand, wyjątek D-016 */}
+      <DashboardAiWidget />
 
       {/* Lista teczek */}
       {clients.length > 0 ? (

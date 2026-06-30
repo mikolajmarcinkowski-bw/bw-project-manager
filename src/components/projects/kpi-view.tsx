@@ -483,15 +483,24 @@ export function KpiView({ projectId, initialKpis, initialMilestones }: KpiViewPr
 
         {/* KPI grid or empty state */}
         {kpis.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 gap-3 text-center rounded-xl border border-dashed border-border">
-            <BarChart3 className="h-8 w-8 text-muted-foreground/30" aria-hidden="true" />
-            <p className="font-heading font-semibold text-sm text-foreground">Brak wskaźników KPI</p>
-            <p className="font-meta text-xs text-muted-foreground max-w-[32ch]">
-              Dodaj ręcznie lub przez Claude: add_kpi
-            </p>
-            <Button size="sm" onClick={openAddKpi} variant="outline" className="gap-1.5">
-              <Plus className="size-3.5" aria-hidden="true" />
-              Dodaj pierwszy KPI
+          <div className="flex flex-col items-center justify-center gap-3 py-14 text-center">
+            <div className="rounded-xl border border-border bg-card p-4 text-muted-foreground">
+              <BarChart3 className="w-7 h-7" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="font-heading font-semibold text-sm text-foreground">Brak zdefiniowanych wskaźników</p>
+              <p className="font-meta text-xs text-muted-foreground mt-1">
+                Dodaj KPI aby mierzyć sukces projektu
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={openAddKpi}
+              className="mt-1 active:scale-[0.97] active:opacity-90"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
+              Dodaj pierwszy wskaźnik
             </Button>
           </div>
         ) : (

@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react'
 import { ProjectStatusBadge } from './project-status-badge'
 import { ImplTypeBadge } from './impl-type-badge'
 import { EditProjectDialog } from './edit-project-dialog'
+import { EditProjectPmsDialog } from './edit-project-pms-dialog'
 import { ProjectLifecycleActions } from './project-lifecycle-actions'
 import type { ProjectDetail, ProjectHealthMetrics } from '@/lib/data/projects'
 
@@ -122,7 +123,7 @@ export function ProjectHeader({ project, profiles, health }: ProjectHeaderProps)
         <span aria-hidden="true" className="text-border/60 select-none">·</span>
 
         {/* PM-owie */}
-        <span className="inline-flex items-center gap-1">
+        <span className="group inline-flex items-center gap-1">
           <span className="font-meta text-[0.65rem] uppercase tracking-wide text-muted-foreground/60">PM</span>
           {pms.length === 0 ? (
             <span className="text-muted-foreground/50 italic">— Bez PM —</span>
@@ -130,6 +131,13 @@ export function ProjectHeader({ project, profiles, health }: ProjectHeaderProps)
             <span className="text-foreground/80 font-medium">
               {pms.map((pm) => pm.fullName ?? '—').join(', ')}
             </span>
+          )}
+          {isKnownStatus(status) && status === 'active' && (
+            <EditProjectPmsDialog
+              projectId={project.id}
+              currentPmIds={pms.map((pm) => pm.id)}
+              profiles={profiles}
+            />
           )}
         </span>
 
