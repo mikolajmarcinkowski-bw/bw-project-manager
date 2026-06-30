@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyMcpToken } from '@/lib/mcp/auth'
 
@@ -23,6 +24,15 @@ export async function POST(request: NextRequest) {
   }).then(({ error }) => {
     if (error) console.error('[mark_project_completed] activity_log failed:', error)
   })
+
+  // Pobierz client_id żeby rewalidować widok klienta
+  const { data: projectRow } = await supabase
+    .from('projects').select('client_id').eq('id', body.project_id).single()
+
+  revalidatePath(`/projects/${body.project_id}`)
+  revalidatePath('/dashboard')
+  revalidatePath('/projekty')
+  if (projectRow?.client_id) revalidatePath(`/clients/${projectRow.client_id}`)
 
   return NextResponse.json({ ok: true, data: { status: 'completed' } })
 }

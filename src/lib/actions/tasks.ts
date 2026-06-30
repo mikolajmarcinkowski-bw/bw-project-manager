@@ -10,6 +10,18 @@ export type TaskStatus = Database['public']['Enums']['task_status']
 const VALID_STATUSES: TaskStatus[] = ['todo', 'in_progress', 'done', 'for_quality', 'na']
 const ASSIGNEE_MAX_LENGTH = 120
 
+/**
+ * Rewaliduje wszystkie widoki zależne od stanu zadań projektu.
+ * Zmiana zadania (status, data, assignee) wpływa na atRisk — dashboard i widok klienta
+ * muszą to odzwierciedlać natychmiast, nie tylko widok projektu.
+ */
+function revalidateTaskDependents(projectId: string) {
+  revalidatePath(`/projects/${projectId}`)
+  revalidatePath('/dashboard')
+  revalidatePath('/projekty')
+  revalidatePath('/clients', 'layout') // odświeża wszystkie /clients/[id]
+}
+
 // Faza 2c · P7 (statusy) + P8 (completion_date). Zmiana statusu zadania = odhaczanie.
 // RLS: tasks „for all to authenticated using(true)" (R13) — każdy zalogowany PM może edytować.
 // Klient serwerowy działa w sesji usera → RLS egzekwuje uprawnienia (NIE admin client).
@@ -70,7 +82,7 @@ export async function updateTaskStatus(
   })
   if (logErr) console.error('[updateTaskStatus] activity_log failed:', logErr)
 
-  revalidatePath(`/projects/${before.project_id}`)
+  revalidateTaskDependents(before.project_id)
   return { ok: true }
 }
 
@@ -122,7 +134,7 @@ export async function updateTaskAssignee(
   })
   if (logErr) console.error('[updateTaskAssignee] activity_log failed:', logErr)
 
-  revalidatePath(`/projects/${before.project_id}`)
+  revalidateTaskDependents(before.project_id)
   return { ok: true }
 }
 
@@ -170,7 +182,7 @@ export async function updateTaskPmAssignee(
   })
   if (logErr) console.error('[updateTaskPmAssignee] activity_log failed:', logErr)
 
-  revalidatePath(`/projects/${before.project_id}`)
+  revalidateTaskDependents(before.project_id)
   return { ok: true }
 }
 
@@ -228,7 +240,7 @@ export async function updateTaskEst(
     after: { est },
   }).then(({ error }) => { if (error) console.error('[updateTaskEst] log failed:', error) })
 
-  revalidatePath(`/projects/${before.project_id}`)
+  revalidateTaskDependents(before.project_id)
   return { ok: true }
 }
 
@@ -289,7 +301,7 @@ export async function updateTaskDueDate(
   })
   if (logErr) console.error('[updateTaskDueDate] activity_log failed:', logErr)
 
-  revalidatePath(`/projects/${before.project_id}`)
+  revalidateTaskDependents(before.project_id)
   return { ok: true }
 }
 
@@ -341,7 +353,7 @@ export async function muteTaskWarning(
   })
   if (logErr) console.error('[muteTaskWarning] activity_log failed:', logErr)
 
-  revalidatePath(`/projects/${before.project_id}`)
+  revalidateTaskDependents(before.project_id)
   return { ok: true }
 }
 

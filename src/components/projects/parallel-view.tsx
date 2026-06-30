@@ -251,9 +251,10 @@ function ParallelColumn({ step, stepDecisions, onSelectStep, totalColumns }: Par
 // ─── ParallelView ─────────────────────────────────────────────────────────────
 
 export function ParallelView({ steps, decisions = [], onSelectStep }: ParallelViewProps) {
-  // Wszystkie aktywne fazy (isActive) + równoległe (isParallel && in_progress)
-  const activeSteps = steps.filter((s) => s.isActive)
-  const parallelSteps = steps.filter((s) => s.isParallel && !s.isActive && s.status === 'in_progress')
+  // Tylko fazy procesu (nie klocki cykliczne phase 99) — aktywne + równoległe
+  const processSteps = steps.filter((s) => s.phaseNumber !== 99)
+  const activeSteps = processSteps.filter((s) => s.isActive)
+  const parallelSteps = processSteps.filter((s) => s.isParallel && !s.isActive && s.status === 'in_progress')
 
   const combined = [...activeSteps, ...parallelSteps]
 

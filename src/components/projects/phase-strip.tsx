@@ -271,9 +271,9 @@ export function PhaseStrip({ steps, decisions, onSelectStep, onRequestNewCr, spe
     }
   }, [])
 
-  // Auto-scroll to first active step on mount
+  // Auto-scroll to first active step on mount (only process steps, not recurring)
   useEffect(() => {
-    const activeStep = steps.find(s => s.isActive)
+    const activeStep = steps.find(s => s.isActive && s.phaseNumber !== 99)
     if (activeStep && scrollRef.current) {
       const el = scrollRef.current.querySelector(`[data-step-id="${activeStep.id}"]`)
       const prefersReduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -301,8 +301,12 @@ export function PhaseStrip({ steps, decisions, onSelectStep, onRequestNewCr, spe
     | { kind: 'step'; step: GanttStep }
     | { kind: 'decision'; decision: Decision }
 
+  // Klocki cykliczne (phase 99) nie należą do sekwencji procesu — nie wyświetlamy ich w Phase Strip.
+  // Są widoczne na Gantcie jako osobne wiersze z ↺ badge.
+  const processSteps = steps.filter(s => s.phaseNumber !== 99)
+
   const items: StripItem[] = []
-  for (const step of steps) {
+  for (const step of processSteps) {
     items.push({ kind: 'step', step })
     const decs = decisionsByStepId.get(step.id) ?? []
     for (const dec of decs) {
