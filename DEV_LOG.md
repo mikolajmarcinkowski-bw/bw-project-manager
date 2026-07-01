@@ -5,6 +5,18 @@
 
 ---
 
+## [2026-07-01] feat | P17 + Impeccable LOW + P23 + D-R2 — `9b55d47` (v3.8.0)
+
+**Code review ✅ Security audit ✅**
+
+- **P17 — Edycja PM per projekt**: `EditProjectPmsDialog` (multi-select profili, alert brak PM) + `updateProjectPms()` server action + przycisk hover w `project-header.tsx`
+- **Impeccable LOW**: est input Enter/Escape (`template-editor.tsx`); branded empty states RAID (`ShieldAlert`+CTA) i KPI (`BarChart3`+CTA); AlertDialog potwierdzenia aktywacji konta (`user-actions.tsx`)
+- **P23 — Widok per konsultant**: `/team/[id]` (Server Component + `requireUser`), `getConsultantDetail()` w `lib/data/team.ts`, `ConsultantView` komponent, link "Szczegóły" z `/admin/team`
+- **D-R2 — AI Dashboard Analysis**: `analyzePortfolio()` server action (GPT-4o-mini, jedyny wyjątek R11 per D-016), `DashboardAiWidget` na dashboardzie; `OPENAI_API_KEY` → Vercel (bezpiecznie)
+- **Security fix**: `requireUser()` w `generateMetadata` `/team/[id]` (TEAM-1 z audytu)
+
+---
+
 ## [2026-06-30] fix | Pełna synchronizacja widoków — `af5a686` (v3.7.0)
 
 **Źródło:** audyt synchronizacji (3 równoległe agenci — revalidatePath, kalkulacje pochodne, UI propagacja)
